@@ -28,8 +28,31 @@ VR_MODEL = "data/vr_model.json"
 AUGMENTATIONS_CONFIG = "configs_template/augmentations_template.yaml"
 MODEL_FOLDER = "pretrain/"
 CONFIG_TEMPLATE_FOLDER = "configs_template/"
+VERSION_CONFIG = "data/version.json"
 
 def setup_webui():
+    if os.path.exists("data"):
+        if not os.path.isfile(VERSION_CONFIG):
+            print("[INFO]正在初始化版本配置文件")
+            shutil.copytree("configs_backup", "configs", dirs_exist_ok=True)
+            shutil.copytree("configs_backup", "configs_template", dirs_exist_ok=True)
+            shutil.copytree("data_backup", "data", dirs_exist_ok=True)
+        else:
+            version_config = load_configs(VERSION_CONFIG)
+            version = version_config["version"]
+            if version != PACKAGE_VERSION:
+                print(f"[INFO]检测到{version}旧版配置，正在更新至最新版{PACKAGE_VERSION}")
+                webui_config = load_configs(WEBUI_CONFIG)
+                webui_config_backup = load_configs("data_backup/webui_config.json")
+                webui_config_backup["settings"] = webui_config["settings"]
+                webui_config_backup["settings_backup"] = webui_config["settings_backup"]
+                save_configs(webui_config_backup, WEBUI_CONFIG)
+                shutil.copytree("configs_backup", "configs", dirs_exist_ok=True)
+                shutil.copytree("configs_backup", "configs_template", dirs_exist_ok=True)
+
+                version_config["version"] = PACKAGE_VERSION
+                save_configs(version_config, VERSION_CONFIG)
+
     if not os.path.exists("configs"):
         print("[INFO]正在初始化configs目录")
         shutil.copytree("configs_backup", "configs")
@@ -42,7 +65,6 @@ def setup_webui():
     if not os.path.isfile("data_backup/download_checks.json") or not os.path.isfile("data_backup/mdx_model_data.json") or not os.path.isfile("data_backup/vr_model_data.json"):
         print("[INFO]正在初始化pretrain目录")
         copy_uvr_config(os.path.join(MODEL_FOLDER, "VR_Models"))
-    print("[INFO]正在初始化ffmpeg环境，该过程不影响原有环境")
     absolute_path = os.path.abspath("ffmpeg/bin/")
     os.environ["PATH"] += os.pathsep + absolute_path
 
@@ -889,7 +911,7 @@ with gr.Blocks(
 
     仅供个人娱乐和非商业用途，禁止用于血腥、暴力、性相关、政治相关内容。<br>
     本整合包完全免费，严禁以任何形式倒卖，如果你从任何地方**付费**购买了本整合包，请**立即退款**。<br> 
-    整合包作者：[bilibili@阿狸不吃隼舞](https://space.bilibili.com/403335715) [Github@KitsuneX07](https://github.com/KitsuneX07) | [Bilibili@Sucial丶](https://space.bilibili.com/445022409) [Github@SUC-DriverOld](https://github.com/SUC-DriverOld) Gradio主题来自 [https://huggingface.co/spaces/NoCrypt/miku](https://huggingface.co/spaces/NoCrypt/miku)
+    整合包作者：[bilibili@阿狸不吃隼舞](https://space.bilibili.com/403335715) [github@KitsuneX07](https://github.com/KitsuneX07) | [Bilibili@Sucial丶](https://space.bilibili.com/445022409) [Github@SUC-DriverOld](https://github.com/SUC-DriverOld) Gradio主题来自 [https://huggingface.co/spaces/NoCrypt/miku](https://huggingface.co/spaces/NoCrypt/miku)
     """)
     with gr.Tabs():
         setup_webui()
