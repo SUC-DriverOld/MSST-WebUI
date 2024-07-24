@@ -29,8 +29,8 @@ AUGMENTATIONS_CONFIG = "configs_template/augmentations_template.yaml"
 MODEL_FOLDER = "pretrain/"
 CONFIG_TEMPLATE_FOLDER = "configs_template/"
 VERSION_CONFIG = "data/version.json"
-PYTHON = "./workenv/python.exe"
-FFMPEG = "./ffmpeg/bin/ffmpeg.exe"
+PYTHON = "python"
+FFMPEG = "ffmpeg"
 
 def setup_webui():
     if os.path.exists("data"):
