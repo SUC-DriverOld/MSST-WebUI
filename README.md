@@ -9,11 +9,16 @@ Music Source Separation Training Inference Webui, besides, we packed UVR togethe
 
 This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training), which is a music source separation training framework. You can use this webUI to infer the MSST model and UVR VR.Models (The inference code comes from [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator), and we do some changes on it), and the preset process page allows you to customize the processing flow yourself. You can install models in the "Install Models" interface. If you have downloaded [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui) before, you do not need to download VR.Models again. You can go to the "Settings" page and directly select your UVR5 model folder. Finally, we also provide four convenient tools in the webUI.
 
-## Usage:
+## Usage
 
-### 中国用户可以直接下载一键包安装程序
+### You can go to [Releases](https://github.com/SUC-DriverOld/MSST-WebUI/releases) to download the installer
 
-下载地址 https://www.123pan.com/s/1bmETd-AefWh.html 提取码:1145
+### 中国用户可以从下方链接下载
+
+下载地址：https://www.123pan.com/s/1bmETd-AefWh.html 提取码:1145<br>
+B站教程视频：https://www.bilibili.com/video/BV18m42137rm
+
+## Run from source
 
 1. Clone this repository.
 2. Create Python environment and install the requirements.
@@ -26,7 +31,7 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 
 > [!NOTE]
 > 1. You may meet some problems when using UVR-Separate, they comes from dependances Numpy and Librosa. You may need to change the code `np.float` to `np.float64` or `np.float32` according to the traceback message.
-> 2. During install the requirements, you may meet conflit between huggingface-Hub and gradio. Just ignore it, it will not affect the use of the webUI.
+> 2. During install the requirements, you may meet conflict between huggingface-Hub and gradio. Just ignore it, it will not affect the use of the webUI.
 
 3. Run the webui use the following command.
 
