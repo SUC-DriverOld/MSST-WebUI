@@ -25,9 +25,10 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
    ```
 
 > [!NOTE]
-> I use `pip freeze > requirements.txt` to creat the requirements.txt file, as a result, the requirements.txt file may a lot complex. If you meet some problems, you migtht want to install the requirements manually.
+> 1. You may meet some problems when using UVR-Separate, they comes from dependances Numpy and Librosa. You may need to change the code `np.float` to `np.float64` or `np.float32` according to the traceback message.
+> 2. During install the requirements, you may meet conflit between huggingface-Hub and gradio. Just ignore it, it will not affect the use of the webUI.
 
-3. Run the webui use the following command.
+1. Run the webui use the following command.
 
    ```bash
    python webUI.py

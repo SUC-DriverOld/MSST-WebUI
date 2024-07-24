@@ -29,6 +29,8 @@ AUGMENTATIONS_CONFIG = "configs_template/augmentations_template.yaml"
 MODEL_FOLDER = "pretrain/"
 CONFIG_TEMPLATE_FOLDER = "configs_template/"
 VERSION_CONFIG = "data/version.json"
+PYTHON = "./workenv/python.exe"
+FFMPEG = "./ffmpeg/bin/ffmpeg.exe"
 
 def setup_webui():
     if os.path.exists("data"):
@@ -401,7 +403,7 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
     extract_instrumental_option = "--extract_instrumental" if extract_instrumental else ""
     force_cpu_option = "--force_cpu" if force_cpu else ""
 
-    command = f".\\workenv\\python.exe inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} {extract_instrumental_option} {force_cpu_option}"
+    command = f"{PYTHON} inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} {extract_instrumental_option} {force_cpu_option}"
     print(command)
     process = subprocess.Popen(
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -481,7 +483,7 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
     vr_high_end_process = "--vr_high_end_process" if vr_high_end_process else ""
     vr_enable_post_process = "--vr_enable_post_process" if vr_enable_post_process else ""
 
-    command = f".\\workenv\\python.exe uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} --sample_rate {sample_rate} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold}"
+    command = f"{PYTHON} uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} --sample_rate {sample_rate} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold}"
 
     print(command)
     subprocess.run(command, shell=True)
@@ -645,7 +647,7 @@ def convert_audio(uploaded_files, ffmpeg_output_format, ffmpeg_output_folder):
         output_file = os.path.join(output_path, os.path.splitext(
             os.path.basename(uploaded_file_path))[0] + "." + ffmpeg_output_format)
 
-        command = f".\\ffmpeg\\bin\\ffmpeg.exe -i \"{uploaded_file_path}\" \"{output_file}\""
+        command = f"{FFMPEG} -i \"{uploaded_file_path}\" \"{output_file}\""
         try:
             subprocess.run(command, shell=True, check=True)
             success_files.append(output_file)
@@ -725,7 +727,7 @@ def ensemble(files, ensemble_mode, weights, output_path):
 
         files_argument = " ".join(files)
         output_path = os.path.join(output_path, f"ensemble_{ensemble_mode}.wav")
-        command = f".\\workenv\\python.exe ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
+        command = f"{PYTHON} ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
         print(command)
         try:
             subprocess.run(command, shell = True)
@@ -892,7 +894,7 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
     else:
         return "模型保存路径不存在，请重新选择。"
 
-    command = f".\\workenv\\python.exe train.py --model_type {model_type} --config_path \"{config_path}\" {start_check_point} --results_path \"{results_path}\" --data_path \"{data_path}\" --dataset_type {dataset_type} --valid_path \"{valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} --pin_memory {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss}"
+    command = f"{PYTHON} train.py --model_type {model_type} --config_path \"{config_path}\" {start_check_point} --results_path \"{results_path}\" --data_path \"{data_path}\" --dataset_type {dataset_type} --valid_path \"{valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} --pin_memory {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss}"
     print(command)
     try:
         subprocess.run(command, shell=True)
