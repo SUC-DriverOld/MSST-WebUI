@@ -25,4 +25,4 @@ auraloss
 torchseg
 mir_eval
 onnxruntime
-gradio
+gradio==4.38
