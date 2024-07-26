@@ -1,0 +1,15 @@
+.vscode/
+__pycache__/
+configs/
+configs_template/
+data/
+ffmpeg/bin/*.exe
+workenv/
+results/
+input/
+
+pretrain/
+webui.exe
+
+!pretrain/*.json
+!.gitkeep
