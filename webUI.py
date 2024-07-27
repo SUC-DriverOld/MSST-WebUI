@@ -20,7 +20,7 @@ from tkinter import filedialog
 from pydub import AudioSegment
 
 
-PACKAGE_VERSION = "1.3"
+PACKAGE_VERSION = "1.3.2"
 PRESETS = "data/preset_data.json"
 MOSELS = "data/model_map.json"
 WEBUI_CONFIG = "data/webui_config.json"
@@ -29,6 +29,8 @@ AUGMENTATIONS_CONFIG = "configs_template/augmentations_template.yaml"
 MODEL_FOLDER = "pretrain/"
 CONFIG_TEMPLATE_FOLDER = "configs_template/"
 VERSION_CONFIG = "data/version.json"
+FFMPEG=".\\ffmpeg\\bin\\ffmpeg.exe"
+PYTHON=".\\workenv\\python.exe"
 
 def setup_webui():
     if os.path.exists("data"):
@@ -42,6 +44,7 @@ def setup_webui():
             version = version_config["version"]
             if version != PACKAGE_VERSION:
                 print(f"[INFO]检测到{version}旧版配置，正在更新至最新版{PACKAGE_VERSION}")
+                print(f"[INFO]将清空除UVR模型路径外的所有路径记录")
                 webui_config = load_configs(WEBUI_CONFIG)
                 webui_config_backup = load_configs("data_backup/webui_config.json")
                 webui_config_backup["settings"] = webui_config["settings"]
@@ -70,7 +73,7 @@ def setup_webui():
 
 
 def webui_restart():
-    os.execl("./workenv/python.exe", "./workenv/python.exe", *sys.argv)
+    os.execl(PYTHON, PYTHON, *sys.argv)
 
 
 def load_configs(config_path):
@@ -88,6 +91,11 @@ def save_configs(config, config_path):
     elif config_path.endswith('.yaml') or config_path.endswith('.yml'):
         with open(config_path, 'w') as f:
             yaml.dump(config.to_dict(), f)
+
+
+def print_command(command):
+    print("\033[34m" + command + "\033[0m")
+
 
 def load_augmentations_config():
     try:
@@ -201,7 +209,7 @@ def save_training_config(train_model_type, train_config_path, train_dataset_type
         return f"配置保存失败: {e}"
 
 
-def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
+def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
     config = load_configs(WEBUI_CONFIG)
     config['inference']['vr_select_model'] = vr_select_model
     config['inference']['vr_window_size'] = vr_window_size
@@ -212,7 +220,6 @@ def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_
     config['inference']['vr_secondary_stem_only'] = vr_secondary_stem_only
     config['inference']['vr_multiple_audio_input'] = vr_multiple_audio_input
     config['inference']['vr_store_dir'] = vr_store_dir
-    config['inference']['vr_sample_rate'] = vr_sample_rate
     config['inference']['vr_batch_size'] = vr_batch_size
     config['inference']['vr_normalization'] = vr_normalization
     config['inference']['vr_post_process_threshold'] = vr_post_process_threshold
@@ -400,27 +407,15 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
     extract_instrumental_option = "--extract_instrumental" if extract_instrumental else ""
     force_cpu_option = "--force_cpu" if force_cpu else ""
 
-    command = f".\\workenv\\python.exe inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} {extract_instrumental_option} {force_cpu_option}"
-    print(command)
-    process = subprocess.Popen(
-        command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-    output = ""
-    while True:
-        line = process.stdout.readline()
-        if not line:
-            break
-        output += line
-        print(line, end="")
-
-    stderr = process.communicate()[1]
-    if stderr:
-        print(stderr)
-    print(f"处理完成！分离后的音频文件已保存在{store_dir}中。")
-    return output if output else stderr
+    command = f"{PYTHON} inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} {extract_instrumental_option} {force_cpu_option}"
+    print_command(command)
+    try:
+        subprocess.run(command, shell=True)
+    except Exception as e:
+        raise gr.Error(f"处理失败: {e}")
 
 
-def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
+def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
     vr_multiple_audio_input = None
     if not os.path.isfile(vr_single_audio):
         return "请上传一个音频文件。"
@@ -430,11 +425,11 @@ def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_outpu
         return "请选择输出目录。"
     if not os.path.exists(vr_store_dir):
         os.makedirs(vr_store_dir)
-    save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
-    message = vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
+    save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
+    message = vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
     return message
 
-def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
+def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
     if not os.path.isdir(vr_multiple_audio_input):
         return "请选择输入文件夹。"
     if not vr_select_model:
@@ -443,11 +438,11 @@ def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output
         return "请选择输出目录。"
     if not os.path.exists(vr_store_dir):
         os.makedirs(vr_store_dir)
-    save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
-    message = vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
+    save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
+    message = vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
     return message
 
-def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
+def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
     config = load_configs(WEBUI_CONFIG)
     model_file_dir = config['settings']['uvr_model_dir']
     model_mapping = load_configs(VR_MODEL)
@@ -474,17 +469,21 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
         else:
             single_stem = ""
     
-    sample_rate = vr_sample_rate
+    sample_rate = 44100
+    vr_batch_size = int(vr_batch_size)
+    vr_aggression = int(vr_aggression)
     use_cpu = "--use_cpu" if vr_use_cpu else ""
     vr_enable_tta = "--vr_enable_tta" if vr_enable_tta else ""
     vr_high_end_process = "--vr_high_end_process" if vr_high_end_process else ""
     vr_enable_post_process = "--vr_enable_post_process" if vr_enable_post_process else ""
 
-    command = f".\\workenv\\python.exe uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} --sample_rate {sample_rate} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold}"
-
-    print(command)
-    subprocess.run(command, shell=True)
-    return f"处理完成，结果已保存至{output_dir}。"
+    command = f"{PYTHON} uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} --sample_rate {sample_rate} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold}"
+    print_command(command)
+    try:
+        subprocess.run(command, shell=True)
+        return f"处理完成，结果已保存至{output_dir}。"
+    except Exception as e:
+        return f"处理失败: {e}"
 
 
 def update_model_name(model_type):
@@ -585,7 +584,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
             input_to_use = tmp_store_dir
             tmp_store_dir = store_dir
         
-        print(f"Step {i+1}: Running inference using {model_name}")
+        print(f"\033[33m=====Step {i+1}: Running inference using {model_name}=====\033[0m")
 
         if model_list[model_name]["model_type"] == "MSST_Models":
             gpu_id = config['inference']['gpu_id'] if not force_cpu else "0"
@@ -604,7 +603,6 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
             vr_secondary_stem_only = True if stem == vr_model_config[model_name]["secondary_stem"] else False
             vr_audio_input = input_to_use
             vr_store_dir = tmp_store_dir
-            vr_sample_rate = config['inference']['vr_sample_rate']
             vr_batch_size = config['inference']['vr_batch_size']
             vr_normalization = config['inference']['vr_normalization']
             vr_post_process_threshold = config['inference']['vr_post_process_threshold']
@@ -614,7 +612,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
             vr_enable_post_process = config['inference']['vr_enable_post_process']
             vr_debug_mode = config['inference']['vr_debug_mode']
 
-            vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
+            vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
         i += 1
 
     if tmp_store_dir != store_dir:
@@ -644,7 +642,8 @@ def convert_audio(uploaded_files, ffmpeg_output_format, ffmpeg_output_folder):
         output_file = os.path.join(output_path, os.path.splitext(
             os.path.basename(uploaded_file_path))[0] + "." + ffmpeg_output_format)
 
-        command = f".\\ffmpeg\\bin\\ffmpeg.exe -i \"{uploaded_file_path}\" \"{output_file}\""
+        command = f"{FFMPEG} -i \"{uploaded_file_path}\" \"{output_file}\""
+        print_command(command)
         try:
             subprocess.run(command, shell=True, check=True)
             success_files.append(output_file)
@@ -724,8 +723,8 @@ def ensemble(files, ensemble_mode, weights, output_path):
 
         files_argument = " ".join(files)
         output_path = os.path.join(output_path, f"ensemble_{ensemble_mode}.wav")
-        command = f".\\workenv\\python.exe ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
-        print(command)
+        command = f"{PYTHON} ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
+        print_command(command)
         try:
             subprocess.run(command, shell = True)
             return f"处理完成，文件已保存为：{output_path}"
@@ -860,9 +859,9 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
     data_path = train_dataset_path
     dataset_type = train_dataset_type
     valid_path = train_valid_path
-    num_workers = train_num_workers
+    num_workers = int(train_num_workers)
     device_ids = train_device_ids
-    seed = train_seed
+    seed = int(train_seed)
     pin_memory = train_pin_memory
     use_multistft_loss = "--use_multistft_loss" if train_use_multistft_loss else ""
     use_mse_loss = "--use_mse_loss" if train_use_mse_loss else ""
@@ -891,8 +890,8 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
     else:
         return "模型保存路径不存在，请重新选择。"
 
-    command = f".\\workenv\\python.exe train.py --model_type {model_type} --config_path \"{config_path}\" {start_check_point} --results_path \"{results_path}\" --data_path \"{data_path}\" --dataset_type {dataset_type} --valid_path \"{valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} --pin_memory {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss}"
-    print(command)
+    command = f"{PYTHON} train.py --model_type {model_type} --config_path \"{config_path}\" {start_check_point} --results_path \"{results_path}\" --data_path \"{data_path}\" --dataset_type {dataset_type} --valid_path \"{valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} --pin_memory {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss}"
+    print_command(command)
     try:
         subprocess.run(command, shell=True)
         # 按道理这边会阻塞住，如果下面的return被执行，说明大概率是出错了（也有可能训练结束）
@@ -951,7 +950,7 @@ with gr.Blocks(
 
             with gr.Tabs():
                 with gr.TabItem(label="单个音频上传"):
-                    single_audio = gr.Audio(label="单个音频上传", type="filepath")
+                    single_audio = gr.File(label="单个音频上传", type="filepath")
                 with gr.TabItem(label="批量音频上传"):
                     with gr.Row():
                         multiple_audio_input = gr.Textbox(
@@ -1080,7 +1079,7 @@ with gr.Blocks(
                     )
             with gr.Tabs():
                 with gr.TabItem(label="单个音频上传"):
-                    vr_single_audio = gr.Audio(label="单个音频上传", type="filepath")
+                    vr_single_audio = gr.File(label="单个音频上传", type="filepath")
                 with gr.TabItem(label="批量音频上传"):
                     with gr.Row():
                         vr_multiple_audio_input = gr.Textbox(
@@ -1102,16 +1101,10 @@ with gr.Blocks(
                 vr_open_store_btn = gr.Button("打开文件夹", scale=1)
             with gr.Accordion("以下是一些高级设置，一般保持默认即可", open=False):
                 with gr.Row():
-                    vr_sample_rate = gr.Dropdown(
-                        label="Sample Rate：输出音频的采样率，可选的值有32000、44100、48000", 
-                        choices=["32000", "44100", "48000"], 
-                        value=webui_config['inference']['vr_sample_rate'] if webui_config['inference']['vr_sample_rate'] else "44100", 
-                        interactive=True
-                        )
                     vr_batch_size = gr.Number(
                         label="Batch Size：一次要处理的批次数，越大占用越多RAM，处理速度加快", 
                         minimum=1, 
-                        value=webui_config['inference']['vr_batch_size'] if webui_config['inference']['vr_batch_size'] else 4, 
+                        value=webui_config['inference']['vr_batch_size'] if webui_config['inference']['vr_batch_size'] else 2, 
                         interactive=True
                         )
                     vr_normalization = gr.Number(
@@ -1119,7 +1112,7 @@ with gr.Blocks(
                         minimum=0.0, 
                         maximum=1.0, 
                         step=0.01, 
-                        value=webui_config['inference']['vr_normalization'] if webui_config['inference']['vr_normalization'] else 0.9, 
+                        value=webui_config['inference']['vr_normalization'] if webui_config['inference']['vr_normalization'] else 1, 
                         interactive=True
                         )
                     vr_post_process_threshold = gr.Number(
@@ -1171,12 +1164,12 @@ with gr.Blocks(
             vr_open_store_btn.click(fn=open_folder, inputs=vr_store_dir)
             vr_start_single_inference.click(
                 fn=vr_inference_single,
-                inputs=[vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode],
+                inputs=[vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode],
                 outputs=vr_output_message
             )
             vr_start_multi_inference.click(
                 fn=vr_inference_multi,
-                inputs=[vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode],
+                inputs=[vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode],
                 outputs=vr_output_message
             )
 
@@ -1271,7 +1264,7 @@ with gr.Blocks(
                         **不支持**网易云音乐、QQ音乐等加密格式，如.ncm, .qmc等。<br>
                         """)
                     with gr.Row():
-                        inputs = gr.Files(label="上传音频文件")
+                        inputs = gr.Files(label="上传一个或多个音频文件")
                         with gr.Column():
                             ffmpeg_output_format = gr.Dropdown(
                                 label="选择或输入音频输出格式",
