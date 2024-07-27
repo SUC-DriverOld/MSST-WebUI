@@ -30,8 +30,7 @@ B站教程视频：https://www.bilibili.com/video/BV18m42137rm
    ```
 
 > [!NOTE]
-> 1. You may meet some problems when using UVR-Separate, they comes from dependances Librosa. This issue occurs in the line around 2000 lines in 'libsora/util/utils.py' with 'np.dtype(np.float).type'. You can manually specify it as 'float32' or 'float64' to resolve this issue.（Do not attempt to install an older version of NumPy to solve this problem, as older versions of NumPy do not support Python 3.10, and using a version of Python other than 3.10 may prevent other modules from being installed.）
-> 2. During install the requirements, you may meet conflict between huggingface-Hub and gradio. Just ignore it, it will not affect the use of the webUI.
+> You may meet some problems when using UVR-Separate, they comes from dependances Librosa. This issue occurs in the line around 2000 lines in `libsora/util/utils.py` with `np.dtype(np.float).type`. You can manually specify it as `float32` or `float64` to resolve this issue.（Do not attempt to install an older version of NumPy to solve this problem, as older versions of NumPy do not support Python 3.10, and using a version of Python other than 3.10 may prevent other modules from being installed.）
 
 3. Run the webui use the following command.
 
