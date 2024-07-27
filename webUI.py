@@ -18,7 +18,11 @@ from tqdm import tqdm
 from mir_eval.separation import bss_eval_sources
 from tkinter import filedialog
 from pydub import AudioSegment
+# 获取当前文件的目录路径
+current_file_directory = os.path.dirname(os.path.abspath(__file__))
 
+# 将当前工作目录更改为当前文件的目录路径
+os.chdir(current_file_directory)
 
 PACKAGE_VERSION = "1.3"
 PRESETS = "data/preset_data.json"
@@ -554,7 +558,7 @@ def delete_func(preset_name):
         return "预设不存在"
 
 
-def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
+def run_inference_flow(input_folder, store_dir, preset_name, force_cpu,extract_instrumental):
     preset_data = load_configs(PRESETS)
     if not preset_name in preset_data.keys():
         return f"预设'{preset_name}'不存在。"
@@ -575,23 +579,42 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
             return f"模型'{model_name}'不存在。"
 
     i = 0
+    model_preview=""
     for model_name in model_list.keys():
-        if i == 0:
-            input_to_use = input_folder
-        elif i < len(model_list.keys()) - 1 and i > 0:
-            if input_to_use != input_folder:
-                shutil.rmtree(input_to_use)
-            input_to_use = tmp_store_dir
-            tmp_store_dir = tempfile.mkdtemp()
-        elif i == len(model_list.keys()) - 1:
-            input_to_use = tmp_store_dir
-            tmp_store_dir = store_dir
+        #如果前一个模型是bsr且下一个模型不是bsr时：
+        if model_preview=="model_bs_roformer_ep_368_sdr_12.9628.ckpt" and model_name!="model_bs_roformer_ep_368_sdr_12.9628.ckpt":
+            #获取上一个模型temp音频文件夹路径下的所有文件，例如xxx_instrumental.wav,xxx_vocals.wav
+            filenames = os.listdir(tmp_store_dir)
+            for filename in filenames:
+                #当遍历到的文件名最后是_instrumental.wav时：
+                if len(filename) >= 17 and filename[-17:] == "_instrumental.wav":
+                    source_file_path = os.path.join(tmp_store_dir,filename)
+                    destination_file_path = os.path.join(store_dir,filename)
+                    # 剪切_instrumental.wav文件到最终文件夹
+                    shutil.copy(source_file_path, destination_file_path)
+                    os.remove(source_file_path)
+                    shutil.rmtree(input_to_use)
+                    input_to_use = tmp_store_dir
+                    tmp_store_dir = tempfile.mkdtemp()
+        #非前bsr，正常情况：
+        else:
+            if i == 0:
+                input_to_use = input_folder
+            elif i < len(model_list.keys()) - 1 and i > 0:
+                if input_to_use != input_folder:
+                    shutil.rmtree(input_to_use)
+                input_to_use = tmp_store_dir
+                tmp_store_dir = tempfile.mkdtemp()
+            elif i == len(model_list.keys()) - 1:
+                input_to_use = tmp_store_dir
+                tmp_store_dir = store_dir
         
         print(f"Step {i+1}: Running inference using {model_name}")
 
         if model_list[model_name]["model_type"] == "MSST_Models":
             gpu_id = config['inference']['gpu_id'] if not force_cpu else "0"
-            extract_instrumental = False
+            #extract_instrumental = True
+            #这里已经将extract_instrumental作为参数传进run_inference()
             run_inference(model_name, input_to_use, tmp_store_dir, extract_instrumental, gpu_id, force_cpu)
         elif model_list[model_name]["model_type"] == "UVR_VR_Models":
             vr_model_config = load_configs(VR_MODEL)
@@ -618,6 +641,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
 
             vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_sample_rate, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
         i += 1
+        model_preview=model_name
 
     if tmp_store_dir != store_dir:
         for file_name in os.listdir(tmp_store_dir):
@@ -1200,6 +1224,11 @@ with gr.Blocks(
                         value=webui_config['inference']['force_cpu'] if webui_config['inference']['force_cpu'] else False,
                         interactive=True
                     )
+                    extract_instrumental = gr.Checkbox(
+                        label="保留次级输出（对于Vocals-Instruments类模型，勾选此项会同时输出伴奏）",
+                        value=webui_config['inference']['extract_instrumental'] if webui_config['inference']['extract_instrumental'] else False,
+                        interactive=True
+                    )
 
                     with gr.Row():
                         input_folder_flow = gr.Textbox(
@@ -1248,7 +1277,7 @@ with gr.Blocks(
             inference_flow.click(
                 fn=run_inference_flow,
                 inputs=[input_folder_flow, store_dir_flow,
-                        preset_dropdown, force_cpu],
+                        preset_dropdown, force_cpu,extract_instrumental],
                 outputs=output_message_flow
             )
 
