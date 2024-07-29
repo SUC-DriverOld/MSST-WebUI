@@ -219,6 +219,42 @@ class VRSeparator(CommonSeparator):
             self.final_process(self.secondary_stem_output_path, self.secondary_source, self.secondary_stem_name)
             output_files.append(self.secondary_stem_output_path)
 
+        # Save and process the primary stem when save_another_stem is set to True
+        if self.save_another_stem and self.output_single_stem.lower() == self.secondary_stem_name.lower():
+            self.logger.debug(f"save_another_stem is set to True. Processing primary stem: {self.primary_stem_name}")
+            if not isinstance(self.primary_source, np.ndarray):
+                self.logger.debug(f"Preparing to convert spectrogram to waveform. Spec shape: {y_spec.shape}")
+
+                self.primary_source = self.spec_to_wav(y_spec).T
+                self.logger.debug("Converting primary source spectrogram to waveform.")
+                if not self.model_samplerate == 44100:
+                    self.primary_source = librosa.resample(self.primary_source.T, orig_sr=self.model_samplerate, target_sr=44100).T
+                    self.logger.debug("Resampling primary source to 44100Hz.")
+
+            self.primary_stem_output_path = os.path.join(f"{self.audio_file_base}_({self.primary_stem_name})_{self.model_name}.{self.output_format.lower()}")
+
+            self.logger.info(f"Saving {self.primary_stem_name} stem to {self.primary_stem_output_path}...")
+            self.final_process_another(self.primary_stem_output_path, self.primary_source, self.primary_stem_name)
+            output_files.append(self.primary_stem_output_path)
+
+        # Save and process the secondary stem when save_another_stem is set to True
+        if self.save_another_stem and self.output_single_stem.lower() == self.primary_stem_name.lower():
+            self.logger.debug(f"save_another_stem is set to True. Processing secondary stem: {self.secondary_stem_name}")
+            if not isinstance(self.secondary_source, np.ndarray):
+                self.logger.debug(f"Preparing to convert spectrogram to waveform. Spec shape: {v_spec.shape}")
+
+                self.secondary_source = self.spec_to_wav(v_spec).T
+                self.logger.debug("Converting secondary source spectrogram to waveform.")
+                if not self.model_samplerate == 44100:
+                    self.secondary_source = librosa.resample(self.secondary_source.T, orig_sr=self.model_samplerate, target_sr=44100).T
+                    self.logger.debug("Resampling secondary source to 44100Hz.")
+
+            self.secondary_stem_output_path = os.path.join(f"{self.audio_file_base}_({self.secondary_stem_name})_{self.model_name}.{self.output_format.lower()}")
+
+            self.logger.info(f"Saving {self.secondary_stem_name} stem to {self.secondary_stem_output_path}...")
+            self.final_process_another(self.secondary_stem_output_path, self.secondary_source, self.secondary_stem_name)
+            output_files.append(self.secondary_stem_output_path)
+
         # Not yet implemented from UVR features:
         # self.process_vocal_split_chain(secondary_sources)
         # self.logger.debug("Vocal split chain processed.")

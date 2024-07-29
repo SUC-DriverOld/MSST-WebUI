@@ -68,6 +68,7 @@ class CommonSeparator:
         # Output directory and format
         self.output_dir = config.get("output_dir")
         self.output_format = config.get("output_format")
+        self.extra_output_dir = config.get("extra_output_dir")
 
         # Functional options which are applicable to all architectures and the user may tweak to affect the output
         self.normalization_threshold = config.get("normalization_threshold")
@@ -75,6 +76,7 @@ class CommonSeparator:
         self.output_single_stem = config.get("output_single_stem")
         self.invert_using_spec = config.get("invert_using_spec")
         self.sample_rate = config.get("sample_rate")
+        self.save_another_stem = config.get("save_another_stem")
 
         # Model specific properties
         # self.primary_stem_name = self.model_data.get("primary_stem", "Vocals")
@@ -128,6 +130,13 @@ class CommonSeparator:
         """
         self.logger.debug(f"Finalizing {stem_name} stem processing and writing audio...")
         self.write_audio(stem_path, source)
+    
+    def final_process_another(self, stem_path, source, stem_name):
+        """
+        Finalizes the processing of another stem by writing the audio to a file and returning the processed source.
+        """
+        self.logger.debug(f"Finalizing another {stem_name} stem processing and writing audio...")
+        self.write_audio_another(stem_path, source)
 
         return {stem_name: source}
 
@@ -217,6 +226,7 @@ class CommonSeparator:
         Writes the separated audio source to a file.
         """
         self.logger.debug(f"Entering write_audio with stem_path: {stem_path}")
+        self.logger.debug(f"Output directory: {self.output_dir}")
 
         stem_source = spec_utils.normalize(wave=stem_source, max_peak=self.normalization_threshold)
 
@@ -229,6 +239,64 @@ class CommonSeparator:
         if self.output_dir:
             os.makedirs(self.output_dir, exist_ok=True)
             stem_path = os.path.join(self.output_dir, stem_path)
+
+        self.logger.debug(f"Audio data shape before processing: {stem_source.shape}")
+        self.logger.debug(f"Data type before conversion: {stem_source.dtype}")
+
+        # Ensure the audio data is in the correct format (e.g., int16)
+        if stem_source.dtype != np.int16:
+            stem_source = (stem_source * 32767).astype(np.int16)
+            self.logger.debug("Converted stem_source to int16.")
+
+        # Correctly interleave stereo channels
+        stem_source_interleaved = np.empty((2 * stem_source.shape[0],), dtype=np.int16)
+        stem_source_interleaved[0::2] = stem_source[:, 0]  # Left channel
+        stem_source_interleaved[1::2] = stem_source[:, 1]  # Right channel
+
+        self.logger.debug(f"Interleaved audio data shape: {stem_source_interleaved.shape}")
+
+        # Create a pydub AudioSegment
+        try:
+            audio_segment = AudioSegment(stem_source_interleaved.tobytes(), frame_rate=self.sample_rate, sample_width=stem_source.dtype.itemsize, channels=2)
+            self.logger.debug("Created AudioSegment successfully.")
+        except (IOError, ValueError) as e:
+            self.logger.error(f"Specific error creating AudioSegment: {e}")
+            return
+
+        # Determine file format based on the file extension
+        file_format = stem_path.lower().split(".")[-1]
+
+        # For m4a files, specify mp4 as the container format as the extension doesn't match the format name
+        if file_format == "m4a":
+            file_format = "mp4"
+        elif file_format == "mka":
+            file_format = "matroska"
+
+        # Export using the determined format
+        try:
+            audio_segment.export(stem_path, format=file_format)
+            self.logger.debug(f"Exported audio file successfully to {stem_path}")
+        except (IOError, ValueError) as e:
+            self.logger.error(f"Error exporting audio file: {e}")
+    
+    def write_audio_another(self, stem_path: str, stem_source):
+        """
+        Writes the another separated audio source to a file.
+        """
+        self.logger.debug(f"Entering write_audio with stem_path: {stem_path}")
+        self.logger.debug(f"Output directory: {self.extra_output_dir}")
+
+        stem_source = spec_utils.normalize(wave=stem_source, max_peak=self.normalization_threshold)
+
+        # Check if the numpy array is empty or contains very low values
+        if np.max(np.abs(stem_source)) < 1e-6:
+            self.logger.warning("Warning: stem_source array is near-silent or empty.")
+            return
+
+        # If extra_output_dir is specified, create it and join it with stem_path
+        if self.extra_output_dir:
+            os.makedirs(self.extra_output_dir, exist_ok=True)
+            stem_path = os.path.join(self.extra_output_dir, stem_path)
 
         self.logger.debug(f"Audio data shape before processing: {stem_source.shape}")
         self.logger.debug(f"Data type before conversion: {stem_source.dtype}")

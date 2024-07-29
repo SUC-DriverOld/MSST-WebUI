@@ -67,12 +67,14 @@ class Separator:
         log_formatter=None,
         model_file_dir="/tmp/audio-separator-models/",
         output_dir=None,
+        extra_output_dir=None,
         output_format="WAV",
         normalization_threshold=0.9,
         output_single_stem=None,
         invert_using_spec=False,
         sample_rate=44100,
         use_cpu=False,
+        save_another_stem=False,
         mdx_params={"hop_length": 1024, "segment_size": 256, "overlap": 0.25, "batch_size": 1, "enable_denoise": False},
         vr_params={"batch_size": 16, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
         demucs_params={"segment_size": "Default", "shifts": 2, "overlap": 0.25, "segments_enabled": True},
@@ -106,6 +108,12 @@ class Separator:
             self.logger.info("Output directory not specified. Using current working directory.")
 
         self.output_dir = output_dir
+
+        if extra_output_dir is None:
+            extra_output_dir = output_dir
+            self.logger.debug(f"Extra output directory not specified. Using output directory: {extra_output_dir} as extra output directory.")
+        
+        self.extra_output_dir = extra_output_dir
 
         # Create the model directory if it does not exist
         os.makedirs(self.model_file_dir, exist_ok=True)
@@ -142,6 +150,7 @@ class Separator:
         self.arch_specific_params = {"MDX": mdx_params, "VR": vr_params, "Demucs": demucs_params, "MDXC": mdxc_params}
 
         self.use_cpu = use_cpu
+        self.save_another_stem = save_another_stem
 
         self.torch_device = None
         self.torch_device_cpu = None
@@ -659,10 +668,12 @@ class Separator:
             "model_data": model_data,
             "output_format": self.output_format,
             "output_dir": self.output_dir,
+            "extra_output_dir": self.extra_output_dir,
             "normalization_threshold": self.normalization_threshold,
             "output_single_stem": self.output_single_stem,
             "invert_using_spec": self.invert_using_spec,
             "sample_rate": self.sample_rate,
+            "save_another_stem": self.save_another_stem,
         }
 
         # Instantiate the appropriate separator class depending on the model type
