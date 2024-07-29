@@ -99,21 +99,28 @@ class Separator:
         if log_level > logging.DEBUG:
             warnings.filterwarnings("ignore")
 
-        self.logger.info(f"Separator instantiating with output_dir: {output_dir}, output_format: {output_format}")
-
         self.model_file_dir = model_file_dir
+        
+        self.save_another_stem = save_another_stem
+        if output_single_stem is None and save_another_stem:
+            self.logger.warning("The save_another_stem option is only applicable when output_single_stem is set. Ignoring save_another_stem.")
+            self.save_another_stem = False
 
         if output_dir is None:
             output_dir = os.getcwd()
             self.logger.info("Output directory not specified. Using current working directory.")
 
         self.output_dir = output_dir
+        self.logger.info(f"Separator instantiating with output_dir: {output_dir}, output_format: {output_format}")
 
         if extra_output_dir is None:
             extra_output_dir = output_dir
-            self.logger.debug(f"Extra output directory not specified. Using output directory: {extra_output_dir} as extra output directory.")
+            if self.save_another_stem:
+                self.logger.info(f"Extra output directory not specified. Using output directory: {extra_output_dir} as extra output directory.")
         
         self.extra_output_dir = extra_output_dir
+        if self.save_another_stem:
+            self.logger.info(f"Separator instantiating with extra_output_dir: {extra_output_dir}")
 
         # Create the model directory if it does not exist
         os.makedirs(self.model_file_dir, exist_ok=True)
@@ -150,7 +157,6 @@ class Separator:
         self.arch_specific_params = {"MDX": mdx_params, "VR": vr_params, "Demucs": demucs_params, "MDXC": mdxc_params}
 
         self.use_cpu = use_cpu
-        self.save_another_stem = save_another_stem
 
         self.torch_device = None
         self.torch_device_cpu = None
@@ -185,16 +191,16 @@ class Separator:
         """
         os_name = platform.system()
         os_version = platform.version()
-        self.logger.info(f"Operating System: {os_name} {os_version}")
+        self.logger.debug(f"Operating System: {os_name} {os_version}")
 
         system_info = platform.uname()
-        self.logger.info(f"System: {system_info.system} Node: {system_info.node} Release: {system_info.release} Machine: {system_info.machine} Proc: {system_info.processor}")
+        self.logger.debug(f"System: {system_info.system} Node: {system_info.node} Release: {system_info.release} Machine: {system_info.machine} Proc: {system_info.processor}")
 
         python_version = platform.python_version()
-        self.logger.info(f"Python Version: {python_version}")
+        self.logger.debug(f"Python Version: {python_version}")
 
         pytorch_version = torch.__version__
-        self.logger.info(f"PyTorch Version: {pytorch_version}")
+        self.logger.debug(f"PyTorch Version: {pytorch_version}")
 
     def check_ffmpeg_installed(self):
         """
@@ -203,7 +209,7 @@ class Separator:
         try:
             ffmpeg_version_output = subprocess.check_output(["ffmpeg", "-version"], text=True)
             first_line = ffmpeg_version_output.splitlines()[0]
-            self.logger.info(f"FFmpeg installed: {first_line}")
+            self.logger.debug(f"FFmpeg installed: {first_line}")
         except FileNotFoundError:
             self.logger.error("FFmpeg is not installed. Please install FFmpeg to use this package.")
             # Raise an exception if this is being run by a user, as ffmpeg is required for pydub to write audio
@@ -220,11 +226,11 @@ class Separator:
         onnxruntime_cpu_package = self.get_package_distribution("onnxruntime")
 
         if onnxruntime_gpu_package is not None:
-            self.logger.info(f"ONNX Runtime GPU package installed with version: {onnxruntime_gpu_package.version}")
+            self.logger.debug(f"ONNX Runtime GPU package installed with version: {onnxruntime_gpu_package.version}")
         if onnxruntime_silicon_package is not None:
-            self.logger.info(f"ONNX Runtime Silicon package installed with version: {onnxruntime_silicon_package.version}")
+            self.logger.debug(f"ONNX Runtime Silicon package installed with version: {onnxruntime_silicon_package.version}")
         if onnxruntime_cpu_package is not None:
-            self.logger.info(f"ONNX Runtime CPU package installed with version: {onnxruntime_cpu_package.version}")
+            self.logger.debug(f"ONNX Runtime CPU package installed with version: {onnxruntime_cpu_package.version}")
 
     def setup_torch_device(self):
         """
@@ -254,10 +260,10 @@ class Separator:
         self.logger.info("CUDA is available in Torch, setting Torch device to CUDA")
         self.torch_device = torch.device("cuda")
         if "CUDAExecutionProvider" in ort_providers:
-            self.logger.info("ONNXruntime has CUDAExecutionProvider available, enabling acceleration")
+            self.logger.debug("ONNXruntime has CUDAExecutionProvider available, enabling acceleration")
             self.onnx_execution_provider = ["CUDAExecutionProvider"]
         else:
-            self.logger.warning("CUDAExecutionProvider not available in ONNXruntime, so acceleration will NOT be enabled")
+            self.logger.debug("CUDAExecutionProvider not available in ONNXruntime, so acceleration will NOT be enabled")
 
     def configure_mps(self, ort_providers):
         """
@@ -269,10 +275,10 @@ class Separator:
         self.torch_device = self.torch_device_mps
 
         if "CoreMLExecutionProvider" in ort_providers:
-            self.logger.info("ONNXruntime has CoreMLExecutionProvider available, enabling acceleration")
+            self.logger.debug("ONNXruntime has CoreMLExecutionProvider available, enabling acceleration")
             self.onnx_execution_provider = ["CoreMLExecutionProvider"]
         else:
-            self.logger.warning("CoreMLExecutionProvider not available in ONNXruntime, so acceleration will NOT be enabled")
+            self.logger.debug("CoreMLExecutionProvider not available in ONNXruntime, so acceleration will NOT be enabled")
 
     def get_package_distribution(self, package_name):
         """

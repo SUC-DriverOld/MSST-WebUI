@@ -226,7 +226,6 @@ class CommonSeparator:
         Writes the separated audio source to a file.
         """
         self.logger.debug(f"Entering write_audio with stem_path: {stem_path}")
-        self.logger.debug(f"Output directory: {self.output_dir}")
 
         stem_source = spec_utils.normalize(wave=stem_source, max_peak=self.normalization_threshold)
 
@@ -284,7 +283,6 @@ class CommonSeparator:
         Writes the another separated audio source to a file.
         """
         self.logger.debug(f"Entering write_audio with stem_path: {stem_path}")
-        self.logger.debug(f"Output directory: {self.extra_output_dir}")
 
         stem_source = spec_utils.normalize(wave=stem_source, max_peak=self.normalization_threshold)
 
