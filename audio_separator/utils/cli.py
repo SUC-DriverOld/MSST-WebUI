@@ -9,7 +9,7 @@ def inference(parser, args):
 
     logger = logging.getLogger(__name__)
     log_handler = logging.StreamHandler()
-    log_formatter = logging.Formatter(fmt="%(asctime)s.%(msecs)03d - %(levelname)s - %(module)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    log_formatter = logging.Formatter(fmt="%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s", datefmt="%H:%M:%S")
     log_handler.setFormatter(log_formatter)
     logger.addHandler(log_handler)
 
@@ -42,12 +42,14 @@ def inference(parser, args):
         log_level=log_level,
         model_file_dir=args.model_file_dir,
         output_dir=args.output_dir,
+        extra_output_dir=args.extra_output_dir,
         output_format=args.output_format,
         normalization_threshold=args.normalization,
         output_single_stem=args.single_stem,
         invert_using_spec=args.invert_spect,
         sample_rate=args.sample_rate,
         use_cpu=args.use_cpu,
+        save_another_stem=args.save_another_stem,
         mdx_params={
             "hop_length": args.mdx_hop_length,
             "segment_size": args.mdx_segment_size,

@@ -20,7 +20,7 @@ from tkinter import filedialog
 from pydub import AudioSegment
 
 
-PACKAGE_VERSION = "1.3.2"
+PACKAGE_VERSION = "1.4"
 PRESETS = "data/preset_data.json"
 MOSELS = "data/model_map.json"
 WEBUI_CONFIG = "data/webui_config.json"
@@ -391,23 +391,26 @@ def run_multi_inference(selected_model, input_folder, store_dir, extract_instrum
     return f"处理完成！分离完成的音频文件已保存在{store_dir}中。"
 
 
-def run_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, force_cpu):
+def run_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, force_cpu, extra_store_dir=None):
     if not bool(re.match(r'^(\d+)(?:\s(?!\1)\d+)*$', gpu_id)):
         raise gr.Error("GPU ID格式错误，请重新输入。")
     if selected_model == "":
         raise gr.Error("请选择模型。")
     if input_folder == "":
         raise gr.Error("请选择输入目录。")
-    if not os.path.exists(input_folder):
+    if not os.path.exists(store_dir):
         os.makedirs(store_dir)
+    if extra_store_dir and not os.path.exists(extra_store_dir):
+        os.makedirs(extra_store_dir)
 
     start_check_point, config_path, model_type, _ = get_msst_model(selected_model)
 
     gpu_ids = gpu_id if not force_cpu else "0"
     extract_instrumental_option = "--extract_instrumental" if extract_instrumental else ""
     force_cpu_option = "--force_cpu" if force_cpu else ""
+    extra_store_dir = f"--extra_store_dir \"{extra_store_dir}\"" if extra_store_dir else ""
 
-    command = f"{PYTHON} inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} {extract_instrumental_option} {force_cpu_option}"
+    command = f"{PYTHON} inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} {extract_instrumental_option} {force_cpu_option} {extra_store_dir}"
     print_command(command)
     try:
         subprocess.run(command, shell=True)
@@ -442,7 +445,7 @@ def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output
     message = vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
     return message
 
-def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
+def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode, save_another_stem=False, extra_output_dir=None):
     config = load_configs(WEBUI_CONFIG)
     model_file_dir = config['settings']['uvr_model_dir']
     model_mapping = load_configs(VR_MODEL)
@@ -476,8 +479,10 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
     vr_enable_tta = "--vr_enable_tta" if vr_enable_tta else ""
     vr_high_end_process = "--vr_high_end_process" if vr_high_end_process else ""
     vr_enable_post_process = "--vr_enable_post_process" if vr_enable_post_process else ""
+    save_another_stem = "--save_another_stem" if save_another_stem else ""
+    extra_output_dir = f"--extra_output_dir \"{extra_output_dir}\"" if extra_output_dir else ""
 
-    command = f"{PYTHON} uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} --sample_rate {sample_rate} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold}"
+    command = f"{PYTHON} uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} --sample_rate {sample_rate} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold} {save_another_stem} {extra_output_dir}"
     print_command(command)
     try:
         subprocess.run(command, shell=True)
@@ -502,19 +507,21 @@ def update_model_stem(model_type, model_name):
             if keys == model_name:
                 primary_stem = config[keys]["primary_stem"]
                 secondary_stem = config[keys]["secondary_stem"]
-                return gr.Dropdown(label="stem", choices=[primary_stem, secondary_stem], interactive=True)
+                return gr.Dropdown(label="输出音轨", choices=[primary_stem, secondary_stem], interactive=True)
     else:
-        return gr.Dropdown(label="stem", choices=["primary_stem"], value="primary_stem", interactive=False)
+        return gr.Dropdown(label="输出音轨", choices=["primary_stem"], value="primary_stem", interactive=False)
 
 
-def add_to_flow_func(model_type, model_name, stem, df):
+def add_to_flow_func(model_type, model_name, stem, secondary_output, df):
     if not model_type or not model_name:
         return df
     if model_type == "UVR_VR_Models" and not stem:
         return df
     if model_type == "UVR_VR_Models" and stem == "primary_stem":
         return df
-    new_data = pd.DataFrame({"model_type": [model_type], "model_name": [model_name], "stem": [stem]})
+    if not secondary_output or secondary_output == "":
+        secondary_output = "False"
+    new_data = pd.DataFrame({"model_type": [model_type], "model_name": [model_name], "stem": [stem], "secondary_output": [secondary_output]})
     if df["model_type"].iloc[0] == "" or df["model_name"].iloc[0] == "":
         return new_data
     updated_df = pd.concat([df, new_data], ignore_index=True)
@@ -522,6 +529,12 @@ def add_to_flow_func(model_type, model_name, stem, df):
 
 def save_flow_func(preset_name, df):
     preset_data = load_configs(PRESETS)
+    if preset_name is None or preset_name == "":
+        output_message = "请填写预设名称"
+        preset_name_delete = gr.Dropdown(label="请选择预设", choices=list(preset_data.keys()))
+        preset_name_select = gr.Dropdown(label="请选择预设", choices=list(preset_data.keys()))
+        return output_message, preset_name_delete, preset_name_select
+
     preset_dict = {row["model_name"]: row.dropna().to_dict() for _, row in df.iterrows()}
     preset_data[preset_name] = preset_dict
     save_configs(preset_data, PRESETS)
@@ -584,12 +597,21 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
             input_to_use = tmp_store_dir
             tmp_store_dir = store_dir
         
-        print(f"\033[33m=====Step {i+1}: Running inference using {model_name}=====\033[0m")
+        print(f"\033[33m=========Step {i+1}: Running inference using {model_name}=========\033[0m")
 
         if model_list[model_name]["model_type"] == "MSST_Models":
             gpu_id = config['inference']['gpu_id'] if not force_cpu else "0"
-            extract_instrumental = False
-            run_inference(model_name, input_to_use, tmp_store_dir, extract_instrumental, gpu_id, force_cpu)
+            try:
+                secondary_output = model_list[model_name]["secondary_output"]
+            except KeyError:
+                secondary_output = "False"
+            if secondary_output == "True":
+                extract_instrumental = True
+                extra_store_dir = os.path.join(store_dir, "secondary_output")
+            else:
+                extract_instrumental = False
+                extra_store_dir = None
+            run_inference(model_name, input_to_use, tmp_store_dir, extract_instrumental, gpu_id, force_cpu, extra_store_dir)
         elif model_list[model_name]["model_type"] == "UVR_VR_Models":
             vr_model_config = load_configs(VR_MODEL)
             stem = model_list[model_name]["stem"]
@@ -611,8 +633,18 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
             vr_high_end_process = config['inference']['vr_high_end_process']
             vr_enable_post_process = config['inference']['vr_enable_post_process']
             vr_debug_mode = config['inference']['vr_debug_mode']
+            try:
+                secondary_output = model_list[model_name]["secondary_output"]
+            except KeyError:
+                secondary_output = "False"
+            if secondary_output == "True":
+                save_another_stem = True
+                extra_output_dir = os.path.join(store_dir, "secondary_output")
+            else:
+                save_another_stem = False
+                extra_output_dir = None
 
-            vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
+            vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode, save_another_stem, extra_output_dir)
         i += 1
 
     if tmp_store_dir != store_dir:
@@ -943,7 +975,7 @@ with gr.Blocks(
                         interactive=True
                     )
                     extract_instrumental = gr.Checkbox(
-                        label="保留次级输出（对于Vocals-Instruments类模型，勾选此项会同时输出伴奏）",
+                        label="同时输出次级音轨",
                         value=webui_config['inference']['extract_instrumental'] if webui_config['inference']['extract_instrumental'] else False,
                         interactive=True
                     )
@@ -1218,16 +1250,18 @@ with gr.Blocks(
                 
                 with gr.TabItem(label="制作预设"):
                     gr.Markdown("""
-                        注意：MSST模型仅支持输出主要音轨，UVR模型支持自定义输出。<br>
+                        注意：MSST模型仅支持输出主要音轨，UVR模型支持自定义主要音轨输出。<br>
+                        同时输出次级音轨：选择True将同时输出该次分离得到的次级音轨，**此音轨将直接保存至输出目录，不会经过后续流程处理**<br>
                         """)
                     preset_name_input = gr.Textbox(label="预设名称", placeholder="请输入预设名称", interactive=True)
                     with gr.Row():
-                        model_type = gr.Dropdown(label="model_type", choices=["MSST_Models", "UVR_VR_Models"], interactive=True)
-                        model_name = gr.Dropdown(label="model_name", choices=["请先选择模型类型"], interactive=True)
-                        stem = gr.Dropdown(label="stem", choices=["请先选择模型"], interactive=True)
+                        model_type = gr.Dropdown(label="选择模型类型", choices=["MSST_Models", "UVR_VR_Models"], interactive=True)
+                        model_name = gr.Dropdown(label="选择模型", choices=["请先选择模型类型"], interactive=True)
+                        stem = gr.Dropdown(label="输出音轨", choices=["请先选择模型"], interactive=True)
+                        secondary_output = gr.Dropdown(label="同时输出次级音轨", choices=["True", "False"], value="False", interactive=True)
                     add_to_flow = gr.Button("添加至流程")
                     gr.Markdown("""预设流程""")
-                    preset_flow = gr.Dataframe(pd.DataFrame({"model_type": [""], "model_name": [""], "stem": [""]}), interactive=False, label=None)
+                    preset_flow = gr.Dataframe(pd.DataFrame({"model_type": [""], "model_name": [""], "stem": [""], "secondary_output": [""]}), interactive=False, label=None)
                     reset_flow = gr.Button("重新输入")
                     save_flow = gr.Button("保存上述预设流程", variant="primary")
                     gr.Markdown("""删除预设""")
@@ -1238,8 +1272,7 @@ with gr.Blocks(
 
             inference_flow.click(
                 fn=run_inference_flow,
-                inputs=[input_folder_flow, store_dir_flow,
-                        preset_dropdown, force_cpu],
+                inputs=[input_folder_flow, store_dir_flow, preset_dropdown, force_cpu],
                 outputs=output_message_flow
             )
 
@@ -1250,7 +1283,7 @@ with gr.Blocks(
 
             model_type.change(update_model_name, inputs=model_type, outputs=model_name)
             model_name.change(update_model_stem, inputs=[model_type, model_name], outputs=stem)
-            add_to_flow.click(add_to_flow_func, [model_type, model_name, stem, preset_flow], preset_flow)
+            add_to_flow.click(add_to_flow_func, [model_type, model_name, stem, secondary_output, preset_flow], preset_flow)
             save_flow.click(save_flow_func, [preset_name_input, preset_flow], [output_message_make, preset_name_delete, preset_dropdown])
             reset_flow.click(reset_flow_func, [], preset_flow)
             delete_button.click(delete_func, [preset_name_delete], [output_message_make, preset_name_delete, preset_dropdown])

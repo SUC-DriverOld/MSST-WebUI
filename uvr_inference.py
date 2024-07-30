@@ -28,17 +28,20 @@ if __name__ == "__main__":
     output_format_help = "output format for separated files, any common format (default: %(default)s). Example: --output_format=MP3"
     output_dir_help = "directory to write output files (default: <current dir>). Example: --output_dir=/app/separated"
     model_file_dir_help = "model files directory (default: %(default)s). Example: --model_file_dir=/app/models"
+    extra_output_dir_help = "extra output directory for saving another stem. If not provided, output_dir will be used. Example: --extra_output_dir=/app/extra_output"
 
     io_params = parser.add_argument_group("Separation I/O Params")
     io_params.add_argument("-m", "--model_filename", default="model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt", help=model_filename_help)
     io_params.add_argument("--output_format", default="FLAC", help=output_format_help)
     io_params.add_argument("--output_dir", default=None, help=output_dir_help)
     io_params.add_argument("--model_file_dir", default="/tmp/audio-separator-models/", help=model_file_dir_help)
+    io_params.add_argument("--extra_output_dir", default=None, help=extra_output_dir_help)
 
     invert_spect_help = "invert secondary stem using spectogram (default: %(default)s). Example: --invert_spect"
     normalization_help = "max peak amplitude to normalize input and output audio to (default: %(default)s). Example: --normalization=0.7"
     single_stem_help = "output only single stem, e.g. Instrumental, Vocals, Drums, Bass, Guitar, Piano, Other. Example: --single_stem=Instrumental"
     sample_rate_help = "modify the sample rate of the output audio (default: %(default)s). Example: --sample_rate=44100"
+    save_another_stem_help = "save another stem when using flow inference (default: %(default)s). Example: --save_another_stem"
 
     common_params = parser.add_argument_group("Common Separation Parameters")
     common_params.add_argument("--invert_spect", action="store_true", help=invert_spect_help)
@@ -46,6 +49,7 @@ if __name__ == "__main__":
     common_params.add_argument("--single_stem", default=None, help=single_stem_help)
     common_params.add_argument("--sample_rate", type=int, default=44100, help=sample_rate_help)
     common_params.add_argument("--use_cpu", action="store_true", help="use CPU instead of GPU for inference")
+    common_params.add_argument("--save_another_stem", action="store_true", help=save_another_stem_help)
 
     mdx_segment_size_help = "larger consumes more resources, but may give better results (default: %(default)s). Example: --mdx_segment_size=256"
     mdx_overlap_help = "amount of overlap between prediction windows, 0.001-0.999. higher is better but slower (default: %(default)s). Example: --mdx_overlap=0.25"

@@ -13,26 +13,24 @@ import numpy as np
 import soundfile as sf
 import torch.nn as nn
 
-current_file_path = os.path.abspath(__file__)
-
-project_root_path = os.path.dirname(current_file_path)
-
-if project_root_path not in sys.path:
-    sys.path.insert(0, project_root_path)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
 
 from utils import demix_track, demix_track_demucs, get_model_from_config
-
+import logging
 import warnings
 
-
-# warnings.filterwarnings("ignore")
-
+warnings.filterwarnings("ignore", category = UserWarning)
+log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"
+date_format = "%H:%M:%S"
+logging.basicConfig(level = logging.INFO, format = log_format, datefmt = date_format)
+logger = logging.getLogger(__name__)
 
 def run_folder(model, args, config, device, verbose = False):
     start_time = time.time()
     model.eval()
     all_mixtures_path = glob.glob(args.input_folder + '/*.*')
-    print('Total files found: {}'.format(len(all_mixtures_path)))
+    logger.info('Total files found: {}'.format(len(all_mixtures_path)))
 
     instruments = config.training.instruments
     if config.training.target_instrument is not None:
@@ -40,9 +38,15 @@ def run_folder(model, args, config, device, verbose = False):
 
     if not os.path.isdir(args.store_dir):
         os.mkdir(args.store_dir)
+    extra_store_dir = args.extra_store_dir
+    if not os.path.isdir(extra_store_dir):
+        extra_store_dir = args.store_dir
 
     if not verbose:
         all_mixtures_path = tqdm(all_mixtures_path)
+
+    if 'vocals' not in instruments and args.extract_instrumental and len(config.training.instruments) != 2:
+        logger.warning('Training instruments > 2, so secondary stem extraction is not possible')
 
     for path in all_mixtures_path:
         if not verbose:
@@ -52,8 +56,8 @@ def run_folder(model, args, config, device, verbose = False):
             mix, sr = librosa.load(path, sr = 44100, mono = False)
             mix = mix.T
         except Exception as e:
-            print('Can read track: {}'.format(path))
-            print('Error message: {}'.format(str(e)))
+            logger.warning('Can read track: {}'.format(path))
+            logger.warning('Error message: {}'.format(str(e)))
             continue
 
         # Convert mono to stereo if needed
@@ -67,14 +71,18 @@ def run_folder(model, args, config, device, verbose = False):
             res = demix_track(config, model, mixture, device)
         for instr in instruments:
             sf.write("{}/{}_{}.wav".format(args.store_dir, os.path.basename(path)[:-4], instr), res[instr].T, sr,
-                     subtype = 'FLOAT')
+            subtype = 'FLOAT')
 
         if 'vocals' in instruments and args.extract_instrumental:
-            instrum_file_name = "{}/{}_{}.wav".format(args.store_dir, os.path.basename(path)[:-4], 'instrumental')
+            instrum_file_name = "{}/{}_{}.wav".format(extra_store_dir, os.path.basename(path)[:-4], 'instrumental')
             sf.write(instrum_file_name, mix - res['vocals'].T, sr, subtype = 'FLOAT')
+        if 'vocals' not in instruments and args.extract_instrumental and config.training.target_instrument is not None:
+            instrum_file_name = "{}/{}_{}.wav".format(extra_store_dir, os.path.basename(path)[:-4], 'other')
+            sf.write(instrum_file_name, mix - res[config.training.target_instrument].T, sr, subtype = 'FLOAT')
 
-    time.sleep(1)
-    print("Elapsed time: {:.2f} sec".format(time.time() - start_time))
+    time.sleep(0.5)
+    logger.info("Elapsed time: {:.2f} sec".format(time.time() - start_time))
+    logger.info('Results are saved to: {}'.format(args.store_dir))
 
 
 def proc_folder(args):
@@ -88,6 +96,7 @@ def proc_folder(args):
     parser.add_argument("--device_ids", nargs = '+', type = int, default = 0, help = 'list of gpu ids')
     parser.add_argument("--extract_instrumental", action = 'store_true',
                         help = "invert vocals to get instrumental if provided")
+    parser.add_argument("--extra_store_dir", default = "", type = str, help = "path to store extracted instrumental. If not provided, store_dir will be used")
     parser.add_argument("--force_cpu", action = 'store_true', help = "Force the use of CPU even if CUDA is available")
     if args is None:
         args = parser.parse_args()
@@ -100,7 +109,7 @@ def proc_folder(args):
 
     model, config = get_model_from_config(args.model_type, args.config_path)
     if args.start_check_point != '':
-        print('Start from checkpoint: {}'.format(args.start_check_point))
+        logger.info('Start from checkpoint: {}'.format(args.start_check_point))
         if use_cuda:
             state_dict = torch.load(args.start_check_point)
         else:
@@ -110,22 +119,7 @@ def proc_folder(args):
             if 'state' in state_dict:
                 state_dict = state_dict['state']
         model.load_state_dict(state_dict)
-    print("Instruments: {}".format(config.training.instruments))
-
-    # if torch.cuda.is_available():
-    #     device_ids = args.device_ids
-    #     if type(device_ids) == int:
-    #         device = torch.device(f'cuda:{device_ids}')
-    #         model = model.to(device)
-    #     else:
-    #         device = torch.device(f'cuda:{device_ids[0]}')
-    #         model = nn.DataParallel(model, device_ids = device_ids).to(device)
-    # else:
-    #     device = 'cpu'
-    #     print('CUDA is not avilable. Run inference on CPU. It will be very slow...')
-    #     model = model.to(device)
-    #
-    # run_folder(model, args, config, device, verbose = False)
+    logger.info('Stems: {}'.format(config.training.instruments))
 
     if use_cuda:
         device_ids = args.device_ids
@@ -135,9 +129,11 @@ def proc_folder(args):
         else:
             device = torch.device(f'cuda:{device_ids[0]}')
             model = nn.DataParallel(model, device_ids = device_ids).to(device)
+        logger.info('Using CUDA with device_ids: {}'.format(device_ids))
     else:
         device = 'cpu'
-        print('Using CPU. If CUDA is available, use --force_cpu to disable it.')
+        logger.info('Using CPU. It will be very slow!')
+        logger.info('If CUDA is available, use --force_cpu to disable it.')
         model = model.to(device)
 
     run_folder(model, args, config, device, verbose = False)
