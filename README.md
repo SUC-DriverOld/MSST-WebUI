@@ -30,9 +30,10 @@ B站教程视频：https://www.bilibili.com/video/BV18m42137rm
    ```
 
 > [!NOTE]
-> You may meet some problems when using UVR-Separate, they comes from dependances Librosa. This issue occurs in the line around 2000 lines in `libsora/util/utils.py` with `np.dtype(np.float).type`. You can manually specify it as `float32` or `float64` to resolve this issue.（Do not attempt to install an older version of NumPy to solve this problem, as older versions of NumPy do not support Python 3.10, and using a version of Python other than 3.10 may prevent other modules from being installed.）
+> 1. You may meet some problems when using UVR-Separate, they comes from dependances Librosa. This issue occurs in the line around 2000 lines in `libsora/util/utils.py` with `np.dtype(np.float).type`. You can manually specify it as `float32` or `float64` to resolve this issue.（Do not attempt to install an older version of NumPy to solve this problem, as older versions of NumPy do not support Python 3.10, and using a version of Python other than 3.10 may prevent other modules from being installed.）
+> 2. We use `gradio==4.38.1` to run the webUI, it may have conflict when installing requirements (Actually you can ignore this warning, it will not affect the running of the webUI). You can change the version of `gradio` to `4.8.0` to solve this problem, but it may couse some bugs.
 
-3. Run the webui use the following command.
+1. Run the webui use the following command.
 
    ```bash
    python webUI.py
@@ -45,26 +46,20 @@ B站教程视频：https://www.bilibili.com/video/BV18m42137rm
 Use `Inference.py`
 
 ```bash
-usage: inference.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--input_folder INPUT_FOLDER] [--store_dir STORE_DIR]
-                    [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [--extract_instrumental] [--force_cpu]
+usage: inference.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--input_folder INPUT_FOLDER]
+                    [--store_dir STORE_DIR] [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [--extract_instrumental] [--extra_store_dir EXTRA_STORE_DIR] [--force_cpu]
 
 options:
-  -h, --help            show this help message and exit
-  --model_type MODEL_TYPE
-                        One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit
-  --config_path CONFIG_PATH
-                        path to config file
-  --start_check_point START_CHECK_POINT
-                        Initial checkpoint to valid weights
-  --input_folder INPUT_FOLDER
-                        folder with mixtures to process
-  --store_dir STORE_DIR
-                        path to store results as wav file
-  --device_ids DEVICE_IDS [DEVICE_IDS ...]
-                        list of gpu ids
-  --extract_instrumental
-                        invert vocals to get instrumental if provided
-  --force_cpu           Force the use of CPU even if CUDA is available
+  -h, --help                                  show this help message and exit
+  --model_type MODEL_TYPE                     One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit
+  --config_path CONFIG_PATH                   path to config file
+  --start_check_point START_CHECK_POINT       Initial checkpoint to valid weights
+  --input_folder INPUT_FOLDER                 folder with mixtures to process
+  --store_dir STORE_DIR                       path to store results as wav file
+  --device_ids DEVICE_IDS [DEVICE_IDS ...]    list of gpu ids
+  --extract_instrumental                      invert vocals to get instrumental if provided
+  --extra_store_dir EXTRA_STORE_DIR           path to store extracted instrumental. If not provided, store_dir will be used
+  --force_cpu                                 Force the use of CPU even if CUDA is available
 ```
 
 ### UVR Inference
@@ -78,8 +73,8 @@ Use `uvr_inference.py`
 
 ```bash
 usage: uvr_inference.py [-h] [-d] [-e] [-l] [--log_level LOG_LEVEL] [-m MODEL_FILENAME] 
-                        [--output_format OUTPUT_FORMAT] [--output_dir OUTPUT_DIR] [--model_file_dir MODEL_FILE_DIR] 
-                        [--invert_spect] [--normalization NORMALIZATION] [--single_stem SINGLE_STEM] [--sample_rate SAMPLE_RATE] [--use_cpu]
+                        [--output_format OUTPUT_FORMAT] [--output_dir OUTPUT_DIR] [--model_file_dir MODEL_FILE_DIR] [--extra_output_dir EXTRA_OUTPUT_DIR]
+                        [--invert_spect] [--normalization NORMALIZATION] [--single_stem SINGLE_STEM] [--sample_rate SAMPLE_RATE] [--use_cpu] [--save_another_stem]
                         [--vr_batch_size VR_BATCH_SIZE] [--vr_window_size VR_WINDOW_SIZE] [--vr_aggression VR_AGGRESSION] [--vr_enable_tta] [--vr_high_end_process] [--vr_enable_post_process]
                         [--vr_post_process_threshold VR_POST_PROCESS_THRESHOLD] 
                         [audio_file]
@@ -103,6 +98,7 @@ Separation I/O Params:
   --output_format OUTPUT_FORMAT                          output format for separated files, any common format (default: FLAC). Example: --output_format=MP3
   --output_dir OUTPUT_DIR                                directory to write output files (default: <current dir>). Example: --output_dir=/app/separated
   --model_file_dir MODEL_FILE_DIR                        model files directory (default: /tmp/audio-separator-models/). Example: --model_file_dir=/app/models
+  --extra_output_dir EXTRA_OUTPUT_DIR                    extra output directory for saving another stem. If not provided, output_dir will be used. Example: --extra_output_dir=/app/extra_output
 
 Common Separation Parameters:
   --invert_spect                                         invert secondary stem using spectogram (default: False). Example: --invert_spect
@@ -110,6 +106,7 @@ Common Separation Parameters:
   --single_stem SINGLE_STEM                              output only single stem, e.g. Instrumental, Vocals, Drums, Bass, Guitar, Piano, Other. Example: --single_stem=Instrumental
   --sample_rate SAMPLE_RATE                              modify the sample rate of the output audio (default: 44100). Example: --sample_rate=44100
   --use_cpu                                              use CPU instead of GPU for inference
+  --save_another_stem                                    save another stem when using flow inference (default: False). Example: --save_another_stem
 
 VR Architecture Parameters:
   --vr_batch_size VR_BATCH_SIZE                          number of batches to process at a time. higher = more RAM, slightly faster processing (default: 4). Example: --vr_batch_size=16        
@@ -131,31 +128,21 @@ usage: train.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--st
                 [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [--use_multistft_loss] [--use_mse_loss] [--use_l1_loss]
 
 options:
-  -h, --help            show this help message and exit
-  --model_type MODEL_TYPE
-                        One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit
-  --config_path CONFIG_PATH
-                        path to config file
-  --start_check_point START_CHECK_POINT
-                        Initial checkpoint to start training
-  --results_path RESULTS_PATH
-                        path to folder where results will be stored (weights, metadata)
-  --data_path DATA_PATH [DATA_PATH ...]
-                        Dataset data paths. You can provide several folders.
-  --dataset_type DATASET_TYPE
-                        Dataset type. Must be one of: 1, 2, 3 or 4. Details here: https://github.com/ZFTurbo/Music-Source-Separation-Training/blob/main/docs/dataset_types.md
-  --valid_path VALID_PATH [VALID_PATH ...]
-                        validation data paths. You can provide several folders.
-  --num_workers NUM_WORKERS
-                        dataloader num_workers
-  --pin_memory PIN_MEMORY
-                        dataloader pin_memory
-  --seed SEED           random seed
-  --device_ids DEVICE_IDS [DEVICE_IDS ...]
-                        list of gpu ids
-  --use_multistft_loss  Use MultiSTFT Loss (from auraloss package)
-  --use_mse_loss        Use default MSE loss
-  --use_l1_loss         Use L1 loss
+  -h, --help                                    show this help message and exit
+  --model_type MODEL_TYPE                       One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit
+  --config_path CONFIG_PATH                     path to config file
+  --start_check_point START_CHECK_POINT         Initial checkpoint to start training
+  --results_path RESULTS_PATH                   path to folder where results will be stored (weights, metadata)
+  --data_path DATA_PATH [DATA_PATH ...]         Dataset data paths. You can provide several folders.
+  --dataset_type DATASET_TYPE                   Dataset type. Must be one of: 1, 2, 3 or 4. Details here: https://github.com/ZFTurbo/Music-Source-Separation-Training/blob/main/docs/dataset_types.md
+  --valid_path VALID_PATH [VALID_PATH ...]      validation data paths. You can provide several folders.
+  --num_workers NUM_WORKERS                     dataloader num_workers
+  --pin_memory PIN_MEMORY                       dataloader pin_memory
+  --seed SEED                                   random seed
+  --device_ids DEVICE_IDS [DEVICE_IDS ...]      list of gpu ids
+  --use_multistft_loss                          Use MultiSTFT Loss (from auraloss package)
+  --use_mse_loss                                Use default MSE loss
+  --use_l1_loss                                 Use L1 loss
 ```
 
 ### Thanks

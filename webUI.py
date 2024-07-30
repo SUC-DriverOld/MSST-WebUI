@@ -1251,7 +1251,7 @@ with gr.Blocks(
                 with gr.TabItem(label="制作预设"):
                     gr.Markdown("""
                         注意：MSST模型仅支持输出主要音轨，UVR模型支持自定义主要音轨输出。<br>
-                        同时输出次级音轨：选择True将同时输出该次分离得到的次级音轨，**此音轨将直接保存至输出目录，不会经过后续流程处理**<br>
+                        同时输出次级音轨：选择True将同时输出该次分离得到的次级音轨，**此音轨将直接保存至**输出目录下的secondary_output文件夹，**不会经过后续流程处理**<br>
                         """)
                     preset_name_input = gr.Textbox(label="预设名称", placeholder="请输入预设名称", interactive=True)
                     with gr.Row():
