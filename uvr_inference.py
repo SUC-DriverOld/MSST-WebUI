@@ -28,7 +28,7 @@ if __name__ == "__main__":
     output_format_help = "output format for separated files, any common format (default: %(default)s). Example: --output_format=MP3"
     output_dir_help = "directory to write output files (default: <current dir>). Example: --output_dir=/app/separated"
     model_file_dir_help = "model files directory (default: %(default)s). Example: --model_file_dir=/app/models"
-    extra_output_dir_help = "extra output directory for saving another stem (default: %(default)s). Example: --extra_output_dir=/app/extra_output"
+    extra_output_dir_help = "extra output directory for saving another stem. If not provided, output_dir will be used. Example: --extra_output_dir=/app/extra_output"
 
     io_params = parser.add_argument_group("Separation I/O Params")
     io_params.add_argument("-m", "--model_filename", default="model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt", help=model_filename_help)
