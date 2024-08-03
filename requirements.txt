@@ -25,4 +25,5 @@ auraloss
 torchseg
 mir_eval
 onnxruntime
+bitsandbytes
 gradio==4.38.1

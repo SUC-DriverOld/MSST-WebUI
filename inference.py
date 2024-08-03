@@ -54,7 +54,6 @@ def run_folder(model, args, config, device, verbose = False):
         try:
             # mix, sr = sf.read(path)
             mix, sr = librosa.load(path, sr = 44100, mono = False)
-            mix = mix.T
         except Exception as e:
             logger.warning('Can read track: {}'.format(path))
             logger.warning('Error message: {}'.format(str(e)))
@@ -62,23 +61,42 @@ def run_folder(model, args, config, device, verbose = False):
 
         # Convert mono to stereo if needed
         if len(mix.shape) == 1:
-            mix = np.stack([mix, mix], axis = -1)
+            mix = np.stack([mix, mix], axis=0)
 
-        mixture = torch.tensor(mix.T, dtype = torch.float32)
+        mix_orig = mix.copy()
+        if 'normalize' in config.inference:
+            if config.inference['normalize'] is True:
+                mono = mix.mean(0)
+                mean = mono.mean()
+                std = mono.std()
+                mix = (mix - mean) / std
+
+        mixture = torch.tensor(mix, dtype=torch.float32)
         if args.model_type == 'htdemucs':
             res = demix_track_demucs(config, model, mixture, device)
         else:
             res = demix_track(config, model, mixture, device)
         for instr in instruments:
-            sf.write("{}/{}_{}.wav".format(args.store_dir, os.path.basename(path)[:-4], instr), res[instr].T, sr,
-            subtype = 'FLOAT')
+            estimates = res[instr].T
+            if 'normalize' in config.inference:
+                if config.inference['normalize'] is True:
+                    estimates = estimates * std + mean
+            sf.write("{}/{}_{}.wav".format(args.store_dir, os.path.basename(path)[:-4], instr), estimates, sr, subtype='FLOAT')
 
         if 'vocals' in instruments and args.extract_instrumental:
             instrum_file_name = "{}/{}_{}.wav".format(extra_store_dir, os.path.basename(path)[:-4], 'instrumental')
-            sf.write(instrum_file_name, mix - res['vocals'].T, sr, subtype = 'FLOAT')
+            estimates = res['vocals'].T
+            if 'normalize' in config.inference:
+                if config.inference['normalize'] is True:
+                    estimates = estimates * std + mean
+            sf.write(instrum_file_name, mix_orig.T - estimates, sr, subtype='FLOAT')
         if 'vocals' not in instruments and args.extract_instrumental and config.training.target_instrument is not None:
             instrum_file_name = "{}/{}_{}.wav".format(extra_store_dir, os.path.basename(path)[:-4], 'other')
-            sf.write(instrum_file_name, mix - res[config.training.target_instrument].T, sr, subtype = 'FLOAT')
+            estimates = res[config.training.target_instrument].T
+            if 'normalize' in config.inference:
+                if config.inference['normalize'] is True:
+                    estimates = estimates * std + mean
+            sf.write(instrum_file_name, mix_orig.T - estimates, sr, subtype='FLOAT')
 
     time.sleep(0.5)
     logger.info("Elapsed time: {:.2f} sec".format(time.time() - start_time))

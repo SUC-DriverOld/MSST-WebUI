@@ -13,17 +13,17 @@ model:
   audio_channels: 2
   dims:
     - 4
-    - 32
     - 64
     - 128
+    - 256
   nfft: 4096
   hop_size: 1024
   win_size: 4096
   normalized: True
   band_SR:
-    - 0.175
-    - 0.392
-    - 0.433
+    - 0.225
+    - 0.372
+    - 0.403
   band_stride:
     - 1
     - 4
@@ -42,7 +42,7 @@ model:
   expand: 1
 
 training:
-  batch_size: 10
+  batch_size: 6
   gradient_accumulation_steps: 1
   grad_clip: 0
   instruments:
@@ -80,3 +80,4 @@ inference:
   batch_size: 8
   dim_t: 256
   num_overlap: 4
+  normalize: false

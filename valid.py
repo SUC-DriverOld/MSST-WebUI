@@ -46,11 +46,26 @@ def proc_list_of_files(
 
     for path in mixture_paths:
         mix, sr = sf.read(path)
+        mix_orig = mix.copy()
+
+        # Fix for mono
+        if len(mix.shape) == 1:
+            mix = np.expand_dims(mix, axis=-1)
+
+        mix = mix.T # (channels, waveform)
         folder = os.path.dirname(path)
         folder_name = os.path.abspath(folder)
         if verbose:
             print('Song: {}'.format(folder_name))
-        mixture = torch.tensor(mix.T, dtype=torch.float32)
+
+        if 'normalize' in config.inference:
+            if config.inference['normalize'] is True:
+                mono = mix.mean(0)
+                mean = mono.mean()
+                std = mono.std()
+                mix = (mix - mean) / std
+
+        mixture = torch.tensor(mix, dtype=torch.float32)
         if args.model_type == 'htdemucs':
             res = demix_track_demucs(config, model, mixture, device)
         else:
@@ -60,20 +75,31 @@ def proc_list_of_files(
             for instr in instruments:
                 if instr != 'other' or config.training.other_fix is False:
                     try:
-                        track, sr1 = sf.read(folder + '/{}.wav'.format(instr))
+                        track, sr1 = sf.read(folder + '/{}.{}'.format(instr, args.extension))
+
+                        # Fix for mono
+                        if len(track.shape) == 1:
+                            track = np.expand_dims(track, axis=-1)
+
                     except Exception as e:
-                        # print('No data for stem: {}. Skip!'.format(instr))
+                        print('No data for stem: {}. Skip!'.format(instr))
                         continue
                 else:
                     # other is actually instrumental
-                    track, sr1 = sf.read(folder + '/{}.wav'.format('vocals'))
-                    track = mix - track
+                    track, sr1 = sf.read(folder + '/{}.{}'.format('vocals', args.extension))
+                    track = mix_orig - track
+
+                estimates = res[instr].T
+                # print(estimates.shape)
+                if 'normalize' in config.inference:
+                    if config.inference['normalize'] is True:
+                        estimates = estimates * std + mean
 
                 if args.store_dir != "":
-                    sf.write("{}/{}_{}.wav".format(args.store_dir, os.path.basename(folder), instr), res[instr].T, sr,
+                    sf.write("{}/{}_{}.wav".format(args.store_dir, os.path.basename(folder), instr), estimates, sr,
                              subtype='FLOAT')
                 references = np.expand_dims(track, axis=0)
-                estimates = np.expand_dims(res[instr].T, axis=0)
+                estimates = np.expand_dims(estimates, axis=0)
                 sdr_val = sdr(references, estimates)[0]
                 if verbose:
                     print(instr, res[instr].shape, sdr_val)
@@ -91,7 +117,7 @@ def proc_list_of_files(
 def valid(model, args, config, device, verbose=False):
     start_time = time.time()
     model.eval().to(device)
-    all_mixtures_path = glob.glob(args.valid_path + '/*/mixture.wav')
+    all_mixtures_path = glob.glob(args.valid_path + '/*/mixture.' + args.extension)
     print('Total mixtures: {}'.format(len(all_mixtures_path)))
     print('Overlap: {} Batch size: {}'.format(config.inference.num_overlap, config.inference.batch_size))
 
@@ -107,8 +133,10 @@ def valid(model, args, config, device, verbose=False):
     print("Num overlap: {}".format(config.inference.num_overlap))
     sdr_avg = 0.0
     for instr in instruments:
-        sdr_val = np.array(all_sdr[instr]).mean()
-        print("Instr SDR {}: {:.4f}".format(instr, sdr_val))
+        npsdr = np.array(all_sdr[instr])
+        sdr_val = npsdr.mean()
+        sdr_std = npsdr.std()
+        print("Instr SDR {}: {:.4f} (Std: {:.4f})".format(instr, sdr_val, sdr_std))
         if args.store_dir != "":
             out.write("Instr SDR {}: {:.4f}".format(instr, sdr_val) + "\n")
         sdr_avg += sdr_val
@@ -152,7 +180,7 @@ def valid_mp(proc_id, queue, all_mixtures_path, model, args, config, device, ret
 
 def valid_multi_gpu(model, args, config, device_ids, verbose=False):
     start_time = time.time()
-    all_mixtures_path = glob.glob(args.valid_path + '/*/mixture.wav')
+    all_mixtures_path = glob.glob(args.valid_path + '/*/mixture.' + args.extension)
     print('Total mixtures: {}'.format(len(all_mixtures_path)))
     print('Overlap: {} Batch size: {}'.format(config.inference.num_overlap, config.inference.batch_size))
 
@@ -191,8 +219,10 @@ def valid_multi_gpu(model, args, config, device_ids, verbose=False):
     print("Num overlap: {}".format(config.inference.num_overlap))
     sdr_avg = 0.0
     for instr in instruments:
-        sdr_val = np.array(all_sdr[instr]).mean()
-        print("Instr SDR {}: {:.4f}".format(instr, sdr_val))
+        npsdr = np.array(all_sdr[instr])
+        sdr_val = npsdr.mean()
+        sdr_std = npsdr.std()
+        print("Instr SDR {}: {:.4f} (Std: {:.4f})".format(instr, sdr_val, sdr_std))
         if args.store_dir != "":
             out.write("Instr SDR {}: {:.4f}".format(instr, sdr_val) + "\n")
         sdr_avg += sdr_val
@@ -219,6 +249,7 @@ def check_validation(args):
     parser.add_argument("--device_ids", nargs='+', type=int, default=0, help='list of gpu ids')
     parser.add_argument("--num_workers", type=int, default=0, help="dataloader num_workers")
     parser.add_argument("--pin_memory", type=bool, default=False, help="dataloader pin_memory")
+    parser.add_argument("--extension", type=str, default='wav', help="Choose extension for validation")
     if args is None:
         args = parser.parse_args()
     else:
@@ -249,7 +280,7 @@ def check_validation(args):
     if torch.cuda.is_available() and len(device_ids) > 1:
         valid_multi_gpu(model, args, config, device_ids, verbose=False)
     else:
-        valid(model, args, config, device, verbose=False)
+        valid(model, args, config, device, verbose=True)
 
 
 if __name__ == "__main__":
