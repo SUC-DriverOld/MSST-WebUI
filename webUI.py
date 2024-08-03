@@ -3,6 +3,7 @@ import subprocess
 import os
 import sys
 import re
+import time
 import tempfile
 import shutil
 import json
@@ -18,9 +19,10 @@ from tqdm import tqdm
 from mir_eval.separation import bss_eval_sources
 from tkinter import filedialog
 from pydub import AudioSegment
+from rich.console import Console
 
 
-PACKAGE_VERSION = "1.4"
+PACKAGE_VERSION = "1.4.1"
 PRESETS = "data/preset_data.json"
 MOSELS = "data/model_map.json"
 WEBUI_CONFIG = "data/webui_config.json"
@@ -29,8 +31,10 @@ AUGMENTATIONS_CONFIG = "configs_template/augmentations_template.yaml"
 MODEL_FOLDER = "pretrain/"
 CONFIG_TEMPLATE_FOLDER = "configs_template/"
 VERSION_CONFIG = "data/version.json"
+MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit']
 FFMPEG=".\\ffmpeg\\bin\\ffmpeg.exe"
 PYTHON=".\\workenv\\python.exe"
+
 
 def setup_webui():
     if os.path.exists("data"):
@@ -94,7 +98,7 @@ def save_configs(config, config_path):
 
 
 def print_command(command):
-    print("\033[34m" + command + "\033[0m")
+    print("\033[34m" + "Use command: " + command + "\033[0m")
 
 
 def load_augmentations_config():
@@ -115,7 +119,7 @@ def load_msst_model():
     model_dir = [os.path.join(MODEL_FOLDER, keys) for keys in config.keys()]
     for dirs in model_dir:
         for files in os.listdir(dirs):
-            if files.endswith(('.ckpt', '.pth', '.th')) and files in model_list:
+            if files.endswith(('.ckpt', '.pth', '.th', '.chpt')) and files in model_list:
                 downloaded_model_list.append(files)
     return downloaded_model_list
 
@@ -173,6 +177,15 @@ def select_yaml_file():
     root.attributes('-topmost', True)
     selected_file = filedialog.askopenfilename(
         filetypes=[('YAML files', '*.yaml')])
+    root.destroy()
+    return selected_file
+
+def select_file():
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes('-topmost', True)
+    selected_file = filedialog.askopenfilename(
+        filetypes=[('All files', '*.*')])
     root.destroy()
     return selected_file
 
@@ -332,32 +345,52 @@ def update_inference_settings(selected_model):
         batch_size = gr.Textbox(label="batch_size", value=str(
             config.inference.get('batch_size')), interactive=True)
     else:
-        batch_size = gr.Textbox(label="batch_size", value="")
+        batch_size = gr.Textbox(label="batch_size", value="该模型不支持修改此值", interactive=False)
     if config.inference.get('dim_t'):
         dim_t = gr.Textbox(label="dim_t", value=str(
             config.inference.get('dim_t')), interactive=True)
     else:
-            dim_t = gr.Textbox(label="dim_t", value="")
+            dim_t = gr.Textbox(label="dim_t", value="该模型不支持修改此值", interactive=False)
     if config.inference.get('num_overlap'):
         num_overlap = gr.Textbox(label="num_overlap", value=str(
             config.inference.get('num_overlap')), interactive=True)
     else:
-        num_overlap = gr.Textbox(label="num_overlap", value="")
-    return batch_size, dim_t, num_overlap
+        num_overlap = gr.Textbox(label="num_overlap", value="该模型不支持修改此值", interactive=False)
+    if config.inference.get('normalize'):
+        normalize = gr.Checkbox(label="normalize 归一化", value=config.inference.get('normalize'), interactive=True)
+    else:
+        normalize = gr.Checkbox(label="normalize 归一化（该模型不支持修改此值）", value=False, interactive=False)
+    return batch_size, dim_t, num_overlap, normalize
 
 
-def save_config(selected_model, batch_size, dim_t, num_overlap):
+def save_config(selected_model, batch_size, dim_t, num_overlap, normalize):
     _, config_path, _, _ = get_msst_model(selected_model)
     config = load_configs(config_path)
-
-    config.inference['batch_size'] = int(
-        batch_size) if batch_size.isdigit() else None
-    config.inference['dim_t'] = int(dim_t) if dim_t.isdigit() else None
-    config.inference['num_overlap'] = int(
-        num_overlap) if num_overlap.isdigit() else None
+    if config.inference.get('batch_size'):
+        config.inference['batch_size'] = int(batch_size) if batch_size.isdigit() else None
+    if config.inference.get('dim_t'):
+        config.inference['dim_t'] = int(dim_t) if dim_t.isdigit() else None
+    if config.inference.get('num_overlap'):
+        config.inference['num_overlap'] = int(num_overlap) if num_overlap.isdigit() else None
+    if config.inference.get('normalize'):
+        config.inference['normalize'] = normalize
 
     save_configs(config, config_path)
     return "配置保存成功！"
+
+
+def reset_config(selected_model):
+    _, original_config_path, _, _ = get_msst_model(selected_model)
+    dir_path, file_name = os.path.split(original_config_path)
+    backup_dir_path = dir_path.replace("configs", "configs_backup", 1)
+    backup_config_path = os.path.join(backup_dir_path, file_name)
+
+    if os.path.exists(backup_config_path):
+        shutil.copy(backup_config_path, original_config_path)
+        update_inference_settings(selected_model)
+        return "配置重置成功！"
+    else:
+        return "备份配置文件不存在。"
 
 
 def run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, force_cpu):
@@ -565,6 +598,7 @@ def delete_func(preset_name):
 
 
 def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
+    start_time = time.time()
     preset_data = load_configs(PRESETS)
     if not preset_name in preset_data.keys():
         return f"预设'{preset_name}'不存在。"
@@ -596,8 +630,9 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
         elif i == len(model_list.keys()) - 1:
             input_to_use = tmp_store_dir
             tmp_store_dir = store_dir
-        
-        print(f"\033[33m=========Step {i+1}: Running inference using {model_name}=========\033[0m")
+
+        console = Console()
+        console.rule(f"[yellow]Step {i+1}: Running inference using {model_name}", style="yellow")
 
         if model_list[model_name]["model_type"] == "MSST_Models":
             gpu_id = config['inference']['gpu_id'] if not force_cpu else "0"
@@ -615,7 +650,6 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
         elif model_list[model_name]["model_type"] == "UVR_VR_Models":
             vr_model_config = load_configs(VR_MODEL)
             stem = model_list[model_name]["stem"]
-            print(f"stem: {stem}")
             vr_select_model = model_name
             vr_window_size = config['inference']['vr_window_size']
             vr_aggression = config['inference']['vr_aggression']
@@ -652,6 +686,9 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
             shutil.move(os.path.join(tmp_store_dir, file_name),
                         os.path.join(store_dir, file_name))
         shutil.rmtree(tmp_store_dir)
+    finish_time = time.time()
+    elapsed_time = finish_time - start_time
+    Console().rule(f"[yellow]处理完成！用时{elapsed_time:.2f}秒", style="yellow")
 
     return f"处理完成！分离完成的音频文件已保存在{store_dir}中。"
 
@@ -868,21 +905,6 @@ def manual_download_model(model_type, model_name):
     return f"已打开 '{model_name}' 的下载链接。"
 
 
-
-def reset_config(selected_model):
-    _, original_config_path, _, _ = get_msst_model(selected_model)
-    dir_path, file_name = os.path.split(original_config_path)
-    backup_dir_path = dir_path.replace("configs", "configs_backup", 1)
-    backup_config_path = os.path.join(backup_dir_path, file_name)
-
-    if os.path.exists(backup_config_path):
-        shutil.copy(backup_config_path, original_config_path)
-        update_inference_settings(selected_model)
-        return "配置重置成功！"
-    else:
-        return "备份配置文件不存在。"
-
-
 def start_training(train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers, train_device_ids, train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path, train_start_check_point):
     model_type = train_model_type
     config_path = train_config_path
@@ -899,9 +921,9 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
     use_mse_loss = "--use_mse_loss" if train_use_mse_loss else ""
     use_l1_loss = "--use_l1_loss" if train_use_l1_loss else ""
 
-    if model_type not in ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c']:
+    if model_type not in MODEL_TYPE:
         return "模型类型错误，请重新选择。"
-    if not os.path.exists(config_path):
+    if not os.path.isfile(config_path):
         return "配置文件不存在，请重新选择。"
     if not os.path.exists(results_path):
         os.makedirs(results_path)
@@ -911,8 +933,6 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
         return "验证集路径不存在，请重新选择。"
     if dataset_type not in [1, 2, 3, 4]:
         return "数据集类型错误，请重新选择。"
-    if num_workers < 0:
-        return "num_workers不能小于0，请重新输入。"
     if not bool(re.match(r'^(\d+)(?:\s(?!\1)\d+)*$', device_ids)):
         return "device_ids格式错误，请重新输入。"
     if train_start_check_point == "None" or train_start_check_point == "":
@@ -932,6 +952,30 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
         return f"训练启动失败: {e}"
 
 
+def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_path, valid_results_path, valid_device_ids, valid_num_workers, valid_extension, valid_pin_memory):
+    if valid_model_type not in MODEL_TYPE:
+        return "模型类型错误，请重新选择。"
+    if not os.path.isfile(valid_config_path):
+        return "配置文件不存在，请重新选择。"
+    if not os.path.isfile(valid_model_path):
+        return "模型不存在，请重新选择。"
+    if not os.path.exists(valid_path):
+        return "验证集路径不存在，请重新选择。"
+    if not os.path.exists(valid_results_path):
+        os.makedirs(valid_results_path)
+    if not bool(re.match(r'^(\d+)(?:\s(?!\1)\d+)*$', valid_device_ids)):
+        return "device_ids格式错误，请重新输入。"
+    pin_memory = "--pin_memory" if valid_pin_memory else ""
+    
+    command = f"{PYTHON} valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {valid_device_ids} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory}"
+    print_command(command)
+    try:
+        subprocess.run(command, shell=True)
+        return "验证完成！请打开输出文件夹查看详细结果。"
+    except Exception as e:
+        return f"验证失败: {e}"
+
+
 with gr.Blocks(
         theme=gr.Theme.load('themes/theme_schema@1.2.2.json')
 ) as app:
@@ -939,9 +983,9 @@ with gr.Blocks(
     gr.Markdown(value=f"""
     ### Music-Source-Separation-Training-Inference-Webui v{PACKAGE_VERSION}
 
-    仅供个人娱乐和非商业用途，禁止用于血腥、暴力、性相关、政治相关内容。<br>
+    仅供个人娱乐和非商业用途，禁止用于血腥、暴力、性相关、政治相关内容。[点击前往教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)<br>
     本整合包完全免费，严禁以任何形式倒卖，如果你从任何地方**付费**购买了本整合包，请**立即退款**。<br> 
-    整合包作者：[bilibili@阿狸不吃隼舞](https://space.bilibili.com/403335715) [github@KitsuneX07](https://github.com/KitsuneX07) | [Bilibili@Sucial丶](https://space.bilibili.com/445022409) [Github@SUC-DriverOld](https://github.com/SUC-DriverOld) Gradio主题来自 [https://huggingface.co/spaces/NoCrypt/miku](https://huggingface.co/spaces/NoCrypt/miku)
+    整合包作者：[bilibili@阿狸不吃隼舞](https://space.bilibili.com/403335715) [Github@KitsuneX07](https://github.com/KitsuneX07) | [Bilibili@Sucial丶](https://space.bilibili.com/445022409) [Github@SUC-DriverOld](https://github.com/SUC-DriverOld) | Gradio主题：[Gradio Theme](https://huggingface.co/spaces/NoCrypt/miku)
     """)
     with gr.Tabs():
         setup_webui()
@@ -1017,8 +1061,9 @@ with gr.Blocks(
                 ### 参数说明
 
                 * batch_size：批次大小，一般不需要改
-                * dim_t：时序维度大小，一般不需要改
+                * dim_t：时序维度大小，一般不需要改（部分模型没有此参数）
                 * num_overlap：窗口重叠长度，也可理解为每帧推理的次数，数值越小速度越快，但会牺牲效果
+                * normalize：是否对音频进行归一化处理（部分模型没有此参数）
                 """)
                 if webui_config['inference']['selected_model']:
                     batch_size_number, dim_t_number, num_overlap_number = init_selected_model()
@@ -1027,6 +1072,7 @@ with gr.Blocks(
                 batch_size = gr.Textbox(label="batch_size", value=batch_size_number)
                 dim_t = gr.Textbox(label="dim_t", value=dim_t_number)
                 num_overlap = gr.Textbox(label="num_overlap", value=num_overlap_number)
+                normalize = gr.Checkbox(label="normalize 归一化", value=False, interactive=False)
                 reset_config_button = gr.Button("重置配置", variant="secondary")
                 save_config_button = gr.Button("保存配置", variant="primary")
 
@@ -1044,11 +1090,11 @@ with gr.Blocks(
             selected_model.change(
                 fn=update_inference_settings,
                 inputs=[selected_model],
-                outputs=[batch_size, dim_t, num_overlap]
+                outputs=[batch_size, dim_t, num_overlap, normalize]
             )
             save_config_button.click(
                 fn=save_config,
-                inputs=[selected_model, batch_size, dim_t, num_overlap],
+                inputs=[selected_model, batch_size, dim_t, num_overlap, normalize],
                 outputs=output_message
             )
             reset_config_button.click(
@@ -1423,41 +1469,44 @@ with gr.Blocks(
 
         with gr.TabItem(label="安装模型"):
             uvr_model_folder = webui_config['settings']['uvr_model_dir']
-            gr.Markdown(value=f"""
-            自动从huggingface镜像站或Github下载模型，无需手动下载。<br>
-            若自动下载出现报错或下载过慢，请点击手动下载，跳转至下载链接，下载完成后按照指示放置在指定目录。
-            ### 注意：
-            * MSST模型默认下载在pretrain/<模型类型>文件夹下。
-            * UVR模型默认下载在设置中的UVR模型目录中。
-            * **请勿删除**UVR模型目录下的download_checks.json，mdx_model_data.json，vr_model_data.json这三个文件！
-            * 需要重启WebUI才能刷新新模型哦。
-            ### 当前UVR模型目录：{uvr_model_folder}，如需更改，请前往设置页面。
-            ### 手动下载完成后，请根据你上面选择的模型类型放置到对应文件夹内。<br>
-            """)
-            with gr.Row():
-                model_choices = list(models.keys())
-                model_choices.append("UVR_VR_Models")
-                model_type_dropdown = gr.Dropdown(
-                    label="模型类型", choices=model_choices)
-                download_model_name_dropdown = gr.Dropdown(
-                    label="选择模型", choices=["请先选择模型类型。"])
-            with gr.Row():
-                open_model_dir = gr.Button("打开MSST模型目录")
-                open_uvr_model_dir = gr.Button("打开UVR模型目录")
-            with gr.Row():
-                download_button = gr.Button("自动下载", variant="primary")
-                manual_download_button = gr.Button("手动下载", variant="primary")
-            output_message_download = gr.Textbox(label="Output Message")
             gr.Markdown(value="""
-                下加载进度可以打开终端查看。如果一直卡着不动或者速度很慢，在确信网络正常的情况下请尝试重启webui。<br>
-                若下载失败，**会在模型目录留下一个损坏的模型，请务必打开模型目录手动删除！**<br>
-                下面是一些模型下载链接：<br>
-                huggingface镜像站: <https://hf-mirror.com/KitsuneX07/Music_Source_Sepetration_Models><br>
-                huggingface: <https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models><br>
-                UVR模型仓库地址：<https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models><br>
+                ### 模型下载
+                自动从Huggingface镜像站或Github下载模型。<br>
+                若自动下载出现报错或下载过慢，请点击手动下载，跳转至下载链接。手动下载完成后，请根据你选择的模型类型放置到对应文件夹内。
                 """)
-            restart_webui = gr.Button("重启WebUI", variant="primary")
-            gr.Markdown('''点击“重启WebUI”按钮后，会短暂性的失去连接，随后会自动开启一个新网页。''')
+            with gr.Row():
+                with gr.Column(scale=3):
+                    with gr.Row():
+                        model_choices = list(models.keys())
+                        model_choices.append("UVR_VR_Models")
+                        model_type_dropdown = gr.Dropdown(
+                            label="选择模型类型", choices=model_choices)
+                        download_model_name_dropdown = gr.Dropdown(
+                            label="选择模型", choices=["请先选择模型类型。"])
+                    gr.Markdown(value=f"""### 当前UVR模型目录：`{uvr_model_folder}`，如需更改，请前往设置页面。""")
+                    with gr.Row():
+                        open_model_dir = gr.Button("打开MSST模型目录")
+                        open_uvr_model_dir = gr.Button("打开UVR模型目录")
+                    with gr.Row():
+                        download_button = gr.Button("自动下载", variant="primary")
+                        manual_download_button = gr.Button("手动下载", variant="primary")
+                    output_message_download = gr.Textbox(label="Output Message")
+                    gr.Markdown(value="### 安装完成后，请点击下方按钮重启WebUI")
+                    restart_webui = gr.Button("重启WebUI", variant="primary")
+                with gr.Column(scale=1):
+                    gr.Markdown(value=f"""
+                        ### 注意事项：
+                        1. MSST模型默认下载在pretrain/<模型类型>文件夹下。UVR模型默认下载在设置中的UVR模型目录中。
+                        2. **请勿删除**UVR模型目录下的download_checks.json，mdx_model_data.json，vr_model_data.json这三个文件！
+                        3. 下加载进度可以打开终端查看。如果一直卡着不动或者速度很慢，在确信网络正常的情况下请尝试重启WebUI。<br>
+                        4. 若下载失败，**会在模型目录留下一个损坏的模型，请务必打开模型目录手动删除！**<br>
+                        5. 点击“重启WebUI”按钮后，会短暂性的失去连接，随后会自动开启一个新网页。
+                        ### 下面是一些模型下载链接
+                        [Huggingface镜像站](https://hf-mirror.com/KitsuneX07/Music_Source_Sepetration_Models) | 
+                        [Huggingface](https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models) | 
+                        [UVR模型仓库地址](https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models)<br>
+                        你也可以在此整合包下载链接中的All_Models文件夹中找到所有可用的模型并下载。
+                        """)
 
             model_type_dropdown.change(
                 fn=upgrade_download_model_name,
@@ -1480,15 +1529,15 @@ with gr.Blocks(
 
         with gr.TabItem(label="MSST训练"):
             gr.Markdown(value="""
-                此页面提供数据集制作教程，训练参数选择，以及一键训练。有关配置文件的修改和数据集文件夹的详细说明请参考MSST原项目:[https://github.com/ZFTurbo/Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)<br>
+                此页面提供数据集制作教程，训练参数选择，以及一键训练。有关配置文件的修改和数据集文件夹的详细说明请参考MSST原项目: [https://github.com/ZFTurbo/Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)<br>
                 在开始下方的模型训练之前，请先进行训练数据的制作。<br>
                 """)
             with gr.Tabs():
-                with gr.TabItem(label="训练模型"):
+                with gr.TabItem(label="训练 Training"):
                     with gr.Row():
                         train_model_type = gr.Dropdown(
                             label="选择训练模型类型",
-                            choices=['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c'],
+                            choices=MODEL_TYPE,
                             value=webui_config['training']['model_type'] if webui_config['training']['model_type'] else None,
                             interactive=True,
                             scale=1
@@ -1535,9 +1584,10 @@ with gr.Blocks(
                         """)
                     with gr.Row():
                         train_num_workers = gr.Number(
-                            label="num_workers: 数据集读取线程数，默认为0",
+                            label="num_workers: 数据集读取线程数，0为自动",
                             value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
                             interactive=True,
+                            minimum=0
                         )
                         train_device_ids = gr.Textbox(
                             label="device_ids：选择显卡",
@@ -1603,8 +1653,89 @@ with gr.Blocks(
                         inputs=train_results_path,
                         outputs=train_start_check_point
                     )
+                
+                with gr.TabItem(label="验证 Validation"):
+                    gr.Markdown(value="""
+                    此页面用于手动验证模型效果，测试验证集，输出SDR测试信息。输出的信息会存放在输出文件夹的results.txt中。<br>
+                    下方参数将自动加载训练页面的参数，在训练页面点击保存训练参数后，重启WebUI即可自动加载。当然你也可以手动输入参数。<br>
+                    """)
+                    with gr.Row():
+                        valid_model_type = gr.Dropdown(
+                            label="选择模型类型",
+                            choices=MODEL_TYPE,
+                            value=webui_config['training']['model_type'] if webui_config['training']['model_type'] else None,
+                            interactive=True,
+                            scale=1
+                        )
+                        valid_config_path = gr.Textbox(
+                            label="配置文件路径",
+                            value=webui_config['training']['config_path'] if webui_config[
+                                'training']['config_path'] else "请输入配置文件路径或选择配置文件",
+                            interactive=True,
+                            scale=3
+                        )
+                        select_valid_config_path = gr.Button("选择配置文件", scale=1)
+                    with gr.Row():
+                        valid_model_path = gr.Textbox(
+                            label="模型路径",
+                            value="请输入或选择模型文件",
+                            interactive=True,
+                            scale=4
+                        )
+                        select_valid_model_path = gr.Button("选择模型文件", scale=1)
+                    with gr.Row():
+                        valid_path = gr.Textbox(
+                            label="验证集路径",
+                            value=webui_config['training']['valid_path'] if webui_config['training']['valid_path'] else "请输入或选择验证集文件夹",
+                            interactive=True,
+                            scale=4
+                        )
+                        select_valid_path = gr.Button("选择验证集文件夹", scale=1)
+                    with gr.Row():
+                        valid_results_path = gr.Textbox(
+                            label="输出目录",
+                            value="results/",
+                            interactive=True,
+                            scale=3
+                        )
+                        select_valid_results_path = gr.Button("选择文件夹", scale=1)
+                        open_valid_results_path = gr.Button("打开文件夹", scale=1)
+                    with gr.Row():
+                        valid_device_ids = gr.Textbox(
+                            label="选择显卡，多卡用户请使用空格分隔GPU ID",
+                            value=webui_config['training']['device_ids'] if webui_config['training']['device_ids'] else "0",
+                            interactive=True
+                        )
+                        valid_num_workers = gr.Number(
+                            label="验证集读取线程数，0为自动",
+                            value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
+                            interactive=True,
+                            minimum=0
+                        )
+                        valid_extension = gr.Dropdown(
+                            label="选择验证集音频格式",
+                            choices=["wav", "flac", "mp3"],
+                            value="wav",
+                            interactive=True,
+                            allow_custom_value=True
+                        )
+                    valid_pin_memory = gr.Checkbox(
+                        label="是否将加载的数据放置在固定内存中，默认为否", value=webui_config['training']['pin_memory'], interactive=True)
+                    valid_button = gr.Button("开始验证", variant="primary")
+                    valid_output_message = gr.Textbox(label="Output Message")
 
-                with gr.TabItem(label="训练集制作"):
+                    select_valid_config_path.click(fn=select_yaml_file, outputs=valid_config_path)
+                    select_valid_model_path.click(fn=select_file, outputs=valid_model_path)
+                    select_valid_path.click(fn=select_folder, outputs=valid_path)
+                    select_valid_results_path.click(fn=select_folder, outputs=valid_results_path)
+                    open_valid_results_path.click(fn=open_folder, inputs=valid_results_path)
+                    valid_button.click(
+                        fn=validate_model,
+                        inputs=[valid_model_type, valid_config_path, valid_model_path, valid_path, valid_results_path, valid_device_ids, valid_num_workers, valid_extension, valid_pin_memory],
+                        outputs=valid_output_message
+                    )
+
+                with gr.TabItem(label="训练集制作指南"):
                     with gr.Accordion("Step 1: 数据集制作", open=False):
                         gr.Markdown(value="""
                             请**任选下面四种类型之一**制作数据集文件夹，并按照给出的目录层级放置你的训练数据。完成后，记录你的数据集**文件夹路径**以及你选择的**数据集类型**，以便后续使用。
@@ -1703,9 +1834,9 @@ with gr.Blocks(
                             """)
 
                     with gr.Accordion("Step 3: 选择并修改修改配置文件", open=False):
-                        gr.Markdown(value="""
+                        gr.Markdown(value=f"""
                             请先明确你想要训练的模型类型，然后选择对应的配置文件进行修改。<br>
-                            目前有以下几种模型类型：`mdx23c`, `htdemucs`, `segm_models`, `mel_band_roformer`, `bs_roformer`。<br>
+                            目前有以下几种模型类型：{MODEL_TYPE}。<br>
                             确定好模型类型后，你可以前往整合包根目录中的configs_template文件夹下找到对应的配置文件模板。复制一份模板，然后根据你的需求进行修改。修改完成后记下你的配置文件路径，以便后续使用。<br>
                             特别说明：config_musdb18_xxx.yaml是针对MUSDB18数据集的配置文件。<br>
                             """)
@@ -1738,30 +1869,35 @@ with gr.Blocks(
                         gr.Code(value=augmentations_config, language="yaml")
 
         with gr.TabItem(label="设置"):
-            gr.Markdown(
-                value="""选择UVR模型目录：如果你的电脑中有安装UVR5，你不必重新下载一遍UVR5模型，只需在下方“选择UVR模型目录”中选择你的UVR5模型目录，定位到models/VR_Models文件夹。<br>
-                例如：E:/Program Files/Ultimate Vocal Remover/models/VR_Models<br>
-                点击保存设置或重置设置后，需要重启WebUI以更新。
-                """)
             with gr.Row():
-                select_uvr_model_dir = gr.Textbox(
-                    label="选择UVR模型目录",
-                    value=webui_config['settings']['uvr_model_dir'] if webui_config['settings']['uvr_model_dir'] else "pretrain/VR_Models",
-                    interactive=True,
-                    scale=4
-                )
-                select_uvr_model_dir_button = gr.Button("选择文件夹", scale=1)
-            with gr.Row():
-                conform_seetings = gr.Button("保存设置")
-                reset_seetings = gr.Button("重置设置")
-            gr.Markdown(value="""
-                重置WebUI路径记录：将所有输入输出目录重置为默认路径，预设、模型、配置文件以及上面的设置等**不会重置**，无需担心。<br>
-                重置WebUI设置后，需要重启WebI。<br>
-                ### 点击“重启WebUI”按钮后，会短暂性的失去连接，随后会自动开启一个新网页。
-                """)
-            reset_all_webui_config = gr.Button("重置WebUI路径记录")
-            restart_webui = gr.Button("重启WebUI", variant="primary")
-            setting_output_message = gr.Textbox(label="Output Message")
+                with gr.Column(scale=3):
+                    gr.Markdown(value="### 选择UVR模型目录")
+                    with gr.Row():
+                        select_uvr_model_dir = gr.Textbox(
+                            label="选择UVR模型目录",
+                            value=webui_config['settings']['uvr_model_dir'] if webui_config['settings']['uvr_model_dir'] else "pretrain/VR_Models",
+                            interactive=True,
+                            scale=4
+                        )
+                        select_uvr_model_dir_button = gr.Button("选择文件夹", scale=1)
+                    with gr.Row():
+                        conform_seetings = gr.Button("保存UVR设置")
+                        reset_seetings = gr.Button("重置UVR设置")
+                    gr.Markdown(value="### 重置WebUI路径记录")
+                    reset_all_webui_config = gr.Button("重置WebUI路径记录", variant="primary")
+                    gr.Markdown(value="### 重启WebUI")
+                    restart_webui = gr.Button("重启WebUI", variant="primary")
+                    setting_output_message = gr.Textbox(label="Output Message")
+                with gr.Column(scale=1):
+                    gr.Markdown(value="""
+                        ### 设置说明
+                        ### 1. 选择UVR模型目录
+                        如果你的电脑中有安装UVR5，你不必重新下载一遍UVR5模型，只需在下方“选择UVR模型目录”中选择你的UVR5模型目录，定位到models/VR_Models文件夹。<br>
+                        例如：E:/Program Files/Ultimate Vocal Remover/models/VR_Models 点击保存设置或重置设置后，需要重启WebUI以更新。<br>
+                        ### 2. 重置WebUI路径记录
+                        将所有输入输出目录重置为默认路径，预设、模型、配置文件以及上面的设置等**不会重置**，无需担心。重置WebUI设置后，需要重启WebUI。<br>
+                        ### 3. 点击“重启WebUI”按钮后，会短暂性的失去连接，随后会自动开启一个新网页。
+                        """)
 
             reset_all_webui_config.click(
                 fn=reset_webui_config,

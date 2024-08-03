@@ -30,6 +30,12 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+import logging
+log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"
+date_format = "%H:%M:%S"
+logging.basicConfig(level = logging.INFO, format = log_format, datefmt = date_format)
+logger = logging.getLogger(__name__)
+
 
 def masked_loss(y_, y, q, coarse=True):
     # shape = [num_sources, batch_size, num_channels, chunk_size]
@@ -63,18 +69,18 @@ def load_not_compatible_weights(model, weights, verbose=False):
     for el in new_model:
         if el in old_model:
             if verbose:
-                print('Match found for {}!'.format(el))
+                logger.info('Match found for {}!'.format(el))
             if new_model[el].shape == old_model[el].shape:
                 if verbose:
-                    print('Action: Just copy weights!')
+                    logger.info('Action: Just copy weights!')
                 new_model[el] = old_model[el]
             else:
                 if len(new_model[el].shape) != len(old_model[el].shape):
                     if verbose:
-                        print('Action: Different dimension! Too lazy to write the code... Skip it')
+                        logger.info('Action: Different dimension! Too lazy to write the code... Skip it')
                 else:
                     if verbose:
-                        print('Shape is different: {} != {}'.format(tuple(new_model[el].shape), tuple(old_model[el].shape)))
+                        logger.info('Shape is different: {} != {}'.format(tuple(new_model[el].shape), tuple(old_model[el].shape)))
                     ln = len(new_model[el].shape)
                     max_shape = []
                     slices_old = []
@@ -83,8 +89,8 @@ def load_not_compatible_weights(model, weights, verbose=False):
                         max_shape.append(max(new_model[el].shape[i], old_model[el].shape[i]))
                         slices_old.append(slice(0, old_model[el].shape[i]))
                         slices_new.append(slice(0, new_model[el].shape[i]))
-                    # print(max_shape)
-                    # print(slices_old, slices_new)
+                    # logger.info(max_shape)
+                    # logger.info(slices_old, slices_new)
                     slices_old = tuple(slices_old)
                     slices_new = tuple(slices_new)
                     max_matrix = np.zeros(max_shape, dtype=np.float32)
@@ -94,7 +100,7 @@ def load_not_compatible_weights(model, weights, verbose=False):
                     new_model[el] = max_matrix[slices_new]
         else:
             if verbose:
-                print('Match not found for {}!'.format(el))
+                logger.info('Match not found for {}!'.format(el))
     model.load_state_dict(
         new_model
     )
@@ -109,10 +115,10 @@ def valid(model, args, config, device, verbose=False):
     for valid_path in args.valid_path:
         part = sorted(glob.glob(valid_path + '/*/mixture.wav'))
         if len(part) == 0:
-            print('No validation data found in: {}'.format(valid_path))
+            logger.info('No validation data found in: {}'.format(valid_path))
         all_mixtures_path += part
     if verbose:
-        print('Total mixtures: {}'.format(len(all_mixtures_path)))
+        logger.info('Total mixtures: {}'.format(len(all_mixtures_path)))
 
     instruments = config.training.instruments
     if config.training.target_instrument is not None:
@@ -130,7 +136,7 @@ def valid(model, args, config, device, verbose=False):
         mix, sr = sf.read(path)
         folder = os.path.dirname(path)
         if verbose:
-            print('Song: {}'.format(os.path.basename(folder)))
+            logger.info('Song: {}'.format(os.path.basename(folder)))
         mixture = torch.tensor(mix.T, dtype=torch.float32)
         if args.model_type == 'htdemucs':
             res = demix_track_demucs(config, model, mixture, device)
@@ -148,7 +154,7 @@ def valid(model, args, config, device, verbose=False):
             estimates = np.expand_dims(res[instr].T, axis=0)
             sdr_val = sdr(references, estimates)[0]
             if verbose:
-                print(instr, res[instr].shape, sdr_val)
+                logger.info(instr, res[instr].shape, sdr_val)
             all_sdr[instr].append(sdr_val)
             pbar_dict['sdr_{}'.format(instr)] = sdr_val
         if not verbose:
@@ -157,11 +163,11 @@ def valid(model, args, config, device, verbose=False):
     sdr_avg = 0.0
     for instr in instruments:
         sdr_val = np.array(all_sdr[instr]).mean()
-        print("Instr SDR {}: {:.4f}".format(instr, sdr_val))
+        logger.info("Instr SDR {}: {:.4f}".format(instr, sdr_val))
         sdr_avg += sdr_val
     sdr_avg /= len(instruments)
     if len(instruments) > 1:
-        print('SDR Avg: {:.4f}'.format(sdr_avg))
+        logger.info('SDR Avg: {:.4f}'.format(sdr_avg))
     return sdr_avg
 
 
@@ -194,7 +200,7 @@ def proc_list_of_files(
         folder = os.path.dirname(path)
         folder_name = os.path.abspath(folder)
         if verbose:
-            print('Song: {}'.format(folder_name))
+            logger.info('Song: {}'.format(folder_name))
         mixture = torch.tensor(mix, dtype=torch.float32)
         if args.model_type == 'htdemucs':
             res = demix_track_demucs(config, model, mixture, device)
@@ -207,7 +213,7 @@ def proc_list_of_files(
                     try:
                         track, sr1 = sf.read(folder + '/{}.wav'.format(instr))
                     except Exception as e:
-                        # print('No data for stem: {}. Skip!'.format(instr))
+                        # logger.info('No data for stem: {}. Skip!'.format(instr))
                         continue
                 else:
                     # other is actually instrumental
@@ -218,7 +224,7 @@ def proc_list_of_files(
                 estimates = np.expand_dims(res[instr].T, axis=0)
                 sdr_val = sdr(references, estimates)[0]
                 if verbose:
-                    print(instr, res[instr].shape, sdr_val)
+                    logger.info(instr, res[instr].shape, sdr_val)
                 all_sdr[instr].append(sdr_val)
                 pbar_dict['sdr_{}'.format(instr)] = sdr_val
 
@@ -252,7 +258,7 @@ def valid_mp(proc_id, queue, all_mixtures_path, model, args, config, device, ret
         if proc_id == 0:
             progress_bar.update(current_step - progress_bar.n)
             progress_bar.set_postfix(pbar_dict)
-        # print(f"Inference on process {proc_id}", all_sdr)
+        # logger.info(f"Inference on process {proc_id}", all_sdr)
     return_dict[proc_id] = all_sdr
     return
 
@@ -269,7 +275,7 @@ def valid_multi_gpu(model, args, config, verbose=False):
     for valid_path in args.valid_path:
         part = sorted(glob.glob(valid_path + '/*/mixture.wav'))
         if len(part) == 0:
-            print('No validation data found in: {}'.format(valid_path))
+            logger.info('No validation data found in: {}'.format(valid_path))
         all_mixtures_path += part
 
     model = model.to('cpu')
@@ -305,11 +311,11 @@ def valid_multi_gpu(model, args, config, verbose=False):
     sdr_avg = 0.0
     for instr in instruments:
         sdr_val = np.array(all_sdr[instr]).mean()
-        print("Instr SDR {}: {:.4f}".format(instr, sdr_val))
+        logger.info("Instr SDR {}: {:.4f}".format(instr, sdr_val))
         sdr_avg += sdr_val
     sdr_avg /= len(instruments)
     if len(instruments) > 1:
-        print('SDR Avg: {:.4f}'.format(sdr_avg))
+        logger.info('SDR Avg: {:.4f}'.format(sdr_avg))
     return sdr_avg
 
 
@@ -340,7 +346,7 @@ def train_model(args):
     torch.multiprocessing.set_start_method('spawn')
 
     model, config = get_model_from_config(args.model_type, args.config_path)
-    print("Instruments: {}".format(config.training.instruments))
+    logger.info("Instruments: {}".format(config.training.instruments))
 
     if not os.path.isdir(args.results_path):
         os.mkdir(args.results_path)
@@ -371,7 +377,7 @@ def train_model(args):
     )
 
     if args.start_check_point != '':
-        print('Start from checkpoint: {}'.format(args.start_check_point))
+        logger.info('Start from checkpoint: {}'.format(args.start_check_point))
         if 1:
             load_not_compatible_weights(model, args.start_check_point, verbose=False)
         else:
@@ -381,16 +387,16 @@ def train_model(args):
 
     if torch.cuda.is_available():
         if len(device_ids) <= 1:
-            print('Use single GPU: {}'.format(device_ids))
+            logger.info('Use single GPU: {}'.format(device_ids))
             device = torch.device(f'cuda:{device_ids[0]}')
             model = model.to(device)
         else:
-            print('Use multi GPU: {}'.format(device_ids))
+            logger.info('Use multi GPU: {}'.format(device_ids))
             device = torch.device(f'cuda:{device_ids[0]}')
             model = nn.DataParallel(model, device_ids=device_ids).to(device)
     else:
         device = 'cpu'
-        print('CUDA is not avilable. Run training on CPU. It will be very slow...')
+        logger.info('CUDA is not avilable. Run training on CPU. It will be very slow...')
         model = model.to(device)
 
     if 0:
@@ -399,7 +405,7 @@ def train_model(args):
     optim_params = dict()
     if 'optimizer' in config:
         optim_params = dict(config['optimizer'])
-        print('Optimizer params from config:\n{}'.format(optim_params))
+        logger.info('Optimizer params from config:\n{}'.format(optim_params))
 
     if config.training.optimizer == 'adam':
         optimizer = Adam(model.parameters(), lr=config.training.lr, **optim_params)
@@ -411,10 +417,10 @@ def train_model(args):
         import bitsandbytes as bnb
         optimizer = bnb.optim.AdamW8bit(model.parameters(), lr=config.training.lr, **optim_params)
     elif config.training.optimizer == 'sgd':
-        print('Use SGD optimizer')
+        logger.info('Use SGD optimizer')
         optimizer = SGD(model.parameters(), lr=config.training.lr, **optim_params)
     else:
-        print('Unknown optimizer: {}'.format(config.training.optimizer))
+        logger.info('Unknown optimizer: {}'.format(config.training.optimizer))
         exit()
 
     gradient_accumulation_steps = 1
@@ -423,7 +429,7 @@ def train_model(args):
     except:
         pass
 
-    print("Patience: {} Reduce factor: {} Batch size: {} Grad accum steps: {} Effective batch size: {}".format(
+    logger.info("Patience: {} Reduce factor: {} Batch size: {} Grad accum steps: {} Effective batch size: {}".format(
         config.training.patience,
         config.training.reduce_factor,
         batch_size,
@@ -438,17 +444,17 @@ def train_model(args):
             loss_options = dict(config.loss_multistft)
         except:
             loss_options = dict()
-        print('Loss options: {}'.format(loss_options))
+        logger.info('Loss options: {}'.format(loss_options))
         loss_multistft = auraloss.freq.MultiResolutionSTFTLoss(
             **loss_options
         )
 
     scaler = GradScaler()
-    print('Train for: {}'.format(config.training.num_epochs))
+    logger.info('Train for: {}'.format(config.training.num_epochs))
     best_sdr = -100
     for epoch in range(config.training.num_epochs):
         model.train().to(device)
-        print('Train epoch: {} Learning rate: {}'.format(epoch, optimizer.param_groups[0]['lr']))
+        logger.info('Train epoch: {} Learning rate: {}'.format(epoch, optimizer.param_groups[0]['lr']))
         loss_val = 0.
         total = 0
 
@@ -504,7 +510,7 @@ def train_model(args):
             pbar.set_postfix({'loss': 100 * li, 'avg_loss': 100 * loss_val / (i + 1)})
             loss.detach()
 
-        print('Training loss: {:.6f}'.format(loss_val / total))
+        logger.info('Training loss: {:.6f}'.format(loss_val / total))
 
         # Save last
         store_path = args.results_path + '/last_{}.ckpt'.format(args.model_type)
@@ -521,7 +527,7 @@ def train_model(args):
             sdr_avg = valid_multi_gpu(model, args, config, verbose=False)
         if sdr_avg > best_sdr:
             store_path = args.results_path + '/model_{}_ep_{}_sdr_{:.4f}.ckpt'.format(args.model_type, epoch, sdr_avg)
-            print('Store weights: {}'.format(store_path))
+            logger.info('Store weights: {}'.format(store_path))
             state_dict = model.state_dict() if len(device_ids) <= 1 else model.module.state_dict()
             torch.save(
                 state_dict,
