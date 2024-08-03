@@ -11,6 +11,7 @@ input/
 
 pretrain/
 webui.exe
+webui.vmp.exe
 
 !pretrain/*.json
 !.gitkeep
