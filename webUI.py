@@ -24,7 +24,7 @@ from rich.console import Console
 
 PACKAGE_VERSION = "1.4.1"
 PRESETS = "data/preset_data.json"
-MOSELS = "data/model_map.json"
+MODELS = "data/model_map.json"
 WEBUI_CONFIG = "data/webui_config.json"
 VR_MODEL = "data/vr_model.json"
 AUGMENTATIONS_CONFIG = "configs_template/augmentations_template.yaml"
@@ -124,7 +124,7 @@ def load_augmentations_config():
 
 
 def load_msst_model():
-    config = load_configs(MOSELS)
+    config = load_configs(MODELS)
     model_list = []
     downloaded_model_list = []
     for keys in config.keys():
@@ -139,7 +139,7 @@ def load_msst_model():
 
 
 def get_msst_model(model_name):
-    config = load_configs(MOSELS)
+    config = load_configs(MODELS)
     for keys in config.keys():
         for model in config[keys]:
             if model["name"] == model_name:
@@ -820,12 +820,12 @@ def upgrade_download_model_name(model_type_dropdown):
         model_map = load_configs(VR_MODEL)
         return gr.Dropdown(label="选择模型", choices=[keys for keys in model_map.keys()])
     else:
-        model_map = load_configs(MOSELS)
+        model_map = load_configs(MODELS)
         return gr.Dropdown(label="选择模型", choices=[model["name"] for model in model_map[model_type_dropdown]])
 
 
 def download_model(model_type, model_name):
-    models = load_configs(MOSELS)
+    models = load_configs(MODELS)
     model_choices = list(models.keys())
     model_choices.append("UVR_VR_Models")
     if model_type not in model_choices:
@@ -847,7 +847,7 @@ def download_model(model_type, model_name):
 
         return download_file(model_url, os.path.join(model_path, model_name), model_name)
 
-    presets = load_configs(MOSELS)
+    presets = load_configs(MODELS)
     model_mapping = load_msst_model()
 
     if model_name in model_mapping:
@@ -883,7 +883,7 @@ def download_file(url, path, model_name):
         return f"模型 '{model_name}' 下载失败。错误信息: {str(e)}"
 
 def manual_download_model(model_type, model_name):
-    models = load_configs(MOSELS)
+    models = load_configs(MODELS)
     model_choices = list(models.keys())
     model_choices.append("UVR_VR_Models")
     if model_type not in model_choices:
@@ -899,7 +899,7 @@ def manual_download_model(model_type, model_name):
 
         model_url = vr_model_map[model_name]["download_link"]
     else:
-        presets = load_configs(MOSELS)
+        presets = load_configs(MODELS)
         model_mapping = load_msst_model()
 
         if model_name in model_mapping:
@@ -1024,7 +1024,7 @@ with gr.Blocks(
 
         webui_config = load_configs(WEBUI_CONFIG)
         presets = load_configs(PRESETS)
-        models = load_configs(MOSELS)
+        models = load_configs(MODELS)
         vr_model = load_configs(VR_MODEL)
 
         with gr.TabItem(label="MSST分离"):
