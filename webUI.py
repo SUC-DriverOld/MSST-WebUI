@@ -31,6 +31,7 @@ AUGMENTATIONS_CONFIG = "configs_template/augmentations_template.yaml"
 MODEL_FOLDER = "pretrain/"
 CONFIG_TEMPLATE_FOLDER = "configs_template/"
 VERSION_CONFIG = "data/version.json"
+TEMP_PATH = "temp"
 MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit']
 FFMPEG=".\\ffmpeg\\bin\\ffmpeg.exe"
 PYTHON=".\\workenv\\python.exe"
@@ -418,7 +419,11 @@ def run_inference_single(selected_model, input_audio, store_dir, extract_instrum
 
     if not input_audio:
         return "请上传一个音频文件。"
-    input_path = os.path.dirname(input_audio)
+    if os.path.exists(TEMP_PATH):
+        shutil.rmtree(TEMP_PATH)
+    os.makedirs(TEMP_PATH)
+    shutil.copy(input_audio, TEMP_PATH)
+    input_path = TEMP_PATH
 
     run_inference(selected_model, input_path, store_dir,extract_instrumental, gpu_id, force_cpu)
     return f"处理完成！分离完成的音频文件已保存在{store_dir}中。"
@@ -475,6 +480,11 @@ def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_outpu
         return "请选择输出目录。"
     if not os.path.exists(vr_store_dir):
         os.makedirs(vr_store_dir)
+    if os.path.exists(TEMP_PATH):
+        shutil.rmtree(TEMP_PATH)
+    os.makedirs(TEMP_PATH)
+    shutil.copy(vr_single_audio, TEMP_PATH)
+    vr_single_audio = os.path.join(TEMP_PATH, os.path.basename(vr_single_audio))
     save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
     message = vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
     return message

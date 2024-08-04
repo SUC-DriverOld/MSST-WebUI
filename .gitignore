@@ -8,7 +8,7 @@ ffmpeg/bin/*.exe
 workenv/
 results/
 input/
-
+temp/
 pretrain/
 webui.exe
 webui.vmp.exe
