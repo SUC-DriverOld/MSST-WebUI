@@ -22,7 +22,7 @@ from pydub import AudioSegment
 from rich.console import Console
 
 
-PACKAGE_VERSION = "1.4.1"
+PACKAGE_VERSION = "1.4.2"
 PRESETS = "data/preset_data.json"
 MODELS = "data/model_map.json"
 WEBUI_CONFIG = "data/webui_config.json"
@@ -868,16 +868,24 @@ def download_model(model_type, model_name):
 
 def download_file(url, path, model_name):
     try:
-        print(f"模型 '{model_name}' 下载中。")
+        print(f"模型 '{model_name}' 下载中")
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
             total_size = int(r.headers.get('content-length', 0))
             with open(path, 'wb') as f, tqdm(
-                    total=total_size, unit='B', unit_scale=True,
-                    desc=model_name, initial=0, ascii=True) as bar:
-                for chunk in r.iter_content(chunk_size=1024):
-                    f.write(chunk)
-                    bar.update(len(chunk))
+                total=total_size, unit='B', unit_scale=True
+            ) as progress_bar:
+                last_update_time = time.time()
+                bytes_written = 0
+                for data in r.iter_content(1024):
+                    f.write(data)
+                    bytes_written += len(data)
+                    current_time = time.time()
+                    if current_time - last_update_time >= 1:
+                        progress_bar.update(bytes_written)
+                        bytes_written = 0
+                        last_update_time = current_time
+                progress_bar.update(bytes_written)
         return f"模型 '{model_name}' 下载成功。"
     except Exception as e:
         return f"模型 '{model_name}' 下载失败。错误信息: {str(e)}"

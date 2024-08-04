@@ -43,7 +43,7 @@ def run_folder(model, args, config, device, verbose = False):
         extra_store_dir = args.store_dir
 
     if not verbose:
-        all_mixtures_path = tqdm(all_mixtures_path)
+        all_mixtures_path = tqdm(all_mixtures_path, desc="Total progress")
 
     if 'vocals' not in instruments and args.extract_instrumental and len(config.training.instruments) != 2:
         logger.warning('Training instruments > 2, so secondary stem extraction is not possible')
