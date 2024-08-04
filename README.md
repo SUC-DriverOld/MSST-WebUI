@@ -15,8 +15,7 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 
 ### 中国用户可以从下方链接下载
 
-下载地址：https://www.123pan.com/s/1bmETd-AefWh.html 提取码:1145<br>
-B站教程视频：https://www.bilibili.com/video/BV18m42137rm
+下载地址：[123盘](https://www.123pan.com/s/1bmETd-AefWh.html) 提取码:1145 | [百度网盘](https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q?pwd=1145) 提取码:1145 | [B站教程视频](https://www.bilibili.com/video/BV18m42137rm) | [飞书教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)
 
 ## Run from source
 

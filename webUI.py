@@ -990,6 +990,24 @@ def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_
         return f"验证失败: {e}"
 
 
+def check_webui_update():
+    url = "https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        latest_version = response.url.split("/")[-1]
+        if latest_version != PACKAGE_VERSION:
+            return f"当前版本：{PACKAGE_VERSION}，发现新版本{latest_version}"
+        else:
+            return f"当前版本：{PACKAGE_VERSION}，已是最新版本"
+    except Exception:
+        return f"检查更新失败"
+
+
+def webui_goto_github():
+    webbrowser.open("https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest")
+
+
 with gr.Blocks(
         theme=gr.Theme.load('themes/theme_schema@1.2.2.json')
 ) as app:
@@ -1899,6 +1917,11 @@ with gr.Blocks(
                         reset_seetings = gr.Button("重置UVR设置")
                     gr.Markdown(value="### 重置WebUI路径记录")
                     reset_all_webui_config = gr.Button("重置WebUI路径记录", variant="primary")
+                    gr.Markdown(value="### 检查更新")
+                    with gr.Row():
+                        update_message = gr.Textbox(label="Output Message", value=f"当前版本：{PACKAGE_VERSION}，请点击检查更新按钮", interactive=False,scale=4)
+                        check_update = gr.Button("检查更新", scale=1)
+                    goto_github = gr.Button("前往Github Releases瞅一眼")
                     gr.Markdown(value="### 重启WebUI")
                     restart_webui = gr.Button("重启WebUI", variant="primary")
                     setting_output_message = gr.Textbox(label="Output Message")
@@ -1910,7 +1933,9 @@ with gr.Blocks(
                         例如：E:/Program Files/Ultimate Vocal Remover/models/VR_Models 点击保存设置或重置设置后，需要重启WebUI以更新。<br>
                         ### 2. 重置WebUI路径记录
                         将所有输入输出目录重置为默认路径，预设、模型、配置文件以及上面的设置等**不会重置**，无需担心。重置WebUI设置后，需要重启WebUI。<br>
-                        ### 3. 点击“重启WebUI”按钮后，会短暂性的失去连接，随后会自动开启一个新网页。
+                        ### 3. 检查更新
+                        从Github检查更新，需要一定的网络要求。点击检查更新按钮后，会自动检查是否有最新版本。你可以前往此整合包的下载链接或访问Github仓库下载最新版本。<br>
+                        ### 4. 点击“重启WebUI”按钮后，会短暂性的失去连接，随后会自动开启一个新网页。
                         """)
 
             reset_all_webui_config.click(
@@ -1919,7 +1944,8 @@ with gr.Blocks(
             )
             restart_webui.click(
                 fn=webui_restart, outputs=setting_output_message)
-
+            check_update.click(fn=check_webui_update, outputs=update_message)
+            goto_github.click(fn=webui_goto_github)
             select_uvr_model_dir_button.click(fn=select_folder, outputs=select_uvr_model_dir)
             conform_seetings.click(
                 fn=save_settings,
