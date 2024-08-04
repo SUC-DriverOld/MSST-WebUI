@@ -40,23 +40,37 @@ def setup_webui():
     if os.path.exists("data"):
         if not os.path.isfile(VERSION_CONFIG):
             print("[INFO]正在初始化版本配置文件")
-            shutil.copytree("configs_backup", "configs", dirs_exist_ok=True)
-            shutil.copytree("configs_backup", "configs_template", dirs_exist_ok=True)
-            shutil.copytree("data_backup", "data", dirs_exist_ok=True)
+            if os.path.exists("configs"):
+                shutil.rmtree("configs")
+                shutil.copytree("configs_backup", "configs")
+            if os.path.exists("configs_template"):
+                shutil.rmtree("configs_template")
+                shutil.copytree("configs_backup", "configs_template")
+            if os.path.exists("data"):
+                shutil.rmtree("data")
+                shutil.copytree("data_backup", "data")
         else:
             version_config = load_configs(VERSION_CONFIG)
             version = version_config["version"]
             if version != PACKAGE_VERSION:
                 print(f"[INFO]检测到{version}旧版配置，正在更新至最新版{PACKAGE_VERSION}")
                 print(f"[INFO]将清空除UVR模型路径外的所有路径记录")
+                presets_config = load_configs(PRESETS)
                 webui_config = load_configs(WEBUI_CONFIG)
                 webui_config_backup = load_configs("data_backup/webui_config.json")
                 webui_config_backup["settings"] = webui_config["settings"]
                 webui_config_backup["settings_backup"] = webui_config["settings_backup"]
+                if os.path.exists("configs"):
+                    shutil.rmtree("configs")
+                    shutil.copytree("configs_backup", "configs")
+                if os.path.exists("configs_template"):
+                    shutil.rmtree("configs_template")
+                    shutil.copytree("configs_backup", "configs_template")
+                if os.path.exists("data"):
+                    shutil.rmtree("data")
+                    shutil.copytree("data_backup", "data")
                 save_configs(webui_config_backup, WEBUI_CONFIG)
-                shutil.copytree("configs_backup", "configs", dirs_exist_ok=True)
-                shutil.copytree("configs_backup", "configs_template", dirs_exist_ok=True)
-
+                save_configs(presets_config, PRESETS)
                 version_config["version"] = PACKAGE_VERSION
                 save_configs(version_config, VERSION_CONFIG)
 
@@ -69,7 +83,7 @@ def setup_webui():
     if not os.path.exists("data"):
         print("[INFO]正在初始化data目录")
         shutil.copytree("data_backup", "data")
-    if not os.path.isfile("data_backup/download_checks.json") or not os.path.isfile("data_backup/mdx_model_data.json") or not os.path.isfile("data_backup/vr_model_data.json"):
+    if not os.path.isfile("pretrain/VR_Models/download_checks.json") or not os.path.isfile("pretrain/VR_Models/mdx_model_data.json") or not os.path.isfile("pretrain/VR_Models/vr_model_data.json"):
         print("[INFO]正在初始化pretrain目录")
         copy_uvr_config(os.path.join(MODEL_FOLDER, "VR_Models"))
     absolute_path = os.path.abspath("ffmpeg/bin/")
