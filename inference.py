@@ -81,22 +81,27 @@ def run_folder(model, args, config, device, verbose = False):
             if 'normalize' in config.inference:
                 if config.inference['normalize'] is True:
                     estimates = estimates * std + mean
-            sf.write("{}/{}_{}.wav".format(args.store_dir, os.path.basename(path)[:-4], instr), estimates, sr, subtype='FLOAT')
+            file_name, _ = os.path.splitext(os.path.basename(path))
+            output_file = os.path.join(args.store_dir, f"{file_name}_{instr}.wav")
+            sf.write(output_file, estimates, sr, subtype = 'FLOAT')
 
         if 'vocals' in instruments and args.extract_instrumental:
-            instrum_file_name = "{}/{}_{}.wav".format(extra_store_dir, os.path.basename(path)[:-4], 'instrumental')
+            file_name, _ = os.path.splitext(os.path.basename(path))
+            instrum_file_name = os.path.join(extra_store_dir, f"{file_name}_instrumental.wav")
             estimates = res['vocals'].T
             if 'normalize' in config.inference:
                 if config.inference['normalize'] is True:
                     estimates = estimates * std + mean
-            sf.write(instrum_file_name, mix_orig.T - estimates, sr, subtype='FLOAT')
+            sf.write(instrum_file_name, mix_orig.T - estimates, sr, subtype = 'FLOAT')
+
         if 'vocals' not in instruments and args.extract_instrumental and config.training.target_instrument is not None:
-            instrum_file_name = "{}/{}_{}.wav".format(extra_store_dir, os.path.basename(path)[:-4], 'other')
+            file_name, _ = os.path.splitext(os.path.basename(path))
+            instrum_file_name = os.path.join(extra_store_dir, f"{file_name}_other.wav")
             estimates = res[config.training.target_instrument].T
             if 'normalize' in config.inference:
                 if config.inference['normalize'] is True:
                     estimates = estimates * std + mean
-            sf.write(instrum_file_name, mix_orig.T - estimates, sr, subtype='FLOAT')
+            sf.write(instrum_file_name, mix_orig.T - estimates, sr, subtype = 'FLOAT')
 
     time.sleep(0.5)
     logger.info("Elapsed time: {:.2f} sec".format(time.time() - start_time))
