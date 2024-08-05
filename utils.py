@@ -70,7 +70,7 @@ def get_model_from_config(model_type, config_path):
     return model, config
 
 
-def demix_track(config, model, mix, device):
+def demix_track(config, model, mix, device, pbar=False):
     C = config.audio.chunk_size
     N = config.inference.num_overlap
     fade_size = C // 10
@@ -96,7 +96,7 @@ def demix_track(config, model, mix, device):
     window_middle[-fade_size:] *= fadeout
     window_middle[:fade_size] *= fadein
 
-    with torch.cuda.amp.autocast():
+    with torch.cuda.amp.autocast(enabled=config.training.use_amp):
         with torch.inference_mode():
             if config.training.target_instrument is not None:
                 req_shape = (1, ) + tuple(mix.shape)
@@ -108,39 +108,43 @@ def demix_track(config, model, mix, device):
             i = 0
             batch_data = []
             batch_locations = []
+            progress_bar = tqdm(total=mix.shape[1], desc="Processing audio chunks", leave=False) if pbar else None
 
-            with tqdm(total=mix.shape[1], desc=f"Processing audio chunks", leave=False) as pbar:
-                while i < mix.shape[1]:
-                    # print(i, i + C, mix.shape[1])
-                    part = mix[:, i:i + C].to(device)
-                    length = part.shape[-1]
-                    if length < C:
-                        if length > C // 2 + 1:
-                            part = nn.functional.pad(input=part, pad=(0, C - length), mode='reflect')
-                        else:
-                            part = nn.functional.pad(input=part, pad=(0, C - length, 0, 0), mode='constant', value=0)
-                    batch_data.append(part)
-                    batch_locations.append((i, length))
-                    i += step
-                    pbar.update(step)
+            while i < mix.shape[1]:
+                # print(i, i + C, mix.shape[1])
+                part = mix[:, i:i + C].to(device)
+                length = part.shape[-1]
+                if length < C:
+                    if length > C // 2 + 1:
+                        part = nn.functional.pad(input=part, pad=(0, C - length), mode='reflect')
+                    else:
+                        part = nn.functional.pad(input=part, pad=(0, C - length, 0, 0), mode='constant', value=0)
+                batch_data.append(part)
+                batch_locations.append((i, length))
+                i += step
+                if progress_bar:
+                    progress_bar.update(step)
 
-                    if len(batch_data) >= batch_size or (i >= mix.shape[1]):
-                        arr = torch.stack(batch_data, dim=0)
-                        x = model(arr)
+                if len(batch_data) >= batch_size or (i >= mix.shape[1]):
+                    arr = torch.stack(batch_data, dim=0)
+                    x = model(arr)
 
-                        window = window_middle
-                        if i - step == 0:  # First audio chunk, no fadein
-                            window = window_start
-                        elif i >= mix.shape[1]:  # Last audio chunk, no fadeout
-                            window = window_finish
+                    window = window_middle
+                    if i - step == 0:  # First audio chunk, no fadein
+                        window = window_start
+                    elif i >= mix.shape[1]:  # Last audio chunk, no fadeout
+                        window = window_finish
 
-                        for j in range(len(batch_locations)):
-                            start, l = batch_locations[j]
-                            result[..., start:start+l] += x[j][..., :l].cpu() * window[..., :l]
-                            counter[..., start:start+l] += window[..., :l]
+                    for j in range(len(batch_locations)):
+                        start, l = batch_locations[j]
+                        result[..., start:start+l] += x[j][..., :l].cpu() * window[..., :l]
+                        counter[..., start:start+l] += window[..., :l]
 
-                        batch_data = []
-                        batch_locations = []
+                    batch_data = []
+                    batch_locations = []
+
+            if progress_bar:
+                progress_bar.close()
 
             estimated_sources = result / counter
             estimated_sources = estimated_sources.cpu().numpy()
@@ -156,7 +160,7 @@ def demix_track(config, model, mix, device):
         return {k: v for k, v in zip([config.training.target_instrument], estimated_sources)}
 
 
-def demix_track_demucs(config, model, mix, device):
+def demix_track_demucs(config, model, mix, device, pbar=False):
     S = len(config.training.instruments)
     C = config.training.samplerate * config.training.segment
     N = config.inference.num_overlap
@@ -172,28 +176,32 @@ def demix_track_demucs(config, model, mix, device):
             i = 0
             batch_data = []
             batch_locations = []
+            progress_bar = tqdm(total=mix.shape[1], desc="Processing audio chunks", leave=False) if pbar else None
 
-            with tqdm(total=mix.shape[1], desc=f"Processing audio chunks", leave=False) as pbar:
-                while i < mix.shape[1]:
-                    # print(i, i + C, mix.shape[1])
-                    part = mix[:, i:i + C].to(device)
-                    length = part.shape[-1]
-                    if length < C:
-                        part = nn.functional.pad(input=part, pad=(0, C - length, 0, 0), mode='constant', value=0)
-                    batch_data.append(part)
-                    batch_locations.append((i, length))
-                    i += step
-                    pbar.update(step)
+            while i < mix.shape[1]:
+                # print(i, i + C, mix.shape[1])
+                part = mix[:, i:i + C].to(device)
+                length = part.shape[-1]
+                if length < C:
+                    part = nn.functional.pad(input=part, pad=(0, C - length, 0, 0), mode='constant', value=0)
+                batch_data.append(part)
+                batch_locations.append((i, length))
+                i += step
+                if progress_bar:
+                    progress_bar.update(step)
 
-                    if len(batch_data) >= batch_size or (i >= mix.shape[1]):
-                        arr = torch.stack(batch_data, dim=0)
-                        x = model(arr)
-                        for j in range(len(batch_locations)):
-                            start, l = batch_locations[j]
-                            result[..., start:start+l] += x[j][..., :l].cpu()
-                            counter[..., start:start+l] += 1.
-                        batch_data = []
-                        batch_locations = []
+                if len(batch_data) >= batch_size or (i >= mix.shape[1]):
+                    arr = torch.stack(batch_data, dim=0)
+                    x = model(arr)
+                    for j in range(len(batch_locations)):
+                        start, l = batch_locations[j]
+                        result[..., start:start+l] += x[j][..., :l].cpu()
+                        counter[..., start:start+l] += 1.
+                    batch_data = []
+                    batch_locations = []
+
+            if progress_bar:
+                progress_bar.close()
 
             estimated_sources = result / counter
             estimated_sources = estimated_sources.cpu().numpy()

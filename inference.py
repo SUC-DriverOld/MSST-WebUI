@@ -73,9 +73,9 @@ def run_folder(model, args, config, device, verbose = False):
 
         mixture = torch.tensor(mix, dtype=torch.float32)
         if args.model_type == 'htdemucs':
-            res = demix_track_demucs(config, model, mixture, device)
+            res = demix_track_demucs(config, model, mixture, device, pbar=True)
         else:
-            res = demix_track(config, model, mixture, device)
+            res = demix_track(config, model, mixture, device, pbar=True)
         for instr in instruments:
             estimates = res[instr].T
             if 'normalize' in config.inference:
