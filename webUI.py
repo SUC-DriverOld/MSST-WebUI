@@ -14,12 +14,15 @@ import librosa
 import numpy as np
 import pandas as pd
 import webbrowser
+import platform
 from ml_collections import ConfigDict
 from tqdm import tqdm
 from mir_eval.separation import bss_eval_sources
 from tkinter import filedialog
 from pydub import AudioSegment
 from rich.console import Console
+from torch.cuda import is_available, get_device_name, device_count
+from multiprocessing import cpu_count
 
 
 PACKAGE_VERSION = "1.4.2"
@@ -89,11 +92,38 @@ def setup_webui():
         copy_uvr_config(os.path.join(MODEL_FOLDER, "VR_Models"))
     absolute_path = os.path.abspath("ffmpeg/bin/")
     os.environ["PATH"] += os.pathsep + absolute_path
+    try:
+        if is_available():
+            print(f"[INFO]已检测到可用GPU: {get_gpu()}")
+        else:
+            print("\033[91m" + "[INFO]未检测到可用GPU，将使用CPU进行推理" + "\033[0m")
+    except Exception:
+        pass
 
 
 def webui_restart():
     os.execl(PYTHON, PYTHON, *sys.argv)
 
+
+def get_gpu():
+    if not is_available():
+        return "无可用GPU"
+    gpus = []
+    try:
+        n_gpu = device_count()
+        for i in range(n_gpu):
+            gpus.append(f"{i} {get_device_name(i)}")
+        if len(gpus) == 1:
+            return gpus[0]
+        return gpus
+    except Exception:
+        return "检查GPU失败"
+
+def get_platform():
+    os_name = platform.system()
+    os_version = platform.version()
+    machine = platform.machine()
+    return f"System: {os_name}, Version: {os_version}, Machine: {machine}"
 
 def load_configs(config_path):
     if config_path.endswith('.json'):
@@ -1055,7 +1085,7 @@ with gr.Blocks(
                 interactive=True
             )
 
-            gr.Markdown(value="""多卡用户请使用空格分隔GPU ID，例如：``0 1 2``。""")
+            gr.Markdown(value="""多卡用户请使用空格分隔GPU ID，例如：``0 1 2``。可前往设置页面查看显卡信息。""")
             with gr.Row():
                 gpu_id = gr.Textbox(
                     label="选择使用的GPU ID",
@@ -1637,7 +1667,9 @@ with gr.Blocks(
                             label="num_workers: 数据集读取线程数，0为自动",
                             value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
                             interactive=True,
-                            minimum=0
+                            minimum=0,
+                            maximum=cpu_count(),
+                            step=1
                         )
                         train_device_ids = gr.Textbox(
                             label="device_ids：选择显卡",
@@ -1760,7 +1792,9 @@ with gr.Blocks(
                             label="验证集读取线程数，0为自动",
                             value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
                             interactive=True,
-                            minimum=0
+                            minimum=0,
+                            maximum=cpu_count(),
+                            step=1
                         )
                         valid_extension = gr.Dropdown(
                             label="选择验证集音频格式",
@@ -1921,7 +1955,9 @@ with gr.Blocks(
         with gr.TabItem(label="设置"):
             with gr.Row():
                 with gr.Column(scale=3):
-                    gr.Markdown(value="### 选择UVR模型目录")
+                    with gr.Row():
+                        gpu_list = gr.Textbox(label="显卡信息", value=get_gpu(), interactive=False)
+                        plantform_info = gr.Textbox(label="系统信息", value=get_platform(), interactive=False)
                     with gr.Row():
                         select_uvr_model_dir = gr.Textbox(
                             label="选择UVR模型目录",
@@ -1932,15 +1968,13 @@ with gr.Blocks(
                         select_uvr_model_dir_button = gr.Button("选择文件夹", scale=1)
                     with gr.Row():
                         conform_seetings = gr.Button("保存UVR设置")
-                        reset_seetings = gr.Button("重置UVR设置")
-                    gr.Markdown(value="### 重置WebUI路径记录")
-                    reset_all_webui_config = gr.Button("重置WebUI路径记录", variant="primary")
-                    gr.Markdown(value="### 检查更新")
+                        reset_seetings = gr.Button("重置UVR设置")                    
                     with gr.Row():
-                        update_message = gr.Textbox(label="Output Message", value=f"当前版本：{PACKAGE_VERSION}，请点击检查更新按钮", interactive=False,scale=4)
+                        update_message = gr.Textbox(label="检查更新", value=f"当前版本：{PACKAGE_VERSION}，请点击检查更新按钮", interactive=False,scale=4)
                         check_update = gr.Button("检查更新", scale=1)
                     goto_github = gr.Button("前往Github Releases瞅一眼")
-                    gr.Markdown(value="### 重启WebUI")
+                    gr.Markdown(value="### 其他设置")
+                    reset_all_webui_config = gr.Button("重置WebUI路径记录", variant="primary")
                     restart_webui = gr.Button("重启WebUI", variant="primary")
                     setting_output_message = gr.Textbox(label="Output Message")
                 with gr.Column(scale=1):
