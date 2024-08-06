@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import webbrowser
 import platform
+from datetime import datetime
 from ml_collections import ConfigDict
 from tqdm import tqdm
 from mir_eval.separation import bss_eval_sources
@@ -27,6 +28,7 @@ from multiprocessing import cpu_count
 
 PACKAGE_VERSION = "1.4.2"
 PRESETS = "data/preset_data.json"
+BACKUP = "backup/"
 MODELS = "data/model_map.json"
 WEBUI_CONFIG = "data/webui_config.json"
 VR_MODEL = "data/vr_model.json"
@@ -637,6 +639,21 @@ def reset_flow_func():
     return gr.Dataframe(pd.DataFrame({"model_type": [""], "model_name": [""], "stem": [""]}), interactive=False, label=None)
 
 
+def load_preset(preset_name):
+    preset_data = load_configs(PRESETS)
+    if preset_name in preset_data.keys():
+        preset_flow = pd.DataFrame({"model_type": [""], "model_name": [""], "stem": [""], "secondary_output": [""]})
+        preset_dict = preset_data[preset_name]
+        for key in preset_dict.keys():
+            try:
+                secondary_output = preset_dict[key]["secondary_output"]
+            except KeyError:
+                secondary_output = "False"
+            preset_flow = add_to_flow_func(preset_dict[key]["model_type"], key, preset_dict[key]["stem"], secondary_output, preset_flow)
+        return preset_flow
+    return gr.Dataframe(pd.DataFrame({"model_type": ["预设不存在"], "model_name": ["预设不存在"], "stem": ["预设不存在"], "secondary_output": ["预设不存在"]}), interactive=False, label=None)
+
+
 def delete_func(preset_name):
     preset_data = load_configs(PRESETS)
     if preset_name in preset_data.keys():
@@ -646,7 +663,8 @@ def delete_func(preset_name):
         output_message = f"预设{preset_name}删除成功"
         preset_name_delete = gr.Dropdown(label="请选择预设", choices=list(preset_data.keys()))
         preset_name_select = gr.Dropdown(label="请选择预设", choices=list(preset_data.keys()))
-        return output_message, preset_name_delete, preset_name_select
+        preset_flow_delete = gr.Dataframe(pd.DataFrame({"model_type": ["预设已删除"], "model_name": ["预设已删除"], "stem": ["预设已删除"], "secondary_output": ["预设已删除"]}), interactive=False, label=None)
+        return output_message, preset_name_delete, preset_name_select, preset_flow_delete
     else:
         return "预设不存在"
 
@@ -1056,6 +1074,40 @@ def webui_goto_github():
     webbrowser.open("https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest")
 
 
+def preset_backup_list():
+    backup_dir = BACKUP
+    if not os.path.exists(backup_dir):
+        return ["暂无备份文件"]
+    backup_files = []
+    for file in os.listdir(backup_dir):
+        if file.startswith("preset_backup_") and file.endswith(".json"):
+            backup_files.append(file)
+    if backup_files == []:
+        return ["暂无备份文件"]
+    return backup_files
+
+
+def restore_preset_func(backup_file):
+    backup_dir = BACKUP
+    if not backup_file or backup_file == "暂无备份文件":
+        return "请选择备份文件"
+    backup_data = load_configs(os.path.join(backup_dir, backup_file))
+    save_configs(backup_data, PRESETS)
+    return f"已成功恢复备份{backup_file}，请重启WebUI更新预设流程。"
+
+
+def backup_preset_func():
+    backup_dir = BACKUP
+    if not os.path.exists(backup_dir):
+        os.makedirs(backup_dir)
+    backup_file = f"preset_backup_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
+    preset_data = load_configs(PRESETS)
+    save_configs(preset_data, os.path.join(backup_dir, backup_file))
+    msg = f"已成功备份至{backup_file}"
+    select_preset_backup = gr.Dropdown(label="选择需要恢复的预设流程备份", choices=preset_backup_list(), interactive=True, scale=4)
+    return msg, select_preset_backup
+
+
 with gr.Blocks(
         theme=gr.Theme.load('themes/theme_schema@1.2.2.json')
 ) as app:
@@ -1377,6 +1429,7 @@ with gr.Blocks(
                 with gr.TabItem(label="制作预设"):
                     gr.Markdown("""
                         注意：MSST模型仅支持输出主要音轨，UVR模型支持自定义主要音轨输出。<br>
+                        一个预设中，同一个模型只能使用一次。仅处理第一次使用，后续使用将会跳过<br>
                         同时输出次级音轨：选择True将同时输出该次分离得到的次级音轨，**此音轨将直接保存至**输出目录下的secondary_output文件夹，**不会经过后续流程处理**<br>
                         """)
                     preset_name_input = gr.Textbox(label="预设名称", placeholder="请输入预设名称", interactive=True)
@@ -1390,11 +1443,17 @@ with gr.Blocks(
                     preset_flow = gr.Dataframe(pd.DataFrame({"model_type": [""], "model_name": [""], "stem": [""], "secondary_output": [""]}), interactive=False, label=None)
                     reset_flow = gr.Button("重新输入")
                     save_flow = gr.Button("保存上述预设流程", variant="primary")
-                    gr.Markdown("""删除预设""")
-                    with gr.Row():
-                        preset_name_delete = gr.Dropdown(label="请选择预设", choices=load_presets_list(), interactive=True)
-                    delete_button = gr.Button("删除所选预设", scale=1)
                     output_message_make = gr.Textbox(label="Output Message")
+
+                with gr.TabItem(label="查看/删除预设"):
+                    preset_name_delete = gr.Dropdown(label="请选择预设", choices=load_presets_list(), interactive=True)
+                    gr.Markdown("""
+                        `model_type`：模型类型；`model_name`：模型名称；`stem`：主要输出音轨；<br>
+                        `secondary_output`：同时输出次级音轨。选择True将同时输出该次分离得到的次级音轨，**此音轨将直接保存至**输出目录下的secondary_output文件夹，**不会经过后续流程处理**
+                        """)
+                    preset_flow_delete = gr.Dataframe(pd.DataFrame({"model_type": ["请先选择预设"], "model_name": ["请先选择预设"], "stem": ["请先选择预设"], "secondary_output": ["请先选择预设"]}), interactive=False, label=None)
+                    delete_button = gr.Button("删除所选预设", scale=1)
+                    output_message_delete = gr.Textbox(label="Output Message")
 
             inference_flow.click(
                 fn=run_inference_flow,
@@ -1412,7 +1471,8 @@ with gr.Blocks(
             add_to_flow.click(add_to_flow_func, [model_type, model_name, stem, secondary_output, preset_flow], preset_flow)
             save_flow.click(save_flow_func, [preset_name_input, preset_flow], [output_message_make, preset_name_delete, preset_dropdown])
             reset_flow.click(reset_flow_func, [], preset_flow)
-            delete_button.click(delete_func, [preset_name_delete], [output_message_make, preset_name_delete, preset_dropdown])
+            delete_button.click(delete_func, [preset_name_delete], [output_message_delete, preset_name_delete, preset_dropdown, preset_flow_delete])
+            preset_name_delete.change(load_preset, inputs=preset_name_delete, outputs=preset_flow_delete)
 
         with gr.TabItem(label="小工具"):
             with gr.Tabs():
@@ -1958,6 +2018,7 @@ with gr.Blocks(
                     with gr.Row():
                         gpu_list = gr.Textbox(label="显卡信息", value=get_gpu(), interactive=False)
                         plantform_info = gr.Textbox(label="系统信息", value=get_platform(), interactive=False)
+                    gr.Markdown(value="### UVR模型目录设置")
                     with gr.Row():
                         select_uvr_model_dir = gr.Textbox(
                             label="选择UVR模型目录",
@@ -1968,12 +2029,25 @@ with gr.Blocks(
                         select_uvr_model_dir_button = gr.Button("选择文件夹", scale=1)
                     with gr.Row():
                         conform_seetings = gr.Button("保存UVR设置")
-                        reset_seetings = gr.Button("重置UVR设置")                    
+                        reset_seetings = gr.Button("重置UVR设置")
+                    gr.Markdown(value="### 预设流程设置")
+                    with gr.Row():
+                        select_preset_backup = gr.Dropdown(
+                            label="选择需要恢复的预设流程备份",
+                            choices=preset_backup_list(),
+                            interactive=True,
+                            scale=4
+                        )
+                        restore_preset = gr.Button("恢复", scale=1)
+                    with gr.Row():
+                        backup_preset = gr.Button("备份预设流程")
+                        open_preset_backup = gr.Button("打开备份文件夹")
+                    gr.Markdown(value="### 检查更新")
                     with gr.Row():
                         update_message = gr.Textbox(label="检查更新", value=f"当前版本：{PACKAGE_VERSION}，请点击检查更新按钮", interactive=False,scale=4)
                         check_update = gr.Button("检查更新", scale=1)
                     goto_github = gr.Button("前往Github Releases瞅一眼")
-                    gr.Markdown(value="### 其他设置")
+                    gr.Markdown(value="### WebUI设置")
                     reset_all_webui_config = gr.Button("重置WebUI路径记录", variant="primary")
                     restart_webui = gr.Button("重启WebUI", variant="primary")
                     setting_output_message = gr.Textbox(label="Output Message")
@@ -1982,23 +2056,22 @@ with gr.Blocks(
                         ### 设置说明
                         ### 1. 选择UVR模型目录
                         如果你的电脑中有安装UVR5，你不必重新下载一遍UVR5模型，只需在下方“选择UVR模型目录”中选择你的UVR5模型目录，定位到models/VR_Models文件夹。<br>
-                        例如：E:/Program Files/Ultimate Vocal Remover/models/VR_Models 点击保存设置或重置设置后，需要重启WebUI以更新。<br>
-                        ### 2. 重置WebUI路径记录
-                        将所有输入输出目录重置为默认路径，预设、模型、配置文件以及上面的设置等**不会重置**，无需担心。重置WebUI设置后，需要重启WebUI。<br>
+                        例如：E:/Program Files/Ultimate Vocal Remover/models/VR_Models 点击保存设置或重置设置后，需要重启WebUI以更新。
+                        ### 2. 预设流程设置
+                        可以将你制作的预设流程备份至backup文件夹，也可以从backup文件夹中恢复预设流程。恢复预设流程后，需要重启WebUI以更新。
                         ### 3. 检查更新
-                        从Github检查更新，需要一定的网络要求。点击检查更新按钮后，会自动检查是否有最新版本。你可以前往此整合包的下载链接或访问Github仓库下载最新版本。<br>
-                        ### 4. 点击“重启WebUI”按钮后，会短暂性的失去连接，随后会自动开启一个新网页。
+                        从Github检查更新，需要一定的网络要求。点击检查更新按钮后，会自动检查是否有最新版本。你可以前往此整合包的下载链接或访问Github仓库下载最新版本。
+                        ### 4. 重置WebUI路径记录
+                        将所有输入输出目录重置为默认路径，预设、模型、配置文件以及上面的设置等**不会重置**，无需担心。重置WebUI设置后，需要重启WebUI。
+                        ### 5. 重启WebUI
+                        点击“重启WebUI”按钮后，会短暂性的失去连接，随后会自动开启一个新网页。
                         """)
 
-            reset_all_webui_config.click(
-                fn=reset_webui_config,
-                outputs=setting_output_message
-            )
-            restart_webui.click(
-                fn=webui_restart, outputs=setting_output_message)
+            restart_webui.click(fn=webui_restart, outputs=setting_output_message)
             check_update.click(fn=check_webui_update, outputs=update_message)
             goto_github.click(fn=webui_goto_github)
             select_uvr_model_dir_button.click(fn=select_folder, outputs=select_uvr_model_dir)
+            open_preset_backup.click(open_folder, inputs=gr.Textbox(BACKUP, visible=False))
             conform_seetings.click(
                 fn=save_settings,
                 inputs=[select_uvr_model_dir],
@@ -2008,6 +2081,19 @@ with gr.Blocks(
                 fn=reset_settings,
                 inputs=[],
                 outputs=setting_output_message
+            )
+            reset_all_webui_config.click(
+                fn=reset_webui_config,
+                outputs=setting_output_message
+            )
+            restore_preset.click(
+                fn=restore_preset_func,
+                inputs=[select_preset_backup],
+                outputs=setting_output_message
+            )
+            backup_preset.click(
+                fn=backup_preset_func,
+                outputs=[setting_output_message, select_preset_backup]
             )
 
 app.launch(inbrowser=True)

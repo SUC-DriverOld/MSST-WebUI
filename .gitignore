@@ -12,6 +12,7 @@ temp/
 pretrain/
 webui.exe
 webui.vmp.exe
+backup/
 
 !pretrain/*.json
 !.gitkeep
