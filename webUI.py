@@ -145,7 +145,7 @@ def save_configs(config, config_path):
 
 
 def print_command(command):
-    print("\033[34m" + "Use command: " + command + "\033[0m")
+    print("\033[32m" + "Use command: " + command + "\033[0m")
 
 
 def load_augmentations_config():
@@ -624,7 +624,7 @@ def save_flow_func(preset_name, df):
         preset_name_select = gr.Dropdown(label="请选择预设", choices=list(preset_data.keys()))
         return output_message, preset_name_delete, preset_name_select
 
-    preset_dict = {row["model_name"]: row.dropna().to_dict() for _, row in df.iterrows()}
+    preset_dict = {f"Step_{index + 1}": row.dropna().to_dict() for index, row in df.iterrows()}
     preset_data[preset_name] = preset_dict
     save_configs(preset_data, PRESETS)
 
@@ -649,7 +649,7 @@ def load_preset(preset_name):
                 secondary_output = preset_dict[key]["secondary_output"]
             except KeyError:
                 secondary_output = "False"
-            preset_flow = add_to_flow_func(preset_dict[key]["model_type"], key, preset_dict[key]["stem"], secondary_output, preset_flow)
+            preset_flow = add_to_flow_func(preset_dict[key]["model_type"], preset_dict[key]["model_name"], preset_dict[key]["stem"], secondary_output, preset_flow)
         return preset_flow
     return gr.Dataframe(pd.DataFrame({"model_type": ["预设不存在"], "model_name": ["预设不存在"], "stem": ["预设不存在"], "secondary_output": ["预设不存在"]}), interactive=False, label=None)
 
@@ -686,12 +686,13 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
     input_to_use = input_folder
     tmp_store_dir = tempfile.mkdtemp()
 
-    for model_name in model_list.keys():
+    for step in model_list.keys():
+        model_name = model_list[step]["model_name"]
         if model_name not in load_msst_model() and model_name not in load_vr_model():
             return f"模型'{model_name}'不存在。"
 
     i = 0
-    for model_name in model_list.keys():
+    for step in model_list.keys():
         if i == 0:
             input_to_use = input_folder
         elif i < len(model_list.keys()) - 1 and i > 0:
@@ -704,12 +705,13 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
             tmp_store_dir = store_dir
 
         console = Console()
+        model_name = model_list[step]["model_name"]
         console.rule(f"[yellow]Step {i+1}: Running inference using {model_name}", style="yellow")
 
-        if model_list[model_name]["model_type"] == "MSST_Models":
+        if model_list[step]["model_type"] == "MSST_Models":
             gpu_id = config['inference']['gpu_id'] if not force_cpu else "0"
             try:
-                secondary_output = model_list[model_name]["secondary_output"]
+                secondary_output = model_list[step]["secondary_output"]
             except KeyError:
                 secondary_output = "False"
             if secondary_output == "True":
@@ -719,9 +721,9 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
                 extract_instrumental = False
                 extra_store_dir = None
             run_inference(model_name, input_to_use, tmp_store_dir, extract_instrumental, gpu_id, force_cpu, extra_store_dir)
-        elif model_list[model_name]["model_type"] == "UVR_VR_Models":
+        elif model_list[step]["model_type"] == "UVR_VR_Models":
             vr_model_config = load_configs(VR_MODEL)
-            stem = model_list[model_name]["stem"]
+            stem = model_list[step]["stem"]
             vr_select_model = model_name
             vr_window_size = config['inference']['vr_window_size']
             vr_aggression = config['inference']['vr_aggression']
@@ -740,7 +742,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
             vr_enable_post_process = config['inference']['vr_enable_post_process']
             vr_debug_mode = config['inference']['vr_debug_mode']
             try:
-                secondary_output = model_list[model_name]["secondary_output"]
+                secondary_output = model_list[step]["secondary_output"]
             except KeyError:
                 secondary_output = "False"
             if secondary_output == "True":
@@ -760,7 +762,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
         shutil.rmtree(tmp_store_dir)
     finish_time = time.time()
     elapsed_time = finish_time - start_time
-    Console().rule(f"[yellow]处理完成！用时{elapsed_time:.2f}秒", style="yellow")
+    Console().rule(f"[yellow]预设{preset_name}运行完成！用时{elapsed_time:.2f}秒", style="yellow")
 
     return f"处理完成！分离完成的音频文件已保存在{store_dir}中。"
 
