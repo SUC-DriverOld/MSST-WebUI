@@ -686,6 +686,17 @@ def delete_func(preset_name):
         return "预设不存在"
 
 
+def run_single_inference_flow(input_audio, store_dir, preset_name, force_cpu):
+    if not input_audio:
+        return "请上传一个音频文件。"
+    if os.path.exists(TEMP_PATH):
+        shutil.rmtree(TEMP_PATH)
+    os.makedirs(TEMP_PATH)
+    shutil.copy(input_audio, TEMP_PATH)
+    input_folder = TEMP_PATH
+    msg = run_inference_flow(input_folder, store_dir, preset_name, force_cpu)
+    return msg
+
 def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
     start_time = time.time()
     preset_data = load_configs(PRESETS)
@@ -1445,16 +1456,19 @@ with gr.Blocks(
                         value=webui_config['inference']['force_cpu'] if webui_config['inference']['force_cpu'] else False,
                         interactive=True
                     )
-
-                    with gr.Row():
-                        input_folder_flow = gr.Textbox(
-                            label="输入目录",
-                            value=webui_config['inference']['input_folder_flow'] if webui_config['inference']['input_folder_flow'] else "input/",
-                            interactive=True,
-                            scale=3
-                        )
-                        select_input_dir = gr.Button("选择文件夹", scale=1)
-                        open_input_dir = gr.Button("打开文件夹", scale=1)
+                    with gr.Tabs():
+                        with gr.TabItem(label="单个音频上传"):
+                            single_audio_flow = gr.File(label="单个音频上传", type="filepath")
+                        with gr.TabItem(label="批量音频上传"):
+                            with gr.Row():
+                                input_folder_flow = gr.Textbox(
+                                    label="输入目录",
+                                    value=webui_config['inference']['input_folder_flow'] if webui_config['inference']['input_folder_flow'] else "input/",
+                                    interactive=True,
+                                    scale=3
+                                )
+                                select_input_dir = gr.Button("选择文件夹", scale=1)
+                                open_input_dir = gr.Button("打开文件夹", scale=1)
                     with gr.Row():
                         store_dir_flow = gr.Textbox(
                             label="输出目录",
@@ -1464,7 +1478,9 @@ with gr.Blocks(
                         )
                         select_output_dir = gr.Button("选择文件夹", scale=1)
                         open_output_dir = gr.Button("打开文件夹", scale=1)
-                    inference_flow = gr.Button("运行预设流程", variant="primary")
+                    with gr.Row():
+                        single_inference_flow = gr.Button("单个音频运行", variant="primary")
+                        inference_flow = gr.Button("批量音频运行", variant="primary")
                     gr.Markdown(value="""
                     该模式下的UVR推理参数将直接沿用UVR分离页面的推理参数，如需修改请前往UVR分离页面。
                     """)
@@ -1504,7 +1520,11 @@ with gr.Blocks(
                 inputs=[input_folder_flow, store_dir_flow, preset_dropdown, force_cpu],
                 outputs=output_message_flow
             )
-
+            single_inference_flow.click(
+                fn=run_single_inference_flow,
+                inputs=[single_audio_flow, store_dir_flow, preset_dropdown, force_cpu],
+                outputs=output_message_flow
+            )
             select_input_dir.click(fn=select_folder, outputs=input_folder_flow)
             open_input_dir.click(fn=open_folder, inputs=input_folder_flow)
             select_output_dir.click(fn=select_folder, outputs=store_dir_flow)
@@ -1658,7 +1678,7 @@ with gr.Blocks(
                 with gr.TabItem(label="歌声转MIDI"):
                     gr.Markdown(value="""
                         歌声转MIDI功能使用开源项目[SOME](https://github.com/openvpi/SOME/)，可以将分离得到的**干净的歌声**转换成.mid文件。<br>
-                        【必须】若想要使用此功能，请先下载权重文件[model_steps_64000_simplified.ckpt](https://hf-mirror.com/Sucial/SOME_Models/resolve/main/model_steps_64000_simplified.ckpt)并将其放置在程序目录下的`tools/SOME_weights`文件夹内。<br>
+                        【必须】若想要使用此功能，请先下载权重文件[model_steps_64000_simplified.ckpt](https://hf-mirror.com/Sucial/SOME_Models/resolve/main/model_steps_64000_simplified.ckpt)并将其放置在程序目录下的`tools/SOME_weights`文件夹内。文件命名不可随意更改！<br>
                         【重要】只能上传wav格式的音频！
                         """)
                     with gr.Row():
@@ -2104,7 +2124,6 @@ with gr.Blocks(
                     with gr.Row():
                         gpu_list = gr.Textbox(label="显卡信息", value=get_gpu(), interactive=False)
                         plantform_info = gr.Textbox(label="系统信息", value=get_platform(), interactive=False)
-                    gr.Markdown(value="### UVR模型目录设置")
                     with gr.Row():
                         select_uvr_model_dir = gr.Textbox(
                             label="选择UVR模型目录",
@@ -2116,7 +2135,6 @@ with gr.Blocks(
                     with gr.Row():
                         conform_seetings = gr.Button("保存UVR设置")
                         reset_seetings = gr.Button("重置UVR设置")
-                    gr.Markdown(value="### 预设流程设置")
                     with gr.Row():
                         select_preset_backup = gr.Dropdown(
                             label="选择需要恢复的预设流程备份",
@@ -2128,12 +2146,10 @@ with gr.Blocks(
                     with gr.Row():
                         backup_preset = gr.Button("备份预设流程")
                         open_preset_backup = gr.Button("打开备份文件夹")
-                    gr.Markdown(value="### 检查更新")
                     with gr.Row():
                         update_message = gr.Textbox(label="检查更新", value=f"当前版本：{PACKAGE_VERSION}，请点击检查更新按钮", interactive=False,scale=4)
                         check_update = gr.Button("检查更新", scale=1)
                     goto_github = gr.Button("前往Github Releases瞅一眼")
-                    gr.Markdown(value="### WebUI设置")
                     reset_all_webui_config = gr.Button("重置WebUI路径记录", variant="primary")
                     restart_webui = gr.Button("重启WebUI", variant="primary")
                     setting_output_message = gr.Textbox(label="Output Message")
