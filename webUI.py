@@ -111,10 +111,10 @@ def webui_restart():
 
 
 def get_gpu():
-    if not is_available():
-        return "无可用GPU"
     gpus = []
     try:
+        if not is_available():
+            return "无可用GPU"
         n_gpu = device_count()
         for i in range(n_gpu):
             gpus.append(f"{i} {get_device_name(i)}")
