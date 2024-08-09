@@ -62,12 +62,26 @@ def setup_webui():
             version = version_config["version"]
             if version != PACKAGE_VERSION:
                 print(f"[INFO]检测到{version}旧版配置，正在更新至最新版{PACKAGE_VERSION}")
-                print(f"[INFO]将清空除UVR模型路径外的所有路径记录")
                 presets_config = load_configs(PRESETS)
                 webui_config = load_configs(WEBUI_CONFIG)
                 webui_config_backup = load_configs("data_backup/webui_config.json")
                 webui_config_backup["settings"] = webui_config["settings"]
                 webui_config_backup["settings_backup"] = webui_config["settings_backup"]
+                for key in webui_config_backup['training']:
+                    try:
+                        webui_config_backup['training'][key] = webui_config['training'][key]
+                    except KeyError:
+                        continue
+                for key in webui_config_backup['inference']:
+                    try:
+                        webui_config_backup['inference'][key] = webui_config['inference'][key]
+                    except KeyError:
+                        continue
+                for key in webui_config_backup['tools']:
+                    try:
+                        webui_config_backup['tools'][key] = webui_config['tools'][key]
+                    except KeyError:
+                        continue
                 if os.path.exists("configs"):
                     shutil.rmtree("configs")
                     shutil.copytree("configs_backup", "configs")
