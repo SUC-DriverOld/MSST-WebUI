@@ -1,7 +1,8 @@
 .vscode/
 __pycache__/
 *.pyc
-configs/
+configs/*.yaml
+configs/viperx/*.yaml
 configs_template/
 data/
 ffmpeg/bin/*.exe
@@ -13,6 +14,7 @@ pretrain/
 webui.exe
 webui.vmp.exe
 backup/
+tools/SOME_weights/model_steps_64000_simplified.ckpt
 
 !pretrain/*.json
 !.gitkeep

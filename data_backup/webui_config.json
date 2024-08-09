@@ -33,7 +33,8 @@
         "ensemble_type": null,
         "ensemble_output_folder": null,
         "merge_audio_input": null,
-        "merge_audio_output": null
+        "merge_audio_output": null,
+        "some_output_folder": null
     },
     "training": {
         "model_type": null,
@@ -87,7 +88,8 @@
         "ensemble_type": null,
         "ensemble_output_folder": null,
         "merge_audio_input": null,
-        "merge_audio_output": null
+        "merge_audio_output": null,
+        "some_output_folder": null
     },
     "training_backup": {
         "model_type": null,

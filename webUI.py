@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import webbrowser
 import platform
+import warnings
 from datetime import datetime
 from ml_collections import ConfigDict
 from tqdm import tqdm
@@ -26,7 +27,7 @@ from torch.cuda import is_available, get_device_name, device_count
 from multiprocessing import cpu_count
 
 
-PACKAGE_VERSION = "1.4.2"
+PACKAGE_VERSION = "1.4.3"
 PRESETS = "data/preset_data.json"
 BACKUP = "backup/"
 MODELS = "data/model_map.json"
@@ -41,6 +42,7 @@ MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'md
 FFMPEG=".\\ffmpeg\\bin\\ffmpeg.exe"
 PYTHON=".\\workenv\\python.exe"
 
+warnings.filterwarnings("ignore")
 
 def setup_webui():
     if os.path.exists("data"):
@@ -99,6 +101,7 @@ def setup_webui():
             print(f"[INFO]已检测到可用GPU: {get_gpu()}")
         else:
             print("\033[91m" + "[INFO]未检测到可用GPU，将使用CPU进行推理" + "\033[0m")
+            print("\033[91m" + "[INFO]若您使用的是N卡，请更新显卡驱动后重试" + "\033[0m")
     except Exception:
         pass
 
@@ -494,7 +497,7 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
     force_cpu_option = "--force_cpu" if force_cpu else ""
     extra_store_dir = f"--extra_store_dir \"{extra_store_dir}\"" if extra_store_dir else ""
 
-    command = f"{PYTHON} inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} {extract_instrumental_option} {force_cpu_option} {extra_store_dir}"
+    command = f"{PYTHON} msst_inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} {extract_instrumental_option} {force_cpu_option} {extra_store_dir}"
     print_command(command)
     try:
         subprocess.run(command, shell=True)
@@ -873,6 +876,31 @@ def ensemble(files, ensemble_mode, weights, output_path):
             return f"处理完成，文件已保存为：{output_path}"
         except Exception as e:
             return f"处理失败: {e}"
+
+
+def some_inference(audio_file, bpm, output_dir):
+    model = "tools/SOME_weights/model_steps_64000_simplified.ckpt"
+    if not os.path.isfile(model):
+        return "请先下载SOME预处理模型并放置在tools/SOME_weights文件夹下！"
+    if not audio_file.endswith('.wav'):
+        return "请上传wav格式文件"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    config = load_configs(WEBUI_CONFIG)
+    config['tools']['some_output_folder'] = output_dir
+    save_configs(config, WEBUI_CONFIG)
+
+    tempo = int(bpm)
+    file_name = os.path.basename(audio_file)[0:-4]
+    midi = os.path.join(output_dir, f"{file_name}.mid")
+    command = f"{PYTHON} tools/SOME/infer.py --model {model} --wav \"{audio_file}\" --midi \"{midi}\" --tempo {tempo}"
+    print_command(command)
+
+    try:
+        subprocess.run(command, shell=True)
+        return f"处理完成，文件已保存为：{midi}"
+    except Exception as e:
+        return f"处理失败: {e}"
 
 
 def upgrade_download_model_name(model_type_dropdown):
@@ -1499,8 +1527,9 @@ with gr.Blocks(
                                 value=webui_config['tools']['ffmpeg_output_folder'] if webui_config['tools']['ffmpeg_output_folder'] else "results/ffmpeg_output/", 
                                 interactive=True
                                 )
-                            select_ffmpeg_output_dir = gr.Button("选择文件夹")
-                            open_ffmpeg_output_dir = gr.Button("打开文件夹")
+                            with gr.Row():
+                                select_ffmpeg_output_dir = gr.Button("选择文件夹")
+                                open_ffmpeg_output_dir = gr.Button("打开文件夹")
                     convert_audio_button = gr.Button("转换音频", variant="primary")
                     output_message_ffmpeg = gr.Textbox(label="Output Message")
 
@@ -1548,12 +1577,12 @@ with gr.Blocks(
                 with gr.TabItem(label="计算SDR"):
                     with gr.Column():
                         gr.Markdown(value="""
-                        上传两个音频文件并计算它们的[SDR](https://www.aicrowd.com/challenges/music-demixing-challenge-ismir-2021#evaluation-metric)。<br>
+                        上传两个**wav音频文件**并计算它们的[SDR](https://www.aicrowd.com/challenges/music-demixing-challenge-ismir-2021#evaluation-metric)。<br>
+                        SDR是一个用于评估模型质量的数值。数值越大，模型算法结果越好。<br>
                         """)
                     with gr.Row():
-                        true_audio = gr.Audio(label="原始音频", type="filepath")
-                        estimated_audio = gr.Audio(
-                            label="分离后的音频", type="filepath")
+                        true_audio = gr.File(label="原始音频", type="filepath")
+                        estimated_audio = gr.File(label="分离后的音频", type="filepath")
                         output_message_sdr = gr.Textbox(label="Output Message")
 
                     compute_sdr_button = gr.Button("计算SDR", variant="primary")
@@ -1562,24 +1591,7 @@ with gr.Blocks(
                         process_audio, [true_audio, estimated_audio], outputs=output_message_sdr)
 
                 with gr.TabItem(label = "Ensemble模式"):
-                    gr.Markdown(value = """
-                        可用于集成不同算法的结果。<br>
-                        具体的文档位于/docs/ensemble.md。<br>
-                        ### 集成类型：
-                        * `avg_wave` - 在 1D 变体上进行集成，独立地找到波形的每个样本的平均值
-                        * `median_wave` - 在 1D 变体上进行集成，独立地找到波形的每个样本的中位数
-                        * `min_wave` - 在 1D 变体上进行集成，独立地找到波形的每个样本的最小绝对值
-                        * `max_wave` - 在 1D 变体上进行集成，独立地找到波形的每个样本的最大绝对值
-                        * `avg_fft` - 在频谱图（短时傅里叶变换（STFT），2D 变体）上进行集成，独立地找到频谱图的每个像素的平均值。平均后使用逆 STFT 得到原始的 1D 波形。
-                        * `median_fft` - 与 avg_fft 相同，但使用中位数代替平均值（仅在集成 3 个或更多来源时有用）。
-                        * `min_fft` - 与 avg_fft 相同，但使用最小函数代替平均值（减少激进程度）。
-                        * `max_fft` - 与 avg_fft 相同，但使用最大函数代替平均值（增加激进程度）。
-                        ### 注：
-                        * min_fft 可用于进行更保守的合成 - 它将减少更激进模型的影响。
-                        * 最好合成等质量的模型 - 在这种情况下，它将带来增益。如果其中一个模型质量不好 - 它将降低整体质量。
-                        * 在原仓库作者的实验中，与其他方法相比，avg_wave 在 SDR 分数上总是更好或相等。
-                        * 上传的文件名**不能包含空格**，最终会在输出目录下生成一个ensemble_<集成模式>.wav。
-                        """)
+                    gr.Markdown(value = """可用于集成不同算法的结果。具体的文档位于/docs/ensemble.md""")
                     with gr.Row():
                         files = gr.Files(label = "上传多个音频文件", type = "filepath", file_count = 'multiple')
                         with gr.Column():
@@ -1596,10 +1608,30 @@ with gr.Blocks(
                             value = webui_config['tools']['ensemble_output_folder'] if webui_config['tools']['ensemble_output_folder'] else "results/ensemble/",
                             interactive=True
                             )
-                            select_ensembl_output_path = gr.Button("选择文件夹")
-                            open_ensembl_output_path = gr.Button("打开文件夹")
+                            with gr.Row():
+                                select_ensembl_output_path = gr.Button("选择文件夹")
+                                open_ensembl_output_path = gr.Button("打开文件夹")
                     ensemble_button = gr.Button("运行", variant = "primary")
                     output_message_ensemble = gr.Textbox(label = "Output Message")
+                    with gr.Row():
+                        gr.Markdown(value = """
+                            ### 集成模式：
+                            - `avg_wave`：在1D变体上进行集成，独立地找到波形的每个样本的平均值
+                            - `median_wave`：在1D变体上进行集成，独立地找到波形的每个样本的中位数
+                            - `min_wave`：在1D变体上进行集成，独立地找到波形的每个样本的最小绝对值
+                            - `max_wave`：在1D变体上进行集成，独立地找到波形的每个样本的最大绝对值
+                            - `avg_fft`：在频谱图（短时傅里叶变换（STFT）2D变体）上进行集成，独立地找到频谱图的每个像素的平均值。平均后使用逆STFT得到原始的1D波形
+                            - `median_fft`：与avg_fft相同，但使用中位数代替平均值（仅在集成3个或更多来源时有用）
+                            - `min_fft`：与avg_fft相同，但使用最小函数代替平均值（减少激进程度）
+                            - `max_fft`：与avg_fft相同，但使用最大函数代替平均值（增加激进程度）
+                            """)
+                        gr.Markdown(value = """
+                            ### 注：
+                            - min_fft可用于进行更保守的合成，它将减少更激进模型的影响。
+                            - 最好合成等质量的模型。在这种情况下，它将带来增益。如果其中一个模型质量不好，它将降低整体质量。
+                            - 在原仓库作者的实验中，与其他方法相比，avg_wave在SDR分数上总是更好或相等。
+                            - 上传的文件名**不能包含空格**，最终会在输出目录下生成一个`ensemble_<集成模式>.wav`。
+                            """)
 
                     ensemble_button.click(
                         fn = ensemble, 
@@ -1608,6 +1640,44 @@ with gr.Blocks(
                         )
                     select_ensembl_output_path.click(fn = select_folder, outputs = ensembl_output_path)
                     open_ensembl_output_path.click(fn = open_folder, inputs = ensembl_output_path)
+                
+                with gr.TabItem(label="歌声转MIDI"):
+                    gr.Markdown(value="""
+                        歌声转MIDI功能使用开源项目[SOME](https://github.com/openvpi/SOME/)，可以将分离得到的**干净的歌声**转换成.mid文件。<br>
+                        【必须】若想要使用此功能，请先下载权重文件[model_steps_64000_simplified.ckpt](https://hf-mirror.com/Sucial/SOME_Models/resolve/main/model_steps_64000_simplified.ckpt)并将其放置在程序目录下的`tools/SOME_weights`文件夹内。<br>
+                        【重要】只能上传wav格式的音频！
+                        """)
+                    with gr.Row():
+                        some_input_audio = gr.File(label="上传wav格式音频", type="filepath")
+                        with gr.Column():
+                            audio_bpm = gr.Number(label="输入音频BPM", value=120, interactive=True)
+                            some_output_folder = gr.Textbox(
+                                label="输出目录",
+                                value=webui_config['tools']['some_output_folder'] if webui_config['tools']['some_output_folder'] else "results/some/",
+                                interactive=True,
+                                scale=3
+                            )
+                            with gr.Row():
+                                select_some_output_dir = gr.Button("选择文件夹")
+                                open_some_output_dir = gr.Button("打开文件夹")
+                    some_button = gr.Button("开始转换", variant="primary")
+                    output_message_some = gr.Textbox(label="Output Message")
+                    gr.Markdown(value="""
+                        ### 注意事项：
+                        1. 音频BPM（每分钟节拍数）可以通过MixMeister BPM Analyzer等软件测量获取。<br>
+                        2. 为保证MIDI提取质量，音频文件请采用干净清晰无混响底噪人声。<br>
+                        3. 输出MIDI不带歌词信息，需要用户自行添加歌词。<br>
+                        4. 实际使用体验中部分音符会出现断开的现象，需自行修正。SOME的模型主要面向DiffSinger唱法模型自动标注，比正常用户在创作中需要的MIDI更加精细，因而可能导致模型倾向于对音符进行切分。<br>
+                        5. 提取的MIDI没有量化/没有对齐节拍/不适配BPM，需自行到各编辑器中手动调整。<br>
+                        """)
+
+                    select_some_output_dir.click(fn=select_folder, outputs=some_output_folder)
+                    open_some_output_dir.click(fn=open_folder, inputs=some_output_folder)
+                    some_button.click(
+                        fn=some_inference,
+                        inputs=[some_input_audio, audio_bpm, some_output_folder],
+                        outputs=output_message_some
+                    )
 
         with gr.TabItem(label="安装模型"):
             uvr_model_folder = webui_config['settings']['uvr_model_dir']
