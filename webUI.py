@@ -44,6 +44,23 @@ PYTHON = sys.executable
 
 warnings.filterwarnings("ignore")
 
+
+def load_port_from_config():
+    with open(WEBUI_CONFIG, 'r', encoding='utf-8') as file:
+        config = json.load(file)
+    return config.get('port', 7860)  # 未指定则在7860打开
+
+port = load_port_from_config()
+
+def save_port_to_config(port):
+    with open(WEBUI_CONFIG, 'r', encoding='utf-8') as file:
+        config = json.load(file)
+    config['port'] = port
+    with open(WEBUI_CONFIG, 'w', encoding='utf-8') as file:
+        json.dump(config, file, indent=4)
+    return f"成功将端口设置为{port}。"
+
+
 def setup_webui():
     if os.path.exists("data"):
         if not os.path.isfile(VERSION_CONFIG):
@@ -2152,8 +2169,11 @@ with gr.Blocks(
                         backup_preset = gr.Button("备份预设流程")
                         open_preset_backup = gr.Button("打开备份文件夹")
                     with gr.Row():
-                        update_message = gr.Textbox(label="检查更新", value=f"当前版本：{PACKAGE_VERSION}，请点击检查更新按钮", interactive=False,scale=4)
+                        update_message = gr.Textbox(label="检查更新", value=f"当前版本：{PACKAGE_VERSION}，请点击检查更新按钮", interactive=False,scale=1)
                         check_update = gr.Button("检查更新", scale=1)
+                        set_webui_port = gr.Number(label="设置WebUI端口", value=port if port else 7860, interactive=True, scale=1)
+                        set_webui_port_button = gr.Button("设置端口(重启后生效)", scale=1)
+
                     goto_github = gr.Button("前往Github Releases瞅一眼")
                     reset_all_webui_config = gr.Button("重置WebUI路径记录", variant="primary")
                     restart_webui = gr.Button("重启WebUI", variant="primary")
@@ -2202,5 +2222,10 @@ with gr.Blocks(
                 fn=backup_preset_func,
                 outputs=[setting_output_message, select_preset_backup]
             )
+            set_webui_port_button.click(
+                fn=save_port_to_config,
+                inputs=[set_webui_port],
+                outputs=setting_output_message
+            )
 
-app.launch(inbrowser=True)
+app.launch(inbrowser=True, server_port = port)
