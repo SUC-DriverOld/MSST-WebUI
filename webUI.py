@@ -16,6 +16,7 @@ import pandas as pd
 import webbrowser
 import platform
 import warnings
+import locale
 from datetime import datetime
 from ml_collections import ConfigDict
 from tqdm import tqdm
@@ -27,7 +28,7 @@ from torch.cuda import is_available, get_device_name, device_count
 from multiprocessing import cpu_count
 
 
-PACKAGE_VERSION = "1.4.3"
+PACKAGE_VERSION = "1.4.4"
 PRESETS = "data/preset_data.json"
 BACKUP = "backup/"
 MODELS = "data/model_map.json"
@@ -40,7 +41,7 @@ VERSION_CONFIG = "data/version.json"
 TEMP_PATH = "temp"
 MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit']
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if platform.system() == "Windows" else "ffmpeg"
-PYTHON = sys.executable
+PYTHON = ".\\workenv\\python.exe" if os.path.isfile(".\\workenv\\python.exe") else sys.executable
 
 warnings.filterwarnings("ignore")
 
@@ -139,6 +140,15 @@ def setup_webui():
 
 def webui_restart():
     os.execl(PYTHON, PYTHON, *sys.argv)
+
+
+def i18n(key):
+    language = locale.getdefaultlocale()[0]
+    if not os.path.exists(path=f"tools/i18n/locale/{language}.json"):
+        language = "en_US"
+    with open(file=f"tools/i18n/locale/{language}.json", mode="r", encoding="utf-8") as f:
+        language_list = json.load(f)
+    return language_list.get(key, key)
 
 
 def get_gpu():
