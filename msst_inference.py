@@ -116,11 +116,13 @@ def proc_folder(args):
     parser.add_argument("--start_check_point", type = str, default = '', help = "Initial checkpoint to valid weights")
     parser.add_argument("--input_folder", type = str, help = "folder with mixtures to process")
     parser.add_argument("--store_dir", default = "", type = str, help = "path to store results as wav file")
+    parser.add_argument("--device", default = None, type = str, help="device to use for inference")
     parser.add_argument("--device_ids", nargs = '+', type = int, default = 0, help = 'list of gpu ids')
     parser.add_argument("--extract_instrumental", action = 'store_true',
                         help = "invert vocals to get instrumental if provided")
     parser.add_argument("--extra_store_dir", default = "", type = str, help = "path to store extracted instrumental. If not provided, store_dir will be used")
     parser.add_argument("--force_cpu", action = 'store_true', help = "Force the use of CPU even if CUDA is available")
+
     if args is None:
         args = parser.parse_args()
     else:
@@ -128,7 +130,20 @@ def proc_folder(args):
 
     torch.backends.cudnn.benchmark = True
 
-    use_cuda = torch.cuda.is_available() and not args.force_cpu
+    device = args.device
+
+    if args.force_cpu:
+        device = 'cpu'
+    elif device is None:
+        if torch.cuda.is_available():
+            device = 'cuda'
+        elif torch.backends.mps.is_available():
+            device = 'mps'
+        else:
+            # fallback to cpu
+            device = 'cpu'
+
+    use_cuda = device == 'cuda'
 
     model, config = get_model_from_config(args.model_type, args.config_path)
     if args.start_check_point != '':
@@ -136,7 +151,7 @@ def proc_folder(args):
         if use_cuda:
             state_dict = torch.load(args.start_check_point)
         else:
-            state_dict = torch.load(args.start_check_point, map_location = torch.device('cpu'))
+            state_dict = torch.load(args.start_check_point, map_location = torch.device(device))
         if args.model_type == 'htdemucs':
             # Fix for htdemucs pround etrained models
             if 'state' in state_dict:
@@ -154,8 +169,7 @@ def proc_folder(args):
             model = nn.DataParallel(model, device_ids = device_ids).to(device)
         logger.info('Using CUDA with device_ids: {}'.format(device_ids))
     else:
-        device = 'cpu'
-        logger.info('Using CPU. It will be very slow!')
+        logger.info(f'Using {device}')
         logger.info('If CUDA is available, use --force_cpu to disable it.')
         model = model.to(device)
 
