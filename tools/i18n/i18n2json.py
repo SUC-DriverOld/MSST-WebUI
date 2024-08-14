@@ -12,7 +12,7 @@ def process_py_file(file_path):
         content = f.read()
         i18n_strings = extract_i18n_strings(content)
         for i, string in enumerate(i18n_strings, 1):
-            i18n_dict[string] = f"text{i}"
+            i18n_dict[string] = "text"
 
     return i18n_dict
 
@@ -21,6 +21,6 @@ def save_to_json(data, output_file):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 file_path = "E:\\vs\\MSST-WebUI\\webUI.py"
-output_file = "i18n_strings.json"
+output_file = "E:\\vs\\MSST-WebUI\\tools\\i18n\\locale\\template.json"
 i18n_dict = process_py_file(file_path)
 save_to_json(i18n_dict, output_file)
