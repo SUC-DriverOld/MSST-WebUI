@@ -127,8 +127,8 @@ def webui_restart():
 
 def i18n(key):
     language = locale.getdefaultlocale()[0]
-    # if language == "zh_CN":
-    #     return key
+    if language == "zh_CN":
+        return key
     if not os.path.exists(path=f"tools/i18n/locale/{language}.json"):
         language = "en_US"
     with open(file=f"tools/i18n/locale/{language}.json", mode="r", encoding="utf-8") as f:
