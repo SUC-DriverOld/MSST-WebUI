@@ -52,7 +52,9 @@
         "results_path": null
     },
     "settings": {
-        "uvr_model_dir": "pretrain/VR_Models"
+        "uvr_model_dir": "pretrain/VR_Models",
+        "port": 0,
+        "language": "Auto"
     },
     "inference_backup": {
         "selected_model": null,
@@ -107,7 +109,8 @@
         "results_path": null
     },
     "settings_backup": {
-        "uvr_model_dir": "pretrain/VR_Models"
-    },
-    "port": 0
+        "uvr_model_dir": "pretrain/VR_Models",
+        "port": 0,
+        "language": "Auto"
+    }
 }

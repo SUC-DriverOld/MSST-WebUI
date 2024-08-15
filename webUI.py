@@ -41,7 +41,7 @@ CONFIG_TEMPLATE_FOLDER = "configs_template/"
 VERSION_CONFIG = "data/version.json"
 TEMP_PATH = "temp"
 MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit']
-FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if platform.system() == "Windows" else "ffmpeg"
+FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"
 PYTHON = ".\\workenv\\python.exe" if os.path.isfile(".\\workenv\\python.exe") else sys.executable
 
 warnings.filterwarnings("ignore")
@@ -55,7 +55,7 @@ def load_port_from_config():
 def save_port_to_config(port):
     port = int(port)
     config = load_configs(WEBUI_CONFIG)
-    config['port'] = port
+    config['settings']['port'] = port
     save_configs(config, WEBUI_CONFIG)
     return i18n("成功将端口设置为") + str(port)
 
@@ -63,7 +63,7 @@ def save_port_to_config(port):
 def setup_webui():
     if os.path.exists("data"):
         if not os.path.isfile(VERSION_CONFIG):
-            print(i18n("[INFO]正在初始化版本配置文件"))
+            print(i18n("[INFO] 正在初始化版本配置文件"))
             if os.path.exists("configs"):
                 shutil.rmtree("configs")
                 shutil.copytree("configs_backup", "configs")
@@ -77,7 +77,7 @@ def setup_webui():
             version_config = load_configs(VERSION_CONFIG)
             version = version_config["version"]
             if version != PACKAGE_VERSION:
-                print(i18n("[INFO]检测到") + version + i18n("旧版配置, 正在更新至最新版") + PACKAGE_VERSION)
+                print(i18n("[INFO] 检测到") + version + i18n("旧版配置, 正在更新至最新版") + PACKAGE_VERSION)
                 presets_config = load_configs(PRESETS)
                 webui_config = load_configs(WEBUI_CONFIG)
                 webui_config_backup = load_configs("data_backup/webui_config.json")
@@ -107,20 +107,20 @@ def setup_webui():
                 save_configs(version_config, VERSION_CONFIG)
 
     if not os.path.exists("configs"):
-        print(i18n("[INFO]正在初始化configs目录"))
+        print(i18n("[INFO] 正在初始化configs目录"))
         shutil.copytree("configs_backup", "configs")
     if not os.path.exists("configs_template"):
-        print(i18n("[INFO]正在初始化configs_template目录"))
+        print(i18n("[INFO] 正在初始化configs_template目录"))
         shutil.copytree("configs_backup", "configs_template")
     if not os.path.exists("data"):
-        print(i18n("[INFO]正在初始化data目录"))
+        print(i18n("[INFO] 正在初始化data目录"))
         shutil.copytree("data_backup", "data")
     if not os.path.isfile("pretrain/VR_Models/download_checks.json") or not os.path.isfile("pretrain/VR_Models/mdx_model_data.json") or not os.path.isfile("pretrain/VR_Models/vr_model_data.json"):
-        print(i18n("[INFO]正在初始化pretrain目录"))
+        print(i18n("[INFO] 正在初始化pretrain目录"))
         copy_uvr_config(os.path.join(MODEL_FOLDER, "VR_Models"))
     absolute_path = os.path.abspath("ffmpeg/bin/")
     os.environ["PATH"] += os.pathsep + absolute_path
-    print(i18n("[INFO]设备信息：") + str(get_device()))
+    print(i18n("[INFO] 设备信息：") + str(get_device()))
 
 
 def webui_restart():
@@ -1334,7 +1334,7 @@ with gr.Blocks(
             gr.Markdown(value=i18n("预设流程允许按照预设的顺序运行多个模型。每一个模型的输出将作为下一个模型的输入。"))
             with gr.Tabs():
                 with gr.TabItem(label=i18n("使用预设")):
-                    gr.Markdown(value=i18n("该模式下的UVR推理参数将直接沿用UVR分离页面的推理参数, 如需修改请前往UVR分离页面。"))
+                    gr.Markdown(value=i18n("该模式下的UVR推理参数将直接沿用UVR分离页面的推理参数, 如需修改请前往UVR分离页面。<br>修改完成后, 还需要任意处理一首歌才能保存参数! "))
                     preset_dropdown = gr.Dropdown(label=i18n("请选择预设"),choices=list(presets.keys()),value=webui_config['inference']['preset'] if webui_config['inference']['preset'] else None,interactive=True)
                     force_cpu = gr.Checkbox(label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),value=webui_config['inference']['force_cpu'] if webui_config['inference']['force_cpu'] else False,interactive=True)
                     with gr.Tabs():
@@ -1369,12 +1369,21 @@ with gr.Blocks(
                     reset_flow = gr.Button(i18n("重新输入"))
                     save_flow = gr.Button(i18n("保存上述预设流程"), variant="primary")
                     output_message_make = gr.Textbox(label="Output Message")
-                with gr.TabItem(label=i18n("查看/删除预设")):
+                with gr.TabItem(label=i18n("管理预设")):
+                    gr.Markdown(i18n("此页面提供查看预设, 删除预设, 备份预设, 恢复预设等功能"))
                     preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=load_presets_list(), interactive=True)
                     gr.Markdown(i18n("`model_type`: 模型类型；`model_name`: 模型名称；`stem`: 主要输出音轨；<br>`secondary_output`: 同时输出次级音轨。选择True将同时输出该次分离得到的次级音轨, **此音轨将直接保存至**输出目录下的secondary_output文件夹, **不会经过后续流程处理**"))
                     preset_flow_delete = gr.Dataframe(pd.DataFrame({"model_type": [i18n("请先选择预设")], "model_name": [i18n("请先选择预设")], "stem": [i18n("请先选择预设")], "secondary_output": [i18n("请先选择预设")]}), interactive=False, label=None)
                     delete_button = gr.Button(i18n("删除所选预设"), scale=1)
-                    output_message_delete = gr.Textbox(label="Output Message")
+                    gr.Markdown(i18n("每次删除预设前, 将自动备份预设以免误操作。<br>你也可以点击“备份预设流程”按钮进行手动备份, 也可以从备份文件夹中恢复预设流程。恢复预设流程后, 需要重启WebUI以更新。"))
+                    with gr.Row():
+                        backup_preset = gr.Button(i18n("备份预设流程"))
+                        open_preset_backup = gr.Button(i18n("打开备份文件夹"))
+                    with gr.Row():
+                        select_preset_backup = gr.Dropdown(label=i18n("选择需要恢复的预设流程备份"),choices=preset_backup_list(),interactive=True,scale=4)
+                        restore_preset = gr.Button(i18n("恢复"), scale=1)
+                    output_message_manage = gr.Textbox(label="Output Message")
+                
 
             inference_flow.click(fn=run_inference_flow,inputs=[input_folder_flow, store_dir_flow, preset_dropdown, force_cpu],outputs=output_message_flow)
             single_inference_flow.click(fn=run_single_inference_flow,inputs=[single_audio_flow, store_dir_flow, preset_dropdown, force_cpu],outputs=output_message_flow)
@@ -1387,9 +1396,12 @@ with gr.Blocks(
             add_to_flow.click(add_to_flow_func, [model_type, model_name, stem, secondary_output, preset_flow], preset_flow)
             save_flow.click(save_flow_func, [preset_name_input, preset_flow], [output_message_make, preset_name_delete, preset_dropdown])
             reset_flow.click(reset_flow_func, [], preset_flow)
-            delete_button.click(delete_func, [preset_name_delete], [output_message_delete, preset_name_delete, preset_dropdown, preset_flow_delete])
+            delete_button.click(delete_func, [preset_name_delete], [output_message_manage, preset_name_delete, preset_dropdown, preset_flow_delete])
             preset_name_delete.change(load_preset, inputs=preset_name_delete, outputs=preset_flow_delete)
             stop_thread.click(fn=stop_all_thread)
+            restore_preset.click(fn=restore_preset_func,inputs=[select_preset_backup],outputs=output_message_manage)
+            backup_preset.click(fn=backup_preset_func,outputs=[output_message_manage, select_preset_backup])
+            open_preset_backup.click(open_folder, inputs=gr.Textbox(BACKUP, visible=False))
 
         with gr.TabItem(label=i18n("小工具")):
             with gr.Tabs():
@@ -1713,50 +1725,39 @@ with gr.Blocks(
                         gpu_list = gr.Textbox(label=i18n("GPU信息"), value=get_device(), interactive=False)
                         plantform_info = gr.Textbox(label=i18n("系统信息"), value=get_platform(), interactive=False)
                     with gr.Row():
+                        set_webui_port = gr.Number(label=i18n("设置WebUI端口, 0为自动"), value=load_port_from_config(), interactive=True)
+                        set_language = gr.Dropdown(label=i18n("选择语言"), choices=["English", "简体中文"], value=webui_config['settings']['language'] if webui_config['settings']['language'] else "Auto", interactive=True)
+                    with gr.Row():
                         select_uvr_model_dir = gr.Textbox(label=i18n("选择UVR模型目录"),value=webui_config['settings']['uvr_model_dir'] if webui_config['settings']['uvr_model_dir'] else "pretrain/VR_Models",interactive=True,scale=4)
                         select_uvr_model_dir_button = gr.Button(i18n("选择文件夹"), scale=1)
                     with gr.Row():
-                        conform_seetings = gr.Button(i18n("保存UVR设置"))
-                        reset_seetings = gr.Button(i18n("重置UVR设置"))
+                        update_message = gr.Textbox(label=i18n("检查更新"), value=i18n("当前版本: ") + PACKAGE_VERSION + i18n(", 请点击检查更新按钮"), interactive=False,scale=3)
+                        check_update = gr.Button(i18n("检查更新"), scale=1)
+                        goto_github = gr.Button(i18n("前往Github瞅一眼"))
                     with gr.Row():
-                        select_preset_backup = gr.Dropdown(label=i18n("选择需要恢复的预设流程备份"),choices=preset_backup_list(),interactive=True,scale=4)
-                        restore_preset = gr.Button(i18n("恢复"), scale=1)
-                    with gr.Row():
-                        backup_preset = gr.Button(i18n("备份预设流程"))
-                        open_preset_backup = gr.Button(i18n("打开备份文件夹"))
-                    with gr.Row():
-                        update_message = gr.Textbox(label=i18n("检查更新"), value=i18n("当前版本: ") + PACKAGE_VERSION + i18n(", 请点击检查更新按钮"), interactive=False,scale=4)
-                        check_update = gr.Button(i18n("检查更新"), scale=2)
-                        set_webui_port = gr.Number(label=i18n("设置WebUI端口, 0为自动"), value=load_port_from_config(), interactive=True, scale=3)
-                        set_webui_port_button = gr.Button(i18n("设置端口(需重启)"), scale=3)
-                    goto_github = gr.Button(i18n("前往Github Releases瞅一眼"))
-                    reset_all_webui_config = gr.Button(i18n("重置WebUI路径记录"), variant="primary")
+                        reset_all_webui_config = gr.Button(i18n("重置WebUI路径记录"), variant="primary")
+                        reset_seetings = gr.Button(i18n("重置WebUI设置"), variant="primary")
                     restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
                     setting_output_message = gr.Textbox(label="Output Message")
                 with gr.Column(scale=1):
                     gr.Markdown(i18n("### 设置说明"))
-                    gr.Markdown(i18n("### 1. 选择UVR模型目录"))
+                    gr.Markdown(i18n("### 选择UVR模型目录"))
                     gr.Markdown(i18n("如果你的电脑中有安装UVR5, 你不必重新下载一遍UVR5模型, 只需在下方“选择UVR模型目录”中选择你的UVR5模型目录, 定位到models/VR_Models文件夹。<br>例如: E:/Program Files/Ultimate Vocal Remover/models/VR_Models 点击保存设置或重置设置后, 需要重启WebUI以更新。"))
-                    gr.Markdown(i18n("### 2. 预设流程设置"))
-                    gr.Markdown(i18n("可以将你制作的预设流程备份至backup文件夹, 也可以从backup文件夹中恢复预设流程。恢复预设流程后, 需要重启WebUI以更新。"))
-                    gr.Markdown(i18n("### 3. 检查更新"))
+                    gr.Markdown(i18n("### 检查更新"))
                     gr.Markdown(i18n("从Github检查更新, 需要一定的网络要求。点击检查更新按钮后, 会自动检查是否有最新版本。你可以前往此整合包的下载链接或访问Github仓库下载最新版本。"))
-                    gr.Markdown(i18n("### 4. 重置WebUI路径记录"))
+                    gr.Markdown(i18n("### 重置WebUI路径记录"))
                     gr.Markdown(i18n("将所有输入输出目录重置为默认路径, 预设/模型/配置文件以及上面的设置等**不会重置**, 无需担心。重置WebUI设置后, 需要重启WebUI。"))
-                    gr.Markdown(i18n("### 5. 重启WebUI"))
+                    gr.Markdown(i18n("### 重启WebUI"))
                     gr.Markdown(i18n("点击 “重启WebUI” 按钮后, 会短暂性的失去连接, 随后会自动开启一个新网页。"))
 
             restart_webui.click(fn=webui_restart, outputs=setting_output_message)
             check_update.click(fn=check_webui_update, outputs=update_message)
             goto_github.click(fn=webui_goto_github)
             select_uvr_model_dir_button.click(fn=select_folder, outputs=select_uvr_model_dir)
-            open_preset_backup.click(open_folder, inputs=gr.Textbox(BACKUP, visible=False))
-            conform_seetings.click(fn=save_settings,inputs=[select_uvr_model_dir],outputs=setting_output_message)
             reset_seetings.click(fn=reset_settings,inputs=[],outputs=setting_output_message)
             reset_all_webui_config.click(fn=reset_webui_config,outputs=setting_output_message)
-            restore_preset.click(fn=restore_preset_func,inputs=[select_preset_backup],outputs=setting_output_message)
-            backup_preset.click(fn=backup_preset_func,outputs=[setting_output_message, select_preset_backup])
-            set_webui_port_button.click(fn=save_port_to_config,inputs=[set_webui_port],outputs=setting_output_message)
+            set_webui_port.change(fn=save_port_to_config,inputs=[set_webui_port],outputs=setting_output_message)
+            select_uvr_model_dir.change(fn=save_settings,inputs=[select_uvr_model_dir],outputs=setting_output_message)
 
 server_port = load_port_from_config()
 if server_port == 0: server_port = None
