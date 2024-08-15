@@ -17,6 +17,8 @@ import webbrowser
 import platform
 import warnings
 import locale
+import threading
+import psutil
 from datetime import datetime
 from ml_collections import ConfigDict
 from tqdm import tqdm
@@ -43,7 +45,7 @@ FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if platform.system() == "Windows" else "ff
 PYTHON = ".\\workenv\\python.exe" if os.path.isfile(".\\workenv\\python.exe") else sys.executable
 
 warnings.filterwarnings("ignore")
-
+stop_all_threads = False
 
 def load_port_from_config():
     config = load_configs(WEBUI_CONFIG)
@@ -330,6 +332,8 @@ def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_
 
 
 def save_settings(select_uvr_model_dir):
+    if not os.path.exists(select_uvr_model_dir):
+        return i18n("请选择正确的模型目录")
     copy_uvr_config(select_uvr_model_dir)
     config = load_configs(WEBUI_CONFIG)
     config['settings']['uvr_model_dir'] = select_uvr_model_dir
@@ -480,6 +484,35 @@ def reset_config(selected_model):
         return i18n("备份配置文件不存在!")
 
 
+def run_command(command):
+    global stop_all_threads
+    stop_all_threads = False
+    print_command(command)
+    try:
+        process = subprocess.Popen(command, shell=True)
+        proc = psutil.Process(process.pid)
+        while process.poll() is None:
+            if stop_all_threads:
+                for child in proc.children(recursive=True):
+                    child.terminate()
+                process.terminate()
+                stop_all_threads = False
+                return
+        if process.returncode != 0:
+            raise gr.Error(i18n("发生错误! 请前往终端查看详细信息"))
+    except Exception as e:
+        print(e)
+        raise gr.Error(i18n("发生错误! 请前往终端查看详细信息"))
+
+
+def stop_all_thread():
+    global stop_all_threads
+    for thread in threading.enumerate():
+        if thread.name in ["msst_inference", "vr_inference", "msst_training", "msst_valid"]:
+            stop_all_threads = True
+            gr.Info(i18n("已停止进程"))
+
+
 def run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, force_cpu):
     config = load_configs(WEBUI_CONFIG)
     config['inference']['selected_model'] = selected_model
@@ -535,12 +568,10 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
     extra_store_dir = f"--extra_store_dir \"{extra_store_dir}\"" if extra_store_dir else ""
 
     command = f"{PYTHON} msst_inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} {extract_instrumental_option} {force_cpu_option} {extra_store_dir}"
-    print_command(command)
-    try:
-        subprocess.run(command, shell=True)
-    except Exception as e:
-        print(e)
-        raise gr.Error(i18n("处理失败!"))
+
+    msst_inference = threading.Thread(target=run_command, args=(command,), name="msst_inference")
+    msst_inference.start()
+    msst_inference.join()
 
 
 def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
@@ -559,8 +590,8 @@ def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_outpu
     shutil.copy(vr_single_audio, TEMP_PATH)
     vr_single_audio = os.path.join(TEMP_PATH, os.path.basename(vr_single_audio))
     save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
-    message = vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
-    return message
+    vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
+    return i18n("处理完成, 结果已保存至") + vr_store_dir
 
 def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
     if not os.path.isdir(vr_multiple_audio_input):
@@ -572,8 +603,8 @@ def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output
     if not os.path.exists(vr_store_dir):
         os.makedirs(vr_store_dir)
     save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
-    message = vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
-    return message
+    vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
+    return i18n("处理完成, 结果已保存至") + vr_store_dir
 
 def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode, save_another_stem=False, extra_output_dir=None):
     config = load_configs(WEBUI_CONFIG)
@@ -613,13 +644,10 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
     extra_output_dir = f"--extra_output_dir \"{extra_output_dir}\"" if extra_output_dir else ""
 
     command = f"{PYTHON} uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} --sample_rate {sample_rate} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold} {save_another_stem} {extra_output_dir}"
-    print_command(command)
-    try:
-        subprocess.run(command, shell=True)
-        return i18n("处理完成, 结果已保存至") + output_dir
-    except Exception as e:
-        print(e)
-        return i18n("处理失败!")
+
+    vr_inference = threading.Thread(target=run_command, args=(command,), name="vr_inference")
+    vr_inference.start()
+    vr_inference.join()
 
 
 def update_model_name(model_type):
@@ -1105,14 +1133,9 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
         return i18n("模型保存路径不存在, 请重新选择")
 
     command = f"{PYTHON} train.py --model_type {model_type} --config_path \"{config_path}\" {start_check_point} --results_path \"{results_path}\" --data_path \"{data_path}\" --dataset_type {dataset_type} --valid_path \"{valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} --pin_memory {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss}"
-    print_command(command)
-    try:
-        subprocess.run(command, shell=True)
-        # 按道理这边会阻塞住, 如果下面的return被执行, 说明大概率是出错了 (也有可能训练结束) 
-        return i18n("请前往控制台查看报错信息! ")
-    except Exception as e:
-        print(e)
-        return i18n("训练启动失败!")
+
+    threading.Thread(target=run_command, args=(command,), name="msst_training").start()
+    return i18n("训练启动成功! 请前往控制台查看训练信息! ")
 
 
 def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_path, valid_results_path, valid_device_ids, valid_num_workers, valid_extension, valid_pin_memory):
@@ -1131,13 +1154,12 @@ def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_
     pin_memory = "--pin_memory" if valid_pin_memory else ""
     
     command = f"{PYTHON} valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {valid_device_ids} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory}"
-    print_command(command)
-    try:
-        subprocess.run(command, shell=True)
-        return i18n("验证完成! 请打开输出文件夹查看详细结果")
-    except Exception as e:
-        print(e)
-        return i18n("验证失败!")
+
+    msst_valid = threading.Thread(target=run_command, args=(command,), name="msst_valid")
+    msst_valid.start()
+    msst_valid.join()
+    return i18n("验证完成! 请打开输出文件夹查看详细结果")
+
 
 
 def check_webui_update():
@@ -1226,9 +1248,6 @@ with gr.Blocks(
                 store_dir = gr.Textbox(label=i18n("输出目录"),value=webui_config['inference']['store_dir'] if webui_config['inference']['store_dir'] else "results/",interactive=True,scale=3)
                 select_store_btn = gr.Button(i18n("选择文件夹"), scale=1)
                 open_store_btn = gr.Button(i18n("打开文件夹"), scale=1)
-            with gr.Row():
-                inference_single = gr.Button(i18n("单个音频分离"), variant="primary")
-                inference_multiple = gr.Button(i18n("批量音频分离"), variant="primary")
             with gr.Accordion(i18n("推理参数设置 (一般不需要动) "), open=False):
                 gr.Markdown(value=i18n("只有在点击保存后才会生效。参数直接写入配置文件, 无法撤销。假如不知道如何设置, 请保持默认值。<br>请牢记自己修改前的参数数值, 防止出现问题以后无法恢复。请确保输入正确的参数, 否则可能会导致模型无法正常运行。<br>假如修改后无法恢复, 请点击``重置``按钮, 这会使得配置文件恢复到默认值。"))
                 if webui_config['inference']['selected_model']:
@@ -1242,7 +1261,12 @@ with gr.Blocks(
                 normalize = gr.Checkbox(label=i18n("normalize: 是否对音频进行归一化处理 (部分模型没有此参数)"), value=False, interactive=False)
                 reset_config_button = gr.Button(i18n("重置配置"), variant="secondary")
                 save_config_button = gr.Button(i18n("保存配置"), variant="primary")
-            output_message = gr.Textbox(label="Output Message")
+            with gr.Row():
+                inference_single = gr.Button(i18n("单个音频分离"), variant="primary")
+                inference_multiple = gr.Button(i18n("批量音频分离"), variant="primary")
+            with gr.Row():
+                output_message = gr.Textbox(label="Output Message", scale=4)
+                stop_thread = gr.Button(i18n("强制停止"), scale=1)
 
             inference_single.click(fn=run_inference_single,inputs=[selected_model, single_audio, store_dir, extract_instrumental, gpu_id, force_cpu],outputs=output_message)
             inference_multiple.click(fn=run_multi_inference, inputs=[selected_model, multiple_audio_input, store_dir, extract_instrumental, gpu_id, force_cpu],outputs=output_message)
@@ -1253,6 +1277,7 @@ with gr.Blocks(
             open_store_btn.click(fn=open_folder, inputs=store_dir)
             select_multi_input_dir.click(fn=select_folder, outputs=multiple_audio_input)
             open_multi_input_dir.click(fn=open_folder, inputs=multiple_audio_input)
+            stop_thread.click(fn=stop_all_thread)
 
         with gr.TabItem(label=i18n("UVR分离")):
             gr.Markdown(value=i18n("说明: 本整合包仅融合了UVR的VR Architecture模型, MDX23C和HtDemucs类模型可以直接使用前面的MSST音频分离。<br>使用UVR模型进行音频分离时, 若有可用的GPU, 软件将自动选择, 否则将使用CPU进行分离。<br>UVR分离使用项目: [https://github.com/nomadkaraoke/python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) 并进行了优化。"))
@@ -1292,7 +1317,9 @@ with gr.Blocks(
             with gr.Row():
                 vr_start_single_inference = gr.Button(i18n("单个音频分离"), variant="primary")
                 vr_start_multi_inference = gr.Button(i18n("批量音频分离"), variant="primary")
-            vr_output_message = gr.Textbox(label="Output Message")
+            with gr.Row():
+                vr_output_message = gr.Textbox(label="Output Message", scale=4)
+                stop_thread = gr.Button(i18n("强制停止"), scale=1)
 
             vr_select_model.change(fn=load_vr_model_stem,inputs=vr_select_model,outputs=[vr_primary_stem_only, vr_secondary_stem_only])
             vr_select_multi_input_dir.click(fn=select_folder, outputs=vr_multiple_audio_input)
@@ -1301,6 +1328,7 @@ with gr.Blocks(
             vr_open_store_btn.click(fn=open_folder, inputs=vr_store_dir)
             vr_start_single_inference.click(fn=vr_inference_single,inputs=[vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode],outputs=vr_output_message)
             vr_start_multi_inference.click(fn=vr_inference_multi,inputs=[vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode],outputs=vr_output_message)
+            stop_thread.click(fn=stop_all_thread)
 
         with gr.TabItem(label=i18n("预设流程")):
             gr.Markdown(value=i18n("预设流程允许按照预设的顺序运行多个模型。每一个模型的输出将作为下一个模型的输入。"))
@@ -1324,7 +1352,9 @@ with gr.Blocks(
                     with gr.Row():
                         single_inference_flow = gr.Button(i18n("单个音频分离"), variant="primary")
                         inference_flow = gr.Button(i18n("批量音频分离"), variant="primary")
-                    output_message_flow = gr.Textbox(label="Output Message")
+                    with gr.Row():
+                        output_message_flow = gr.Textbox(label="Output Message", scale=4)
+                        stop_thread = gr.Button(i18n("强制停止"), scale=1)
                 with gr.TabItem(label=i18n("制作预设")):
                     gr.Markdown(i18n("注意: MSST模型仅支持输出主要音轨, UVR模型支持自定义主要音轨输出。<br>同时输出次级音轨: 选择True将同时输出该次分离得到的次级音轨, **此音轨将直接保存至**输出目录下的secondary_output文件夹, **不会经过后续流程处理**<br>"))
                     preset_name_input = gr.Textbox(label=i18n("预设名称"), placeholder=i18n("请输入预设名称"), interactive=True)
@@ -1359,6 +1389,7 @@ with gr.Blocks(
             reset_flow.click(reset_flow_func, [], preset_flow)
             delete_button.click(delete_func, [preset_name_delete], [output_message_delete, preset_name_delete, preset_dropdown, preset_flow_delete])
             preset_name_delete.change(load_preset, inputs=preset_name_delete, outputs=preset_flow_delete)
+            stop_thread.click(fn=stop_all_thread)
 
         with gr.TabItem(label=i18n("小工具")):
             with gr.Tabs():
@@ -1518,7 +1549,9 @@ with gr.Blocks(
                     save_train_config = gr.Button(i18n("保存上述训练配置"))
                     start_train_button = gr.Button(i18n("开始训练"), variant="primary")
                     gr.Markdown(value=i18n("点击开始训练后, 请到终端查看训练进度或报错, 下方不会输出报错信息, 想要停止训练可以直接关闭终端。在训练过程中, 你也可以关闭网页, 仅**保留终端**。"))
-                    output_message_train = gr.Textbox(label="Output Message")
+                    with gr.Row():
+                        output_message_train = gr.Textbox(label="Output Message", scale=4)
+                        stop_thread = gr.Button(i18n("强制停止"), scale=1)
 
                     select_train_config_path.click(fn=select_yaml_file, outputs=train_config_path)
                     select_train_dataset_path.click(fn=select_folder, outputs=train_dataset_path)
@@ -1528,6 +1561,7 @@ with gr.Blocks(
                     save_train_config.click(fn=save_training_config,inputs=[train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers,train_device_ids, train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path],outputs=output_message_train)
                     start_train_button.click(fn=start_training,inputs=[train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers, train_device_ids,train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path, train_start_check_point],outputs=output_message_train)
                     reflesh_start_check_point.click(fn=update_train_start_check_point,inputs=train_results_path,outputs=train_start_check_point)
+                    stop_thread.click(fn=stop_all_thread)
 
                 with gr.TabItem(label=i18n("验证")):
                     gr.Markdown(value=i18n("此页面用于手动验证模型效果, 测试验证集, 输出SDR测试信息。输出的信息会存放在输出文件夹的results.txt中。<br>下方参数将自动加载训练页面的参数, 在训练页面点击保存训练参数后, 重启WebUI即可自动加载。当然你也可以手动输入参数。<br>"))
@@ -1551,7 +1585,9 @@ with gr.Blocks(
                         valid_extension = gr.Dropdown(label=i18n("选择验证集音频格式"),choices=["wav", "flac", "mp3"],value="wav",interactive=True,allow_custom_value=True)
                     valid_pin_memory = gr.Checkbox(label=i18n("是否将加载的数据放置在固定内存中, 默认为否"), value=webui_config['training']['pin_memory'], interactive=True)
                     valid_button = gr.Button(i18n("开始验证"), variant="primary")
-                    valid_output_message = gr.Textbox(label="Output Message")
+                    with gr.Row():
+                        valid_output_message = gr.Textbox(label="Output Message", scale=4)
+                        stop_thread = gr.Button(i18n("强制停止"), scale=1)
 
                     select_valid_config_path.click(fn=select_yaml_file, outputs=valid_config_path)
                     select_valid_model_path.click(fn=select_file, outputs=valid_model_path)
@@ -1559,6 +1595,7 @@ with gr.Blocks(
                     select_valid_results_path.click(fn=select_folder, outputs=valid_results_path)
                     open_valid_results_path.click(fn=open_folder, inputs=valid_results_path)
                     valid_button.click(fn=validate_model,inputs=[valid_model_type, valid_config_path, valid_model_path, valid_path, valid_results_path, valid_device_ids, valid_num_workers, valid_extension, valid_pin_memory],outputs=valid_output_message)
+                    stop_thread.click(fn=stop_all_thread)
 
                 with gr.TabItem(label=i18n("训练集制作指南")):
                     with gr.Accordion(i18n("Step 1: 数据集制作"), open=False):
