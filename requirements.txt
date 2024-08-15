@@ -1,4 +1,7 @@
-torch
+# It is recommended to install torch torchvision and torchaudio manually.
+# use command: pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# torch
+
 numpy
 pandas
 scipy
@@ -29,3 +32,4 @@ mir_eval
 onnxruntime
 bitsandbytes
 gradio==4.38.1
+psutil
