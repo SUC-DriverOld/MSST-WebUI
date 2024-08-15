@@ -19,20 +19,21 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 
 ## Run from source
 
-1. Clone this repository.
-2. Create Python environment and install the requirements.
+- Clone this repository.
+- Create Python environment and install the requirements.
 
    ```bash
    conda create -n msst python=3.10 -y
    conda activate msst
+   pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
    pip install -r requirements.txt
    ```
 
 > [!NOTE]
-> 1. You may meet some problems when using UVR-Separate, they comes from dependances Librosa. This issue occurs in the line around 2000 lines in `libsora/util/utils.py` with `np.dtype(np.float).type`. You can manually specify it as `float32` or `float64` to resolve this issue.（Do not attempt to install an older version of NumPy to solve this problem, as older versions of NumPy do not support Python 3.10, and using a version of Python other than 3.10 may prevent other modules from being installed.）
+> 1. You may meet some problems when using UVR-Separate, they comes from dependances Librosa. This issue occurs in the line around 2100 lines in `libsora/util/utils.py` with `np.dtype(np.float).type`. You can manually specify it as `np.dtype(float).type` to resolve this issue.（Do not attempt to install an older version of NumPy to solve this problem, as older versions of NumPy do not support Python 3.10, and using a version of Python other than 3.10 may prevent other modules from being installed.）
 > 2. We use `gradio==4.38.1` to run the webUI, it may have conflict when installing requirements (Actually you can ignore this warning, it will not affect the running of the webUI). You can change the version of `gradio` to `4.8.0` to solve this problem, but it may couse some bugs.
 
-1. Run the webui use the following command.
+- Run the webui use the following command.
 
    ```bash
    python webUI.py
