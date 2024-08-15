@@ -54,7 +54,8 @@
     "settings": {
         "uvr_model_dir": "pretrain/VR_Models",
         "port": 0,
-        "language": "Auto"
+        "language": "Auto",
+        "download_link": "Auto"
     },
     "inference_backup": {
         "selected_model": null,
@@ -111,6 +112,7 @@
     "settings_backup": {
         "uvr_model_dir": "pretrain/VR_Models",
         "port": 0,
-        "language": "Auto"
+        "language": "Auto",
+        "download_link": "Auto"
     }
 }

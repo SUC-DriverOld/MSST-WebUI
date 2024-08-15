@@ -30,7 +30,7 @@ from torch import cuda, backends
 from multiprocessing import cpu_count
 
 
-PACKAGE_VERSION = "1.4.4"
+PACKAGE_VERSION = "1.5"
 PRESETS = "data/preset_data.json"
 BACKUP = "backup/"
 MODELS = "data/model_map.json"
@@ -41,26 +41,26 @@ CONFIG_TEMPLATE_FOLDER = "configs_template/"
 VERSION_CONFIG = "data/version.json"
 TEMP_PATH = "temp"
 MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit']
+LANGUAGE_LIST = ['Auto', '简体中文', '繁體中文', 'English', '日本語']
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"
 PYTHON = ".\\workenv\\python.exe" if os.path.isfile(".\\workenv\\python.exe") else sys.executable
 
 warnings.filterwarnings("ignore")
 stop_all_threads = False
 
-def load_port_from_config():
-    config = load_configs(WEBUI_CONFIG)
-    return config.get('port', 0)
-
-
-def save_port_to_config(port):
-    port = int(port)
-    config = load_configs(WEBUI_CONFIG)
-    config['settings']['port'] = port
-    save_configs(config, WEBUI_CONFIG)
-    return i18n("成功将端口设置为") + str(port)
-
-
 def setup_webui():
+    if not os.path.exists("data"):
+        shutil.copytree("data_backup", "data")
+        print(i18n("[INFO] 正在初始化data目录"))
+    if not os.path.exists("configs"):
+        shutil.copytree("configs_backup", "configs")
+        print(i18n("[INFO] 正在初始化configs目录"))
+    if not os.path.exists("configs_template"):
+        shutil.copytree("configs_backup", "configs_template")
+        print(i18n("[INFO] 正在初始化configs_template目录"))
+    if not os.path.isfile("pretrain/VR_Models/download_checks.json") or not os.path.isfile("pretrain/VR_Models/mdx_model_data.json") or not os.path.isfile("pretrain/VR_Models/vr_model_data.json"):
+        copy_uvr_config(os.path.join(MODEL_FOLDER, "VR_Models"))
+        print(i18n("[INFO] 正在初始化pretrain目录"))
     if os.path.exists("data"):
         if not os.path.isfile(VERSION_CONFIG):
             print(i18n("[INFO] 正在初始化版本配置文件"))
@@ -81,8 +81,6 @@ def setup_webui():
                 presets_config = load_configs(PRESETS)
                 webui_config = load_configs(WEBUI_CONFIG)
                 webui_config_backup = load_configs("data_backup/webui_config.json")
-                webui_config_backup["settings"] = webui_config["settings"]
-                webui_config_backup["settings_backup"] = webui_config["settings_backup"]
                 for key in webui_config_backup['training']:
                     try: webui_config_backup['training'][key] = webui_config['training'][key]
                     except KeyError: continue
@@ -91,6 +89,9 @@ def setup_webui():
                     except KeyError: continue
                 for key in webui_config_backup['tools']:
                     try: webui_config_backup['tools'][key] = webui_config['tools'][key]
+                    except KeyError: continue
+                for key in webui_config_backup['settings']:
+                    try: webui_config_backup['settings'][key] = webui_config['settings'][key]
                     except KeyError: continue
                 if os.path.exists("configs"):
                     shutil.rmtree("configs")
@@ -105,21 +106,7 @@ def setup_webui():
                 save_configs(presets_config, PRESETS)
                 version_config["version"] = PACKAGE_VERSION
                 save_configs(version_config, VERSION_CONFIG)
-
-    if not os.path.exists("configs"):
-        print(i18n("[INFO] 正在初始化configs目录"))
-        shutil.copytree("configs_backup", "configs")
-    if not os.path.exists("configs_template"):
-        print(i18n("[INFO] 正在初始化configs_template目录"))
-        shutil.copytree("configs_backup", "configs_template")
-    if not os.path.exists("data"):
-        print(i18n("[INFO] 正在初始化data目录"))
-        shutil.copytree("data_backup", "data")
-    if not os.path.isfile("pretrain/VR_Models/download_checks.json") or not os.path.isfile("pretrain/VR_Models/mdx_model_data.json") or not os.path.isfile("pretrain/VR_Models/vr_model_data.json"):
-        print(i18n("[INFO] 正在初始化pretrain目录"))
-        copy_uvr_config(os.path.join(MODEL_FOLDER, "VR_Models"))
-    absolute_path = os.path.abspath("ffmpeg/bin/")
-    os.environ["PATH"] += os.pathsep + absolute_path
+    os.environ["PATH"] += os.pathsep + os.path.abspath("ffmpeg/bin/")
     print(i18n("[INFO] 设备信息：") + str(get_device()))
 
 
@@ -128,7 +115,13 @@ def webui_restart():
 
 
 def i18n(key):
-    language = locale.getdefaultlocale()[0]
+    try:
+        config = load_configs(WEBUI_CONFIG)
+        if config["settings"]["language"]== "Auto":
+            language = locale.getdefaultlocale()[0]
+        else: language = config['settings']['language']
+    except Exception:
+        language = locale.getdefaultlocale()[0]
     if language == "zh_CN":
         return key
     if not os.path.exists(path=f"tools/i18n/locale/{language}.json"):
@@ -144,7 +137,7 @@ def get_device():
             gpus = []
             n_gpu = cuda.device_count()
             for i in range(n_gpu):
-                gpus.append(f"{i} {cuda.get_device_name(i)}")
+                gpus.append(f"{i}: {cuda.get_device_name(i)}")
             if len(gpus) == 1:
                 return gpus[0]
             return gpus
@@ -155,11 +148,13 @@ def get_device():
     except Exception:
         return i18n("设备检查失败")
 
+
 def get_platform():
     os_name = platform.system()
     os_version = platform.version()
     machine = platform.machine()
     return f"System: {os_name}, Version: {os_version}, Machine: {machine}"
+
 
 def load_configs(config_path):
     if config_path.endswith('.json'):
@@ -168,6 +163,7 @@ def load_configs(config_path):
     elif config_path.endswith('.yaml') or config_path.endswith('.yml'):
         with open(config_path, 'r') as f:
             return ConfigDict(yaml.load(f, Loader=yaml.FullLoader))
+
 
 def save_configs(config, config_path):
     if config_path.endswith('.json'):
@@ -207,6 +203,13 @@ def load_msst_model():
 
 def get_msst_model(model_name):
     config = load_configs(MODELS)
+    webui_config = load_configs(WEBUI_CONFIG)
+    main_link = webui_config['settings']['download_link']
+    if main_link == "Auto":
+        language = locale.getdefaultlocale()[0]
+        if language in ["zh_CN", "zh_TW", "zh_HK", "zh_SG"]:
+            main_link = "hf-mirror.com"
+        else: main_link = "huggingface.co"
     for keys in config.keys():
         for model in config[keys]:
             if model["name"] == model_name:
@@ -214,6 +217,7 @@ def get_msst_model(model_name):
                 model_path = os.path.join(MODEL_FOLDER, keys, model_name)
                 config_path = model["config_path"]
                 download_link = model["link"]
+                download_link = download_link.replace("huggingface.co", main_link)
                 return model_path, config_path, model_type, download_link
     raise gr.Error(i18n("模型不存在!"))
 
@@ -235,6 +239,7 @@ def load_vr_model_stem(model):
             vr_secondary_stem_only = gr.Checkbox(label=f"{secondary_stem} Only", value=False, interactive=True)
             return vr_primary_stem_only, vr_secondary_stem_only
     raise gr.Error(i18n("模型不存在!"))
+
 
 def load_presets_list():
     config = load_configs(PRESETS)
@@ -260,6 +265,7 @@ def select_yaml_file():
         filetypes=[('YAML files', '*.yaml')])
     root.destroy()
     return selected_file
+
 
 def select_file():
     root = tk.Tk()
@@ -331,7 +337,7 @@ def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_
     save_configs(config, WEBUI_CONFIG)
 
 
-def save_settings(select_uvr_model_dir):
+def save_uvr_modeldir(select_uvr_model_dir):
     if not os.path.exists(select_uvr_model_dir):
         return i18n("请选择正确的模型目录")
     copy_uvr_config(select_uvr_model_dir)
@@ -345,20 +351,18 @@ def reset_settings():
     try:
         copy_uvr_config(os.path.join(MODEL_FOLDER, "VR_Models"))
         config = load_configs(WEBUI_CONFIG)
-
         for key in config['settings_backup']:
             config['settings'][key] = config['settings_backup'][key]
-        
         save_configs(config, WEBUI_CONFIG)
         return i18n("设置重置成功, 请重启WebUI刷新! ")
     except Exception as e:
         print(e)
         return i18n("设置重置失败!")
 
+
 def reset_webui_config():
     try:
         config = load_configs(WEBUI_CONFIG)
-
         for key in config['training_backup']:
             config['training'][key] = config['training_backup'][key]
         for key in config['inference_backup']:
@@ -371,6 +375,7 @@ def reset_webui_config():
     except Exception as e:
         print(e)
         return i18n("记录重置失败!")
+
 
 def copy_uvr_config(path):
     download_checks = "data_backup/download_checks.json"
@@ -401,6 +406,7 @@ def init_selected_model():
     else:
         num_overlap = ""
     return batch_size, dim_t, num_overlap
+
 
 def init_selected_vr_model():
     webui_config = load_configs(WEBUI_CONFIG)
@@ -465,7 +471,6 @@ def save_config(selected_model, batch_size, dim_t, num_overlap, normalize):
         config.inference['num_overlap'] = int(num_overlap) if num_overlap.isdigit() else None
     if config.inference.get('normalize'):
         config.inference['normalize'] = normalize
-
     save_configs(config, config_path)
     return i18n("配置保存成功!")
 
@@ -475,7 +480,6 @@ def reset_config(selected_model):
     dir_path, file_name = os.path.split(original_config_path)
     backup_dir_path = dir_path.replace("configs", "configs_backup", 1)
     backup_config_path = os.path.join(backup_dir_path, file_name)
-
     if os.path.exists(backup_config_path):
         shutil.copy(backup_config_path, original_config_path)
         update_inference_settings(selected_model)
@@ -521,7 +525,6 @@ def run_inference_single(selected_model, input_audio, store_dir, extract_instrum
     config['inference']['extract_instrumental'] = extract_instrumental
     config['inference']['store_dir'] = store_dir
     save_configs(config, WEBUI_CONFIG)
-
     if not input_audio:
         return i18n("请上传一个音频文件。")
     if os.path.exists(TEMP_PATH):
@@ -529,7 +532,6 @@ def run_inference_single(selected_model, input_audio, store_dir, extract_instrum
     os.makedirs(TEMP_PATH)
     shutil.copy(input_audio, TEMP_PATH)
     input_path = TEMP_PATH
-
     run_inference(selected_model, input_path, store_dir,extract_instrumental, gpu_id, force_cpu)
     return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
 
@@ -543,7 +545,6 @@ def run_multi_inference(selected_model, input_folder, store_dir, extract_instrum
     config['inference']['store_dir'] = store_dir
     config['inference']['multiple_audio_input'] = input_folder
     save_configs(config, WEBUI_CONFIG)
-
     run_inference(selected_model, input_folder, store_dir,extract_instrumental, gpu_id, force_cpu)
     return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
 
@@ -559,16 +560,12 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
         os.makedirs(store_dir)
     if extra_store_dir and not os.path.exists(extra_store_dir):
         os.makedirs(extra_store_dir)
-
     start_check_point, config_path, model_type, _ = get_msst_model(selected_model)
-
     gpu_ids = gpu_id if not force_cpu else "0"
     extract_instrumental_option = "--extract_instrumental" if extract_instrumental else ""
     force_cpu_option = "--force_cpu" if force_cpu else ""
     extra_store_dir = f"--extra_store_dir \"{extra_store_dir}\"" if extra_store_dir else ""
-
     command = f"{PYTHON} msst_inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} {extract_instrumental_option} {force_cpu_option} {extra_store_dir}"
-
     msst_inference = threading.Thread(target=run_command, args=(command,), name="msst_inference")
     msst_inference.start()
     msst_inference.join()
@@ -610,10 +607,8 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
     config = load_configs(WEBUI_CONFIG)
     model_file_dir = config['settings']['uvr_model_dir']
     model_mapping = load_configs(VR_MODEL)
-
     primary_stem = model_mapping[vr_select_model]["primary_stem"]
     secondary_stem = model_mapping[vr_select_model]["secondary_stem"]
-
     audio_file = vr_audio_input
     model_filename = vr_select_model
     output_format = vr_output_format
@@ -621,7 +616,6 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
     invert_spect = "--invert_spect" if vr_invert_spect else ""
     normalization = vr_normalization
     debug_mode = "--debug" if vr_debug_mode else ""
-
     if vr_primary_stem_only:
         if vr_secondary_stem_only:
             single_stem = ""
@@ -632,7 +626,6 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
             single_stem = f"--single_stem \"{secondary_stem}\""
         else:
             single_stem = ""
-    
     sample_rate = 44100
     vr_batch_size = int(vr_batch_size)
     vr_aggression = int(vr_aggression)
@@ -642,9 +635,7 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
     vr_enable_post_process = "--vr_enable_post_process" if vr_enable_post_process else ""
     save_another_stem = "--save_another_stem" if save_another_stem else ""
     extra_output_dir = f"--extra_output_dir \"{extra_output_dir}\"" if extra_output_dir else ""
-
     command = f"{PYTHON} uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} --sample_rate {sample_rate} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold} {save_another_stem} {extra_output_dir}"
-
     vr_inference = threading.Thread(target=run_command, args=(command,), name="vr_inference")
     vr_inference.start()
     vr_inference.join()
@@ -693,15 +684,12 @@ def save_flow_func(preset_name, df):
         preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
         preset_name_select = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
         return output_message, preset_name_delete, preset_name_select
-
     preset_dict = {f"Step_{index + 1}": row.dropna().to_dict() for index, row in df.iterrows()}
     preset_data[preset_name] = preset_dict
     save_configs(preset_data, PRESETS)
-
     output_message = i18n("预设") + preset_name + i18n("保存成功")
     preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
     preset_name_select = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
-
     return output_message, preset_name_delete, preset_name_select
 
 
@@ -727,14 +715,14 @@ def load_preset(preset_name):
 def delete_func(preset_name):
     preset_data = load_configs(PRESETS)
     if preset_name in preset_data.keys():
+        _, select_preset_backup = backup_preset_func()
         del preset_data[preset_name]
         save_configs(preset_data, PRESETS)
-
         output_message = i18n("预设") + preset_name + i18n("删除成功")
         preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
         preset_name_select = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
         preset_flow_delete = gr.Dataframe(pd.DataFrame({"model_type": [i18n("预设已删除")], "model_name": [i18n("预设已删除")], "stem": [i18n("预设已删除")], "secondary_output": [i18n("预设已删除")]}), interactive=False, label=None)
-        return output_message, preset_name_delete, preset_name_select, preset_flow_delete
+        return output_message, preset_name_delete, preset_name_select, preset_flow_delete, select_preset_backup
     else:
         return i18n("预设不存在")
 
@@ -755,23 +743,19 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
     preset_data = load_configs(PRESETS)
     if not preset_name in preset_data.keys():
         return i18n("预设") + preset_name + i18n("不存在")
-    
     config = load_configs(WEBUI_CONFIG)
     config['inference']['preset'] = preset_name
     config['inference']['force_cpu'] = force_cpu
     config['inference']['input_folder_flow'] = input_folder
     config['inference']['store_dir_flow'] = store_dir
     save_configs(config, WEBUI_CONFIG)
-
     model_list = preset_data[preset_name]
     input_to_use = input_folder
     tmp_store_dir = tempfile.mkdtemp()
-
     for step in model_list.keys():
         model_name = model_list[step]["model_name"]
         if model_name not in load_msst_model() and model_name not in load_vr_model():
             return i18n("模型") + model_name + i18n("不存在")
-
     i = 0
     for step in model_list.keys():
         if i == 0:
@@ -784,11 +768,9 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
         elif i == len(model_list.keys()) - 1:
             input_to_use = tmp_store_dir
             tmp_store_dir = store_dir
-
         console = Console()
         model_name = model_list[step]["model_name"]
         console.rule(f"[yellow]Step {i+1}: Running inference using {model_name}", style="yellow")
-
         if model_list[step]["model_type"] == "MSST_Models":
             gpu_id = config['inference']['gpu_id'] if not force_cpu else "0"
             try:
@@ -832,10 +814,8 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
             else:
                 save_another_stem = False
                 extra_output_dir = None
-
             vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode, save_another_stem, extra_output_dir)
         i += 1
-
     if tmp_store_dir != store_dir:
         for file_name in os.listdir(tmp_store_dir):
             shutil.move(os.path.join(tmp_store_dir, file_name),
@@ -844,8 +824,41 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
     finish_time = time.time()
     elapsed_time = finish_time - start_time
     Console().rule(f"[yellow]Finished runing {preset_name}! Costs{elapsed_time:.2f}s", style="yellow")
-
     return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
+
+
+def preset_backup_list():
+    backup_dir = BACKUP
+    if not os.path.exists(backup_dir):
+        return [i18n("暂无备份文件")]
+    backup_files = []
+    for file in os.listdir(backup_dir):
+        if file.startswith("preset_backup_") and file.endswith(".json"):
+            backup_files.append(file)
+    if backup_files == []:
+        return [i18n("暂无备份文件")]
+    return backup_files
+
+
+def restore_preset_func(backup_file):
+    backup_dir = BACKUP
+    if not backup_file or backup_file == i18n("暂无备份文件"):
+        return i18n("请选择备份文件")
+    backup_data = load_configs(os.path.join(backup_dir, backup_file))
+    save_configs(backup_data, PRESETS)
+    return i18n("已成功恢复备份") + backup_file + i18n(", 请重启WebUI更新预设流程。")
+
+
+def backup_preset_func():
+    backup_dir = BACKUP
+    if not os.path.exists(backup_dir):
+        os.makedirs(backup_dir)
+    backup_file = f"preset_backup_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
+    preset_data = load_configs(PRESETS)
+    save_configs(preset_data, os.path.join(backup_dir, backup_file))
+    msg = i18n("已成功备份至") + backup_file
+    select_preset_backup = gr.Dropdown(label=i18n("选择需要恢复的预设流程备份"), choices=preset_backup_list(), interactive=True, scale=4)
+    return msg, select_preset_backup
 
 
 def convert_audio(uploaded_files, ffmpeg_output_format, ffmpeg_output_folder):
@@ -857,15 +870,12 @@ def convert_audio(uploaded_files, ffmpeg_output_format, ffmpeg_output_folder):
         output_path = ffmpeg_output_folder
         if not os.path.exists(output_path):
             os.makedirs(output_path)
-
         config = load_configs(WEBUI_CONFIG)
         config['tools']['ffmpeg_output_format'] = ffmpeg_output_format
         config['tools']['ffmpeg_output_folder'] = ffmpeg_output_folder
         save_configs(config, WEBUI_CONFIG)
-
         output_file = os.path.join(output_path, os.path.splitext(
             os.path.basename(uploaded_file_path))[0] + "." + ffmpeg_output_format)
-
         command = f"{FFMPEG} -i \"{uploaded_file_path}\" \"{output_file}\""
         print_command(command)
         try:
@@ -874,19 +884,18 @@ def convert_audio(uploaded_files, ffmpeg_output_format, ffmpeg_output_folder):
         except subprocess.CalledProcessError:
             print(f"Fail to convert file: {uploaded_file_path}\n")
             continue  # 如果转换失败, 则跳过当前文件
-
     if not success_files:
         return i18n("所有文件转换失败, 请检查文件格式和ffmpeg路径。")
     else:
         text = i18n("处理完成, 文件已保存为: ") + "\n" + "\n".join(success_files)
         return text
 
+
 def merge_audios(input_folder, output_folder):
     config = load_configs(WEBUI_CONFIG)
     config['tools']['merge_audio_input'] = input_folder
     config['tools']['merge_audio_output'] = output_folder
     save_configs(config, WEBUI_CONFIG)
-
     combined_audio = AudioSegment.empty()
     output_file = os.path.join(output_folder, "merged_audio.wav")
     for filename in sorted(os.listdir(input_folder)):
@@ -945,7 +954,6 @@ def ensemble(files, ensemble_mode, weights, output_path):
         config['tools']['ensemble_type'] = ensemble_mode
         config['tools']['ensemble_output_folder'] = output_path
         save_configs(config, WEBUI_CONFIG)
-
         files_argument = " ".join(files)
         output_path = os.path.join(output_path, f"ensemble_{ensemble_mode}.wav")
         command = f"{PYTHON} ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
@@ -968,13 +976,11 @@ def some_inference(audio_file, bpm, output_dir):
     config = load_configs(WEBUI_CONFIG)
     config['tools']['some_output_folder'] = output_dir
     save_configs(config, WEBUI_CONFIG)
-
     tempo = int(bpm)
     file_name = os.path.basename(audio_file)[0:-4]
     midi = os.path.join(output_dir, f"{file_name}.mid")
     command = f"{PYTHON} tools/SOME/infer.py --model {model} --wav \"{audio_file}\" --midi \"{midi}\" --tempo {tempo}"
     print_command(command)
-
     try:
         subprocess.run(command, shell=True)
         return i18n("处理完成, 文件已保存为: ") + midi
@@ -997,41 +1003,29 @@ def download_model(model_type, model_name):
     model_choices.append("UVR_VR_Models")
     if model_type not in model_choices:
         return i18n("请选择模型类型")
-
     if model_type == "UVR_VR_Models":
         downloaded_model = load_vr_model()
         if model_name in downloaded_model:
             return i18n("模型") + model_name + i18n("已安装")
-
         vr_model_map = load_configs(VR_MODEL)
         if model_name not in vr_model_map.keys():
             return i18n("模型") + model_name + i18n("不存在")
-
         model_url = vr_model_map[model_name]["download_link"]
         webui_config = load_configs(WEBUI_CONFIG)
         model_path = webui_config['settings']['uvr_model_dir']
         os.makedirs(model_path, exist_ok=True)
-
         return download_file(model_url, os.path.join(model_path, model_name), model_name)
-
     presets = load_configs(MODELS)
     model_mapping = load_msst_model()
-
     if model_name in model_mapping:
         return i18n("模型") + model_name + i18n("已安装")
     if model_type not in presets:
         return i18n("模型类型") + model_type + i18n("不存在")
+    _, _, _, model_url = get_msst_model(model_name)
+    model_path = f"pretrain/{model_type}/{model_name}"
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    return download_file(model_url, model_path, model_name)
 
-    for model in presets[model_type]:
-        if model["name"] == model_name:
-            if isinstance(model["link"], str):
-                model_url = model["link"]
-                model_path = f"pretrain/{model_type}/{model_name}"
-                os.makedirs(os.path.dirname(model_path), exist_ok=True)
-                download_file(model_url, model_path, model_name)
-            else:
-                return i18n("模型") + model_name + i18n("链接无效")
-    return i18n("模型") + model_name + i18n("不存在")
 
 def download_file(url, path, model_name):
     try:
@@ -1058,13 +1052,13 @@ def download_file(url, path, model_name):
         print(e)
         return i18n("模型") + model_name + i18n("下载失败")
 
+
 def manual_download_model(model_type, model_name):
     models = load_configs(MODELS)
     model_choices = list(models.keys())
     model_choices.append("UVR_VR_Models")
     if model_type not in model_choices:
         return i18n("请选择模型类型")
-
     if model_type == "UVR_VR_Models":
         downloaded_model = load_vr_model()
         if model_name in downloaded_model:
@@ -1072,25 +1066,15 @@ def manual_download_model(model_type, model_name):
         vr_model_map = load_configs(VR_MODEL)
         if model_name not in vr_model_map.keys():
             return i18n("模型") + model_name + i18n("不存在")
-
         model_url = vr_model_map[model_name]["download_link"]
     else:
         presets = load_configs(MODELS)
         model_mapping = load_msst_model()
-
         if model_name in model_mapping:
             return i18n("模型") + model_name + i18n("已安装")
         if model_type not in presets:
             return i18n("模型类型") + model_type + i18n("不存在")
-
-        for model in presets[model_type]:
-            if model["name"] == model_name:
-                if isinstance(model["link"], str):
-                    model_url = model["link"]
-                    break
-        else:
-            return i18n("模型") + model_name + i18n("不存在")
-    
+        _, _, _, model_url = get_msst_model(model_name)
     webbrowser.open(model_url)
     return i18n("已打开") + model_name + i18n("的下载链接")
 
@@ -1110,7 +1094,6 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
     use_multistft_loss = "--use_multistft_loss" if train_use_multistft_loss else ""
     use_mse_loss = "--use_mse_loss" if train_use_mse_loss else ""
     use_l1_loss = "--use_l1_loss" if train_use_l1_loss else ""
-
     if model_type not in MODEL_TYPE:
         return i18n("模型类型错误, 请重新选择")
     if not os.path.isfile(config_path):
@@ -1131,9 +1114,7 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
         start_check_point = "--start_check_point " + "\"" + os.path.join(results_path, train_start_check_point) + "\""
     else:
         return i18n("模型保存路径不存在, 请重新选择")
-
     command = f"{PYTHON} train.py --model_type {model_type} --config_path \"{config_path}\" {start_check_point} --results_path \"{results_path}\" --data_path \"{data_path}\" --dataset_type {dataset_type} --valid_path \"{valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} --pin_memory {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss}"
-
     threading.Thread(target=run_command, args=(command,), name="msst_training").start()
     return i18n("训练启动成功! 请前往控制台查看训练信息! ")
 
@@ -1152,14 +1133,11 @@ def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_
     if not bool(re.match(r'^(\d+)(?:\s(?!\1)\d+)*$', valid_device_ids)):
         return i18n("device_ids格式错误, 请重新输入")
     pin_memory = "--pin_memory" if valid_pin_memory else ""
-    
     command = f"{PYTHON} valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {valid_device_ids} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory}"
-
     msst_valid = threading.Thread(target=run_command, args=(command,), name="msst_valid")
     msst_valid.start()
     msst_valid.join()
     return i18n("验证完成! 请打开输出文件夹查看详细结果")
-
 
 
 def check_webui_update():
@@ -1180,48 +1158,69 @@ def webui_goto_github():
     webbrowser.open("https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest")
 
 
-def preset_backup_list():
-    backup_dir = BACKUP
-    if not os.path.exists(backup_dir):
-        return [i18n("暂无备份文件")]
-    backup_files = []
-    for file in os.listdir(backup_dir):
-        if file.startswith("preset_backup_") and file.endswith(".json"):
-            backup_files.append(file)
-    if backup_files == []:
-        return [i18n("暂无备份文件")]
-    return backup_files
+def change_language(language):
+    config = load_configs(WEBUI_CONFIG)
+    if language == "简体中文":
+        config['settings']['language'] = "zh_CN"
+    elif language == "English":
+        config['settings']['language'] = "en_US"
+    elif language == "日本語":
+        config['settings']['language'] = "ja_JP"
+    elif language == "繁體中文":
+        config['settings']['language'] = "zh_TW"
+    else:
+        config['settings']['language'] = "Auto"
+    save_configs(config, WEBUI_CONFIG)
+    return i18n("语言已更改, 重启WebUI生效")
 
 
-def restore_preset_func(backup_file):
-    backup_dir = BACKUP
-    if not backup_file or backup_file == i18n("暂无备份文件"):
-        return i18n("请选择备份文件")
-    backup_data = load_configs(os.path.join(backup_dir, backup_file))
-    save_configs(backup_data, PRESETS)
-    return i18n("已成功恢复备份") + backup_file + i18n(", 请重启WebUI更新预设流程。")
+def get_language():
+    config = load_configs(WEBUI_CONFIG)
+    language = config['settings']['language']
+    if language == "zh_CN":
+        return "简体中文"
+    elif language == "en_US":
+        return "English"
+    elif language == "ja_JP":
+        return "日本語"
+    elif language == "zh_TW":
+        return "繁體中文"
+    else:
+        return "Auto"
 
 
-def backup_preset_func():
-    backup_dir = BACKUP
-    if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir)
-    backup_file = f"preset_backup_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
-    preset_data = load_configs(PRESETS)
-    save_configs(preset_data, os.path.join(backup_dir, backup_file))
-    msg = i18n("已成功备份至") + backup_file
-    select_preset_backup = gr.Dropdown(label=i18n("选择需要恢复的预设流程备份"), choices=preset_backup_list(), interactive=True, scale=4)
-    return msg, select_preset_backup
+def load_port_from_config():
+    config = load_configs(WEBUI_CONFIG)
+    return config.get('port', 0)
 
 
+def save_port_to_config(port):
+    port = int(port)
+    config = load_configs(WEBUI_CONFIG)
+    config['settings']['port'] = port
+    save_configs(config, WEBUI_CONFIG)
+    return i18n("成功将端口设置为") + str(port) + i18n(", 重启WebUI生效")
+
+
+def change_download_link(link):
+    config = load_configs(WEBUI_CONFIG)
+    if link == i18n("huggingface.co (需要魔法)"):
+        config['settings']['download_link'] = "huggingface.co"
+    elif link == i18n("hf-mirror.com (镜像站可直连)"):
+        config['settings']['download_link'] = "hf-mirror.com"
+    else:
+        config['settings']['download_link'] = "Auto"
+    save_configs(config, WEBUI_CONFIG)
+    return i18n("下载链接已更改")
+
+
+setup_webui()
 with gr.Blocks(
-        theme=gr.Theme.load('themes/theme_schema@1.2.2.json')
+        theme=gr.Theme.load('tools/themes/theme_schema@1.2.2.json')
 ) as app:
-
     gr.Markdown(value=f"""### Music-Source-Separation-Training-Inference-Webui v{PACKAGE_VERSION}""")
     gr.Markdown(value=i18n("仅供个人娱乐和非商业用途, 禁止用于血腥/暴力/性相关/政治相关内容。[点击前往教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)<br>本整合包完全免费, 严禁以任何形式倒卖, 如果你从任何地方**付费**购买了本整合包, 请**立即退款**。<br> 整合包作者: [bilibili@阿狸不吃隼舞](https://space.bilibili.com/403335715) [Github@KitsuneX07](https://github.com/KitsuneX07) | [Bilibili@Sucial](https://space.bilibili.com/445022409) [Github@SUC-DriverOld](https://github.com/SUC-DriverOld) | Gradio主题: [Gradio Theme](https://huggingface.co/spaces/NoCrypt/miku)"))
     with gr.Tabs():
-        setup_webui()
         webui_config = load_configs(WEBUI_CONFIG)
         presets = load_configs(PRESETS)
         models = load_configs(MODELS)
@@ -1230,9 +1229,8 @@ with gr.Blocks(
         with gr.TabItem(label=i18n("MSST分离")):
             gr.Markdown(value=i18n("MSST音频分离原项目地址: [https://github.com/ZFTurbo/Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)"))
             selected_model = gr.Dropdown(label=i18n("选择模型"),choices=load_msst_model(),value=webui_config['inference']['selected_model'] if webui_config['inference']['selected_model'] else None,interactive=True)
-            gr.Markdown(value=i18n("多卡用户请使用空格分隔GPU ID, 例如: ``0 1 2``。可前往设置页面查看显卡信息。"))
             with gr.Row():
-                gpu_id = gr.Textbox(label=i18n("选择使用的GPU ID"),value=webui_config['inference']['gpu_id'] if webui_config['inference']['gpu_id'] else "0",interactive=True)
+                gpu_id = gr.Textbox(label=i18n("选择使用的GPU ID, 多卡用户请使用空格分隔GPU ID。可前往设置页面查看显卡信息。"),value=webui_config['inference']['gpu_id'] if webui_config['inference']['gpu_id'] else "0",interactive=True)
                 with gr.Column():
                     force_cpu = gr.Checkbox(label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),value=webui_config['inference']['force_cpu'] if webui_config['inference']['force_cpu'] else False,interactive=True)
                     extract_instrumental = gr.Checkbox(label=i18n("同时输出次级音轨"),value=webui_config['inference']['extract_instrumental'] if webui_config['inference']['extract_instrumental'] else False,interactive=True)
@@ -1396,7 +1394,7 @@ with gr.Blocks(
             add_to_flow.click(add_to_flow_func, [model_type, model_name, stem, secondary_output, preset_flow], preset_flow)
             save_flow.click(save_flow_func, [preset_name_input, preset_flow], [output_message_make, preset_name_delete, preset_dropdown])
             reset_flow.click(reset_flow_func, [], preset_flow)
-            delete_button.click(delete_func, [preset_name_delete], [output_message_manage, preset_name_delete, preset_dropdown, preset_flow_delete])
+            delete_button.click(delete_func, [preset_name_delete], [output_message_manage, preset_name_delete, preset_dropdown, preset_flow_delete, select_preset_backup])
             preset_name_delete.change(load_preset, inputs=preset_name_delete, outputs=preset_flow_delete)
             stop_thread.click(fn=stop_all_thread)
             restore_preset.click(fn=restore_preset_func,inputs=[select_preset_backup],outputs=output_message_manage)
@@ -1540,7 +1538,6 @@ with gr.Blocks(
                     with gr.Row():
                         train_valid_path = gr.Textbox(label=i18n("验证集路径"),value=webui_config['training']['valid_path'] if webui_config['training']['valid_path'] else i18n("请输入或选择验证集文件夹"),interactive=True,scale=4)
                         select_train_valid_path = gr.Button(i18n("选择验证集文件夹"), scale=1)
-                    gr.Markdown(value=i18n("以下是一些训练参数的设置"))
                     with gr.Row():
                         train_num_workers = gr.Number(label=i18n("num_workers: 数据集读取线程数, 0为自动"),value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,interactive=True,minimum=0,maximum=cpu_count(),step=1)
                         train_device_ids = gr.Textbox(label=i18n("device_ids: 选择显卡, 多卡用户请使用空格分隔"),value=webui_config['training']['device_ids'] if webui_config['training']['device_ids'] else "0",interactive=True)
@@ -1554,9 +1551,8 @@ with gr.Blocks(
                         train_results_path = gr.Textbox(label=i18n("模型保存路径"),value=webui_config['training']['results_path'] if webui_config['training']['results_path'] else i18n("请输入或选择模型保存文件夹"),interactive=True,scale=3)
                         select_train_results_path = gr.Button(i18n("选择文件夹"), scale=1)
                         open_train_results_path = gr.Button(i18n("打开文件夹"), scale=1)
-                    gr.Markdown(value=i18n("说明: 继续训练或微调模型训练时, 请选择初始模型, 否则将从头开始训练! "))
                     with gr.Row():
-                        train_start_check_point = gr.Dropdown(label=i18n("初始模型"), choices=["None"], value="None", interactive=True, scale=4)
+                        train_start_check_point = gr.Dropdown(label=i18n("初始模型: 继续训练或微调模型训练时, 请选择初始模型, 否则将从头开始训练! "), choices=["None"], value="None", interactive=True, scale=4)
                         reflesh_start_check_point = gr.Button(i18n("刷新初始模型列表"), scale=1)
                     save_train_config = gr.Button(i18n("保存上述训练配置"))
                     start_train_button = gr.Button(i18n("开始训练"), variant="primary")
@@ -1726,7 +1722,8 @@ with gr.Blocks(
                         plantform_info = gr.Textbox(label=i18n("系统信息"), value=get_platform(), interactive=False)
                     with gr.Row():
                         set_webui_port = gr.Number(label=i18n("设置WebUI端口, 0为自动"), value=load_port_from_config(), interactive=True)
-                        set_language = gr.Dropdown(label=i18n("选择语言"), choices=["English", "简体中文"], value=webui_config['settings']['language'] if webui_config['settings']['language'] else "Auto", interactive=True)
+                        set_language = gr.Dropdown(label=i18n("选择语言"), choices=LANGUAGE_LIST, value=get_language(), interactive=True)
+                        set_download_link = gr.Dropdown(label=i18n("选择MSST模型下载链接"), choices=["Auto", i18n("huggingface.co (需要魔法)"), i18n("hf-mirror.com (镜像站可直连)")], value=webui_config['settings']['download_link'] if webui_config['settings']['download_link'] else "Auto", interactive=True)
                     with gr.Row():
                         select_uvr_model_dir = gr.Textbox(label=i18n("选择UVR模型目录"),value=webui_config['settings']['uvr_model_dir'] if webui_config['settings']['uvr_model_dir'] else "pretrain/VR_Models",interactive=True,scale=4)
                         select_uvr_model_dir_button = gr.Button(i18n("选择文件夹"), scale=1)
@@ -1747,6 +1744,8 @@ with gr.Blocks(
                     gr.Markdown(i18n("从Github检查更新, 需要一定的网络要求。点击检查更新按钮后, 会自动检查是否有最新版本。你可以前往此整合包的下载链接或访问Github仓库下载最新版本。"))
                     gr.Markdown(i18n("### 重置WebUI路径记录"))
                     gr.Markdown(i18n("将所有输入输出目录重置为默认路径, 预设/模型/配置文件以及上面的设置等**不会重置**, 无需担心。重置WebUI设置后, 需要重启WebUI。"))
+                    gr.Markdown(i18n("### 重置WebUI设置"))
+                    gr.Markdown(i18n("仅重置WebUI设置, 例如UVR模型路径, WebUI端口等。重置WebUI设置后, 需要重启WebUI。"))
                     gr.Markdown(i18n("### 重启WebUI"))
                     gr.Markdown(i18n("点击 “重启WebUI” 按钮后, 会短暂性的失去连接, 随后会自动开启一个新网页。"))
 
@@ -1757,7 +1756,9 @@ with gr.Blocks(
             reset_seetings.click(fn=reset_settings,inputs=[],outputs=setting_output_message)
             reset_all_webui_config.click(fn=reset_webui_config,outputs=setting_output_message)
             set_webui_port.change(fn=save_port_to_config,inputs=[set_webui_port],outputs=setting_output_message)
-            select_uvr_model_dir.change(fn=save_settings,inputs=[select_uvr_model_dir],outputs=setting_output_message)
+            select_uvr_model_dir.change(fn=save_uvr_modeldir,inputs=[select_uvr_model_dir],outputs=setting_output_message)
+            set_language.change(fn=change_language,inputs=[set_language],outputs=setting_output_message)
+            set_download_link.change(fn=change_download_link,inputs=[set_download_link],outputs=setting_output_message)
 
 server_port = load_port_from_config()
 if server_port == 0: server_port = None

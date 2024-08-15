@@ -7,7 +7,6 @@ configs_template/
 data/
 ffmpeg/bin/*.exe
 workenv/
-results/
 input/
 temp/
 pretrain/
@@ -15,7 +14,6 @@ webui.exe
 webui.vmp.exe
 backup/
 tools/SOME_weights/model_steps_64000_simplified.ckpt
-tools/i18n/s2t.py
 
 !pretrain/*.json
 !.gitkeep

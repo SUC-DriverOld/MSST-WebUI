@@ -1,68 +1,26 @@
-import ast
-import glob
+import re
 import json
-from collections import OrderedDict
 
+def extract_i18n_strings(file_content):
+    pattern = re.compile(r'i18n\("([^"]+)"\)')
+    return pattern.findall(file_content)
 
-def extract_i18n_strings(node):
-    i18n_strings = []
+def process_py_file(file_path):
+    i18n_dict = {}
 
-    if (
-        isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "i18n"
-    ):
-        for arg in node.args:
-            if isinstance(arg, ast.Str):
-                i18n_strings.append(arg.s)
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+        i18n_strings = extract_i18n_strings(content)
+        for i, string in enumerate(i18n_strings, 1):
+            i18n_dict[string] = "text"
 
-    for child_node in ast.iter_child_nodes(node):
-        i18n_strings.extend(extract_i18n_strings(child_node))
+    return i18n_dict
 
-    return i18n_strings
+def save_to_json(data, output_file):
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
 
-
-# scan the directory for all .py files (recursively)
-# for each file, parse the code into an AST
-# for each AST, extract the i18n strings
-
-strings = []
-for filename in glob.iglob("**/*.py", recursive=True):
-    with open(filename, "r") as f:
-        code = f.read()
-        if "I18nAuto" in code:
-            tree = ast.parse(code)
-            i18n_strings = extract_i18n_strings(tree)
-            print(filename, len(i18n_strings))
-            strings.extend(i18n_strings)
-code_keys = set(strings)
-
-
-print()
-print("Total unique:", len(code_keys))
-
-
-standard_file = "i18n/locale/zh_CN.json"
-with open(standard_file, "r", encoding="utf-8") as f:
-    standard_data = json.load(f, object_pairs_hook=OrderedDict)
-standard_keys = set(standard_data.keys())
-
-# Define the standard file name
-unused_keys = standard_keys - code_keys
-print("Unused keys:", len(unused_keys))
-for unused_key in unused_keys:
-    print("\t", unused_key)
-
-missing_keys = code_keys - standard_keys
-print("Missing keys:", len(missing_keys))
-for missing_key in missing_keys:
-    print("\t", missing_key)
-
-code_keys_dict = OrderedDict()
-for s in strings:
-    code_keys_dict[s] = s
-
-# write back
-with open(standard_file, "w", encoding="utf-8") as f:
-    json.dump(code_keys_dict, f, ensure_ascii=False, indent=4, sort_keys=True)
-    f.write("\n")
+file_path = "E:\\vs\\MSST-WebUI\\webUI.py"
+output_file = "E:\\vs\\MSST-WebUI\\tools\\i18n\\locale\\template.json"
+i18n_dict = process_py_file(file_path)
+save_to_json(i18n_dict, output_file)
