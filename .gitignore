@@ -13,6 +13,8 @@ webui.exe
 webui.vmp.exe
 backup/
 tools/SOME_weights/model_steps_64000_simplified.ckpt
+input/
+results/
 
 !pretrain/*.json
 !.gitkeep

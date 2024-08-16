@@ -62,7 +62,7 @@ def setup_webui():
         copy_uvr_config(os.path.join(MODEL_FOLDER, "VR_Models"))
         print(i18n("[INFO] 正在初始化pretrain目录"))
     if not os.path.exists("input"): os.makedirs("input")
-    if not os.path.exists("output"): os.makedirs("output")
+    if not os.path.exists("results"): os.makedirs("results")
     if os.path.exists("data"):
         if not os.path.isfile(VERSION_CONFIG):
             print(i18n("[INFO] 正在初始化版本配置文件"))
