@@ -7,14 +7,12 @@ configs_template/
 data/
 ffmpeg/bin/*.exe
 workenv/
-input/
 temp/
 pretrain/
 webui.exe
 webui.vmp.exe
 backup/
 tools/SOME_weights/model_steps_64000_simplified.ckpt
-results/
 
 !pretrain/*.json
 !.gitkeep

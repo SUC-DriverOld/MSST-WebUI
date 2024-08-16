@@ -61,6 +61,8 @@ def setup_webui():
     if not os.path.isfile("pretrain/VR_Models/download_checks.json") or not os.path.isfile("pretrain/VR_Models/mdx_model_data.json") or not os.path.isfile("pretrain/VR_Models/vr_model_data.json"):
         copy_uvr_config(os.path.join(MODEL_FOLDER, "VR_Models"))
         print(i18n("[INFO] 正在初始化pretrain目录"))
+    if not os.path.exists("input"): os.makedirs("input")
+    if not os.path.exists("output"): os.makedirs("output")
     if os.path.exists("data"):
         if not os.path.isfile(VERSION_CONFIG):
             print(i18n("[INFO] 正在初始化版本配置文件"))
@@ -897,6 +899,8 @@ def merge_audios(input_folder, output_folder):
     config['tools']['merge_audio_output'] = output_folder
     save_configs(config, WEBUI_CONFIG)
     combined_audio = AudioSegment.empty()
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
     output_file = os.path.join(output_folder, "merged_audio.wav")
     for filename in sorted(os.listdir(input_folder)):
         if filename.endswith(('.mp3', '.wav', '.ogg', '.flac')):
@@ -955,6 +959,8 @@ def ensemble(files, ensemble_mode, weights, output_path):
         config['tools']['ensemble_output_folder'] = output_path
         save_configs(config, WEBUI_CONFIG)
         files_argument = " ".join(files)
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
         output_path = os.path.join(output_path, f"ensemble_{ensemble_mode}.wav")
         command = f"{PYTHON} ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
         print_command(command)
