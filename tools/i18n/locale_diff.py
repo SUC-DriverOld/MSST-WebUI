@@ -16,4 +16,4 @@ def locale_diff(template, target):
 template = "locale/template.json"
 target = ["locale/en_US.json", "locale/ja_JP.json"]
 for t in target:
-    locale_diff(t, target)
+    locale_diff(template, t)

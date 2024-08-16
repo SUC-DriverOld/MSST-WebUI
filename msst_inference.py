@@ -110,8 +110,8 @@ def run_folder(model, args, config, device, verbose = False):
 
 def proc_folder(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_type", type = str, default = 'mdx23c',
-                        help = "One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit")
+    parser.add_argument("--model_type", type=str, default='mdx23c', 
+                        help="One of bandit, bandit_v2, bs_roformer, htdemucs, mdx23c, mel_band_roformer, scnet, scnet_unofficial, segm_models, swin_upernet, torchseg")
     parser.add_argument("--config_path", type = str, help = "path to config file")
     parser.add_argument("--start_check_point", type = str, default = '', help = "Initial checkpoint to valid weights")
     parser.add_argument("--input_folder", type = str, help = "folder with mixtures to process")
@@ -128,50 +128,35 @@ def proc_folder(args):
     else:
         args = parser.parse_args(args)
 
-    torch.backends.cudnn.benchmark = True
-
-    device = args.device
-
+    device = "cpu"
     if args.force_cpu:
-        device = 'cpu'
-    elif device is None:
-        if torch.cuda.is_available():
-            device = 'cuda'
-        elif torch.backends.mps.is_available():
-            device = 'mps'
-        else:
-            # fallback to cpu
-            device = 'cpu'
+        device = "cpu"
+    elif torch.cuda.is_available():
+        device = "cuda"
+        device = f'cuda:{args.device_ids}' if type(args.device_ids) == int else f'cuda:{args.device_ids[0]}'
+    elif torch.backends.mps.is_available():
+        device = "mps"
 
-    use_cuda = device == 'cuda'
+    logger.info(f"Using device: {device}")
+    torch.backends.cudnn.benchmark = True
 
     model, config = get_model_from_config(args.model_type, args.config_path)
     if args.start_check_point != '':
         logger.info('Start from checkpoint: {}'.format(args.start_check_point))
-        if use_cuda:
-            state_dict = torch.load(args.start_check_point)
-        else:
-            state_dict = torch.load(args.start_check_point, map_location = torch.device(device))
         if args.model_type == 'htdemucs':
-            # Fix for htdemucs pround etrained models
+            state_dict = torch.load(args.start_check_point, map_location = device, weights_only=False)
+            # Fix for htdemucs pretrained models
             if 'state' in state_dict:
                 state_dict = state_dict['state']
-        model.load_state_dict(state_dict)
-    logger.info('Stems: {}'.format(config.training.instruments))
-
-    if use_cuda:
-        device_ids = args.device_ids
-        if type(device_ids) == int:
-            device = torch.device(f'cuda:{device_ids}')
-            model = model.to(device)
         else:
-            device = torch.device(f'cuda:{device_ids[0]}')
-            model = nn.DataParallel(model, device_ids = device_ids).to(device)
-        logger.info('Using CUDA with device_ids: {}'.format(device_ids))
-    else:
-        logger.info(f'Using {device}')
-        logger.info('If CUDA is available, use --force_cpu to disable it.')
-        model = model.to(device)
+            state_dict = torch.load(args.start_check_point, map_location = device, weights_only=True)
+        model.load_state_dict(state_dict)
+    logger.info("Instruments: {}".format(config.training.instruments))
+    
+    # in case multiple CUDA GPUs are used and --device_ids arg is passed
+    if type(args.device_ids) != int:
+        model = nn.DataParallel(model, device_ids = args.device_ids)
+    model = model.to(device)
 
     run_folder(model, args, config, device, verbose = False)
 

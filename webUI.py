@@ -58,9 +58,6 @@ def setup_webui():
     if not os.path.exists("configs_template"):
         shutil.copytree("configs_backup", "configs_template")
         print(i18n("[INFO] 正在初始化configs_template目录"))
-    if not os.path.isfile("pretrain/VR_Models/download_checks.json") or not os.path.isfile("pretrain/VR_Models/mdx_model_data.json") or not os.path.isfile("pretrain/VR_Models/vr_model_data.json"):
-        copy_uvr_config(os.path.join(MODEL_FOLDER, "VR_Models"))
-        print(i18n("[INFO] 正在初始化pretrain目录"))
     if not os.path.exists("input"): os.makedirs("input")
     if not os.path.exists("results"): os.makedirs("results")
     if os.path.exists("data"):
@@ -110,6 +107,12 @@ def setup_webui():
                 save_configs(version_config, VERSION_CONFIG)
     os.environ["PATH"] += os.pathsep + os.path.abspath("ffmpeg/bin/")
     print(i18n("[INFO] 设备信息：") + str(get_device()))
+
+    # fix model_path when version is lower than 1.5
+    model_name = ["denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt", "denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt", "deverb_bs_roformer_8_256dim_8depth.ckpt", "deverb_bs_roformer_8_384dim_10depth.ckpt", "deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt"]
+    for model in model_name:
+        if os.path.exists(os.path.join(MODEL_FOLDER, "vocal_models", model)):
+            shutil.move(os.path.join(MODEL_FOLDER, "vocal_models", model), os.path.join(MODEL_FOLDER, "single_stem_models", model))
 
 
 def webui_restart():
@@ -294,7 +297,7 @@ def open_folder(folder):
         os.system(f"xdg-open {absolute_path}")
 
 
-def save_training_config(train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers, train_device_ids, train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path):
+def save_training_config(train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers, train_device_ids, train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path, train_accelerate):
     try:
         config = load_configs(WEBUI_CONFIG)
         config['training']['model_type'] = train_model_type
@@ -309,6 +312,7 @@ def save_training_config(train_model_type, train_config_path, train_dataset_type
         config['training']['use_multistft_loss'] = train_use_multistft_loss
         config['training']['use_mse_loss'] = train_use_mse_loss
         config['training']['use_l1_loss'] = train_use_l1_loss
+        config['training']['accelerate'] = train_accelerate
         config['training']['results_path'] = train_results_path
         save_configs(config, WEBUI_CONFIG)
         return i18n("配置保存成功!")
@@ -1089,7 +1093,7 @@ def manual_download_model(model_type, model_name):
     return i18n("已打开") + model_name + i18n("的下载链接")
 
 
-def start_training(train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers, train_device_ids, train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path, train_start_check_point):
+def start_training(train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers, train_device_ids, train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path, train_start_check_point, train_accelerate):
     model_type = train_model_type
     config_path = train_config_path
     start_check_point = train_start_check_point
@@ -1104,6 +1108,10 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
     use_multistft_loss = "--use_multistft_loss" if train_use_multistft_loss else ""
     use_mse_loss = "--use_mse_loss" if train_use_mse_loss else ""
     use_l1_loss = "--use_l1_loss" if train_use_l1_loss else ""
+    if train_accelerate:
+        train_file = "train_accelerate.py"
+    else:
+        train_file = "train.py"
     if model_type not in MODEL_TYPE:
         return i18n("模型类型错误, 请重新选择")
     if not os.path.isfile(config_path):
@@ -1124,7 +1132,7 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
         start_check_point = "--start_check_point " + "\"" + os.path.join(results_path, train_start_check_point) + "\""
     else:
         return i18n("模型保存路径不存在, 请重新选择")
-    command = f"{PYTHON} train.py --model_type {model_type} --config_path \"{config_path}\" {start_check_point} --results_path \"{results_path}\" --data_path \"{data_path}\" --dataset_type {dataset_type} --valid_path \"{valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} --pin_memory {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss}"
+    command = f"{PYTHON} {train_file} --model_type {model_type} --config_path \"{config_path}\" {start_check_point} --results_path \"{results_path}\" --data_path \"{data_path}\" --dataset_type {dataset_type} --valid_path \"{valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} --pin_memory {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss}"
     threading.Thread(target=run_command, args=(command,), name="msst_training").start()
     return i18n("训练启动成功! 请前往控制台查看训练信息! ")
 
@@ -1564,6 +1572,7 @@ with gr.Blocks(
                         train_use_multistft_loss = gr.Checkbox(label=i18n("是否使用MultiSTFT Loss, 默认为否"), value=webui_config['training']['use_multistft_loss'], interactive=True)
                         train_use_mse_loss = gr.Checkbox(label=i18n("是否使用MSE loss, 默认为否"), value=webui_config['training']['use_mse_loss'], interactive=True)
                         train_use_l1_loss = gr.Checkbox(label=i18n("是否使用L1 loss, 默认为否"), value=webui_config['training']['use_l1_loss'], interactive=True)
+                        train_accelerate = gr.Checkbox(label=i18n("(实验中) 是否使用加速训练, 对于多显卡用户会加快训练"), value=False, interactive=True)
                     with gr.Row():
                         train_results_path = gr.Textbox(label=i18n("模型保存路径"),value=webui_config['training']['results_path'] if webui_config['training']['results_path'] else i18n("请输入或选择模型保存文件夹"),interactive=True,scale=3)
                         select_train_results_path = gr.Button(i18n("选择文件夹"), scale=1)
@@ -1583,8 +1592,8 @@ with gr.Blocks(
                     select_train_valid_path.click(fn=select_folder, outputs=train_valid_path)
                     select_train_results_path.click(fn=select_folder, outputs=train_results_path)
                     open_train_results_path.click(fn=open_folder, inputs=train_results_path)
-                    save_train_config.click(fn=save_training_config,inputs=[train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers,train_device_ids, train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path],outputs=output_message_train)
-                    start_train_button.click(fn=start_training,inputs=[train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers, train_device_ids,train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path, train_start_check_point],outputs=output_message_train)
+                    save_train_config.click(fn=save_training_config,inputs=[train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers,train_device_ids, train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path, train_accelerate],outputs=output_message_train)
+                    start_train_button.click(fn=start_training,inputs=[train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers, train_device_ids,train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path, train_start_check_point, train_accelerate],outputs=output_message_train)
                     reflesh_start_check_point.click(fn=update_train_start_check_point,inputs=train_results_path,outputs=train_start_check_point)
                     stop_thread.click(fn=stop_all_thread)
 

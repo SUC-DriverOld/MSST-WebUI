@@ -69,6 +69,13 @@ def get_model_from_config(model_type, config_path):
 
     return model, config
 
+def _getWindowingArray(window_size, fade_size):
+    fadein = torch.linspace(0, 1, fade_size)
+    fadeout = torch.linspace(1, 0, fade_size)
+    window = torch.ones(window_size)
+    window[-fade_size:] *= fadeout
+    window[:fade_size] *= fadein
+    return window
 
 def demix_track(config, model, mix, device, pbar=False):
     C = config.audio.chunk_size
@@ -84,17 +91,8 @@ def demix_track(config, model, mix, device, pbar=False):
     if length_init > 2 * border and (border > 0):
         mix = nn.functional.pad(mix, (border, border), mode='reflect')
 
-    # Prepare windows arrays (do 1 time for speed up). This trick repairs click problems on the edges of segment
-    window_size = C
-    fadein = torch.linspace(0, 1, fade_size)
-    fadeout = torch.linspace(1, 0, fade_size)
-    window_start = torch.ones(window_size)
-    window_middle = torch.ones(window_size)
-    window_finish = torch.ones(window_size)
-    window_start[-fade_size:] *= fadeout # First audio chunk, no fadein
-    window_finish[:fade_size] *= fadein # Last audio chunk, no fadeout
-    window_middle[-fade_size:] *= fadeout
-    window_middle[:fade_size] *= fadein
+    # windowingArray crossfades at segment boundaries to mitigate clicking artifacts
+    windowingArray = _getWindowingArray(C, fade_size)
 
     with torch.cuda.amp.autocast():
         with torch.inference_mode():
@@ -122,18 +120,16 @@ def demix_track(config, model, mix, device, pbar=False):
                 batch_data.append(part)
                 batch_locations.append((i, length))
                 i += step
-                if progress_bar:
-                    progress_bar.update(step)
 
                 if len(batch_data) >= batch_size or (i >= mix.shape[1]):
                     arr = torch.stack(batch_data, dim=0)
                     x = model(arr)
 
-                    window = window_middle
+                    window = windowingArray
                     if i - step == 0:  # First audio chunk, no fadein
-                        window = window_start
+                        window[:fade_size] = 1
                     elif i >= mix.shape[1]:  # Last audio chunk, no fadeout
-                        window = window_finish
+                        window[-fade_size:] = 1
 
                     for j in range(len(batch_locations)):
                         start, l = batch_locations[j]
@@ -142,6 +138,9 @@ def demix_track(config, model, mix, device, pbar=False):
 
                     batch_data = []
                     batch_locations = []
+
+                if progress_bar:
+                    progress_bar.update(step)
 
             if progress_bar:
                 progress_bar.close()
@@ -187,8 +186,6 @@ def demix_track_demucs(config, model, mix, device, pbar=False):
                 batch_data.append(part)
                 batch_locations.append((i, length))
                 i += step
-                if progress_bar:
-                    progress_bar.update(step)
 
                 if len(batch_data) >= batch_size or (i >= mix.shape[1]):
                     arr = torch.stack(batch_data, dim=0)
@@ -199,6 +196,9 @@ def demix_track_demucs(config, model, mix, device, pbar=False):
                         counter[..., start:start+l] += 1.
                     batch_data = []
                     batch_locations = []
+
+                if progress_bar:
+                    progress_bar.update(step)
 
             if progress_bar:
                 progress_bar.close()

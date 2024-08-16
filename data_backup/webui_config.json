@@ -49,6 +49,7 @@
         "use_multistft_loss": false,
         "use_mse_loss": false,
         "use_l1_loss": false,
+        "accelerate": false,
         "results_path": null
     },
     "settings": {
@@ -108,6 +109,7 @@
         "use_multistft_loss": false,
         "use_mse_loss": false,
         "use_l1_loss": false,
+        "accelerate": false,
         "results_path": null
     },
     "settings_backup": {

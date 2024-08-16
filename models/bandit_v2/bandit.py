@@ -364,3 +364,4 @@ class Bandit(BaseBandit):
             }
 
         return batch
+

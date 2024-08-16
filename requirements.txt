@@ -34,6 +34,9 @@ onnxruntime
 bitsandbytes
 gradio==4.38.1
 psutil
+accelerate
+huggingface-hub>=0.23.0
+prodigyopt
 
 # After installing the requirements, go to site-packages folder, open "\librosa\util\utils.py" and go to line 2185
 # Change the line from "np.dtype(complex): np.dtype(np.float).type," to "np.dtype(complex): np.dtype(float).type,"
