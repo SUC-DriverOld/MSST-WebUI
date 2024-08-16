@@ -1195,11 +1195,6 @@ def get_language():
         return "Auto"
 
 
-def load_port_from_config():
-    config = load_configs(WEBUI_CONFIG)
-    return config.get('port', 0)
-
-
 def save_port_to_config(port):
     port = int(port)
     config = load_configs(WEBUI_CONFIG)
@@ -1218,6 +1213,18 @@ def change_download_link(link):
         config['settings']['download_link'] = "Auto"
     save_configs(config, WEBUI_CONFIG)
     return i18n("下载链接已更改")
+
+
+def change_share_link(flag):
+    config = load_configs(WEBUI_CONFIG)
+    if flag:
+        config['settings']['share_link'] = True
+        save_configs(config, WEBUI_CONFIG)
+        return i18n("公共链接已开启, 重启WebUI生效")
+    else:
+        config['settings']['share_link'] = False
+        save_configs(config, WEBUI_CONFIG)
+        return i18n("公共链接已关闭, 重启WebUI生效")
 
 
 setup_webui()
@@ -1727,9 +1734,10 @@ with gr.Blocks(
                         gpu_list = gr.Textbox(label=i18n("GPU信息"), value=get_device(), interactive=False)
                         plantform_info = gr.Textbox(label=i18n("系统信息"), value=get_platform(), interactive=False)
                     with gr.Row():
-                        set_webui_port = gr.Number(label=i18n("设置WebUI端口, 0为自动"), value=load_port_from_config(), interactive=True)
+                        set_webui_port = gr.Number(label=i18n("设置WebUI端口, 0为自动"), value=webui_config["settings"].get("port", 0), interactive=True)
                         set_language = gr.Dropdown(label=i18n("选择语言"), choices=LANGUAGE_LIST, value=get_language(), interactive=True)
                         set_download_link = gr.Dropdown(label=i18n("选择MSST模型下载链接"), choices=["Auto", i18n("huggingface.co (需要魔法)"), i18n("hf-mirror.com (镜像站可直连)")], value=webui_config['settings']['download_link'] if webui_config['settings']['download_link'] else "Auto", interactive=True)
+                        open_share_link = gr.Checkbox(label=i18n("开启公共链接: 开启后, 他人可通过公共链接访问WebUI。链接有效时长为72小时。"), value=webui_config['settings']['share_link'], interactive=True)
                     with gr.Row():
                         select_uvr_model_dir = gr.Textbox(label=i18n("选择UVR模型目录"),value=webui_config['settings']['uvr_model_dir'] if webui_config['settings']['uvr_model_dir'] else "pretrain/VR_Models",interactive=True,scale=4)
                         select_uvr_model_dir_button = gr.Button(i18n("选择文件夹"), scale=1)
@@ -1765,7 +1773,9 @@ with gr.Blocks(
             select_uvr_model_dir.change(fn=save_uvr_modeldir,inputs=[select_uvr_model_dir],outputs=setting_output_message)
             set_language.change(fn=change_language,inputs=[set_language],outputs=setting_output_message)
             set_download_link.change(fn=change_download_link,inputs=[set_download_link],outputs=setting_output_message)
+            open_share_link.change(fn=change_share_link,inputs=[open_share_link],outputs=setting_output_message)
 
-server_port = load_port_from_config()
+server_port = webui_config["settings"].get("port", 0)
+share_flag = webui_config["settings"].get("share_link", False)
 if server_port == 0: server_port = None
-app.launch(inbrowser=True, server_port=server_port)
+app.launch(inbrowser=True, server_port=server_port, share=share_flag)
