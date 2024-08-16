@@ -79,15 +79,39 @@
       "config_path": "configs/viperx/model_bs_roformer_ep_937_sdr_10.5309.yaml",
       "model_type": "bs_roformer",
       "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/single_stem_models/model_bs_roformer_ep_937_sdr_10.5309.ckpt"
-    }
-  ],
-  "vocal_models": [
+    },
+    {
+      "name": "denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt",
+      "config_path": "configs/model_mel_band_roformer_denoise.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt"
+    },
+    {
+      "name": "denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt",
+      "config_path": "configs/model_mel_band_roformer_denoise.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt"
+    },
     {
       "name": "deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt",
       "config_path": "configs/deverb_mel_band_roformer.yaml",
       "model_type": "mel_band_roformer",
       "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt"
     },
+    {
+      "name": "deverb_bs_roformer_8_256dim_8depth.ckpt",
+      "config_path": "configs/deverb_bs_roformer_8_256dim_8depth.yaml",
+      "model_type": "bs_roformer",
+      "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/deverb_bs_roformer_8_256dim_8depth.ckpt"
+    },
+    {
+      "name": "deverb_bs_roformer_8_384dim_10depth.ckpt",
+      "config_path": "configs/deverb_bs_roformer_8_384dim_10depth.yaml",
+      "model_type": "bs_roformer",
+      "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/deverb_bs_roformer_8_384dim_10depth.ckpt"
+    }
+  ],
+  "vocal_models": [
     {
       "name": "model_bs_roformer_ep_317_sdr_12.9755.ckpt",
       "config_path": "configs/viperx/model_bs_roformer_ep_317_sdr_12.9755.yaml",
@@ -131,34 +155,22 @@
       "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/model_vocals_segm_models_sdr_9.77.ckpt"
     },
     {
-      "name": "deverb_bs_roformer_8_256dim_8depth.ckpt",
-      "config_path": "configs/deverb_bs_roformer_8_256dim_8depth.yaml",
-      "model_type": "bs_roformer",
-      "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/deverb_bs_roformer_8_256dim_8depth.ckpt"
-    },
-    {
-      "name": "deverb_bs_roformer_8_384dim_10depth.ckpt",
-      "config_path": "configs/deverb_bs_roformer_8_384dim_10depth.yaml",
-      "model_type": "bs_roformer",
-      "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/deverb_bs_roformer_8_384dim_10depth.ckpt"
-    },
-    {
       "name": "model_bs_roformer_ep_368_sdr_12.9628.ckpt",
       "config_path": "configs/viperx/model_bs_roformer_ep_368_sdr_12.9628.yaml",
       "model_type": "bs_roformer",
       "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/model_bs_roformer_ep_368_sdr_12.9628.ckpt"
     },
     {
-      "name": "denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt",
-      "config_path": "configs/model_mel_band_roformer_denoise.yaml",
+      "name": "model_mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt",
+      "config_path": "configs/config_mel_band_roformer_karaoke.yaml",
       "model_type": "mel_band_roformer",
-      "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt"
+      "link": "https://huggingface.co/Sucial/Music_Source_Sepetration_Models/resolve/main/model_mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt"
     },
     {
-      "name": "denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt",
-      "config_path": "configs/model_mel_band_roformer_denoise.yaml",
+      "name": "model_vocals_mel_band_roformer_kj_sdr_10.98.ckpt",
+      "config_path": "configs/config_vocals_mel_band_roformer_kj_sdr_10.98.yaml",
       "model_type": "mel_band_roformer",
-      "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt"
+      "link": "https://huggingface.co/Sucial/Music_Source_Sepetration_Models/resolve/main/model_vocals_mel_band_roformer_kj_sdr_10.98.ckpt"
     }
   ]
 }

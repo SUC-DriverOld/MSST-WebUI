@@ -825,7 +825,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
         shutil.rmtree(tmp_store_dir)
     finish_time = time.time()
     elapsed_time = finish_time - start_time
-    Console().rule(f"[yellow]Finished runing {preset_name}! Costs{elapsed_time:.2f}s", style="yellow")
+    Console().rule(f"[yellow]Finished runing {preset_name}! Costs {elapsed_time:.2f}s", style="yellow")
     return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
 
 
@@ -1375,7 +1375,7 @@ with gr.Blocks(
                     preset_name_input = gr.Textbox(label=i18n("预设名称"), placeholder=i18n("请输入预设名称"), interactive=True)
                     with gr.Row():
                         model_type = gr.Dropdown(label=i18n("选择模型类型"), choices=["MSST_Models", "UVR_VR_Models"], interactive=True)
-                        model_name = gr.Dropdown(label=i18n("选择模型"), choices=[i18n("请先选择模型类型")], interactive=True)
+                        model_name = gr.Dropdown(label=i18n("选择模型"), choices=[i18n("请先选择模型类型")], interactive=True, scale=2)
                         stem = gr.Dropdown(label=i18n("输出音轨"), choices=[i18n("请先选择模型")], interactive=True)
                         secondary_output = gr.Dropdown(label=i18n("同时输出次级音轨"), choices=["True", "False"], value="False", interactive=True)
                     add_to_flow = gr.Button(i18n("添加至流程"))
