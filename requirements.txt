@@ -1,6 +1,6 @@
 # It is recommended to install torch torchvision and torchaudio manually.
-# use command: pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-# torch
+# Use command: pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# torch>=2.0.1
 
 numpy
 pandas
@@ -11,21 +11,22 @@ tqdm
 segmentation_models_pytorch==0.3.3
 timm==0.9.2
 audiomentations==0.24.0
-pedalboard==0.8.1
+pedalboard~=0.8.1
 omegaconf==2.2.3
 beartype==0.14.1
 rotary_embedding_torch==0.3.5
 einops==0.6.1
 mido
-librosa<0.10.0
+librosa==0.9.2
 lightning>=2.0.0
 demucs==4.0.0
-transformers==4.35.0
+transformers~=4.35.0
 torchmetrics==0.11.4
 spafe==0.3.2
 protobuf==3.20.3
 torch_audiomentations
 asteroid==0.7.0
+samplerate
 auraloss
 torchseg
 mir_eval
@@ -33,3 +34,6 @@ onnxruntime
 bitsandbytes
 gradio==4.38.1
 psutil
+
+# After installing the requirements, go to site-packages folder, open "\librosa\util\utils.py" and go to line 2185
+# Change the line from "np.dtype(complex): np.dtype(np.float).type," to "np.dtype(complex): np.dtype(float).type,"
