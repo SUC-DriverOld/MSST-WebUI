@@ -848,7 +848,11 @@ def restore_preset_func(backup_file):
         return i18n("请选择备份文件")
     backup_data = load_configs(os.path.join(backup_dir, backup_file))
     save_configs(backup_data, PRESETS)
-    return i18n("已成功恢复备份") + backup_file + i18n(", 请重启WebUI更新预设流程。")
+    output_message_manage = i18n("已成功恢复备份") + backup_file
+    preset_dropdown = gr.Dropdown(label=i18n("请选择预设"), choices=list(backup_data.keys()))
+    preset_name_delet = gr.Dropdown(label=i18n("请选择预设"), choices=list(backup_data.keys()))
+    preset_flow_delete = pd.DataFrame({"model_type": [i18n("请先选择预设")], "model_name": [i18n("请先选择预设")], "stem": [i18n("请先选择预设")], "secondary_output": [i18n("请先选择预设")]})
+    return output_message_manage, preset_dropdown, preset_name_delet, preset_flow_delete
 
 
 def backup_preset_func():
@@ -1386,7 +1390,7 @@ with gr.Blocks(
                     gr.Markdown(i18n("`model_type`: 模型类型；`model_name`: 模型名称；`stem`: 主要输出音轨；<br>`secondary_output`: 同时输出次级音轨。选择True将同时输出该次分离得到的次级音轨, **此音轨将直接保存至**输出目录下的secondary_output文件夹, **不会经过后续流程处理**"))
                     preset_flow_delete = gr.Dataframe(pd.DataFrame({"model_type": [i18n("请先选择预设")], "model_name": [i18n("请先选择预设")], "stem": [i18n("请先选择预设")], "secondary_output": [i18n("请先选择预设")]}), interactive=False, label=None)
                     delete_button = gr.Button(i18n("删除所选预设"), scale=1)
-                    gr.Markdown(i18n("每次删除预设前, 将自动备份预设以免误操作。<br>你也可以点击“备份预设流程”按钮进行手动备份, 也可以从备份文件夹中恢复预设流程。恢复预设流程后, 需要重启WebUI以更新。"))
+                    gr.Markdown(i18n("每次删除预设前, 将自动备份预设以免误操作。<br>你也可以点击“备份预设流程”按钮进行手动备份, 也可以从备份文件夹中恢复预设流程。"))
                     with gr.Row():
                         backup_preset = gr.Button(i18n("备份预设流程"))
                         open_preset_backup = gr.Button(i18n("打开备份文件夹"))
@@ -1410,7 +1414,7 @@ with gr.Blocks(
             delete_button.click(delete_func, [preset_name_delete], [output_message_manage, preset_name_delete, preset_dropdown, preset_flow_delete, select_preset_backup])
             preset_name_delete.change(load_preset, inputs=preset_name_delete, outputs=preset_flow_delete)
             stop_thread.click(fn=stop_all_thread)
-            restore_preset.click(fn=restore_preset_func,inputs=[select_preset_backup],outputs=output_message_manage)
+            restore_preset.click(fn=restore_preset_func,inputs=[select_preset_backup],outputs=[output_message_manage, preset_dropdown, preset_name_delete, preset_flow_delete])
             backup_preset.click(fn=backup_preset_func,outputs=[output_message_manage, select_preset_backup])
             open_preset_backup.click(open_folder, inputs=gr.Textbox(BACKUP, visible=False))
 
