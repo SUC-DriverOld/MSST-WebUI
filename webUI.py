@@ -41,9 +41,17 @@ CONFIG_TEMPLATE_FOLDER = "configs_template/"
 VERSION_CONFIG = "data/version.json"
 TEMP_PATH = "temp"
 MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit']
-LANGUAGE_LIST = ['Auto', '简体中文', '繁體中文', 'English', '日本語']
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"
 PYTHON = ".\\workenv\\python.exe" if os.path.isfile(".\\workenv\\python.exe") else sys.executable
+
+language_dict = {
+    "Auto": "Auto",
+    "简体中文": "zh_CN",
+    "繁體中文": "zh_TW",
+    "English": "en_US",
+    "日本語": "ja_JP",
+    "😊": "emoji"
+    }
 
 warnings.filterwarnings("ignore")
 stop_all_threads = False
@@ -1178,14 +1186,8 @@ def webui_goto_github():
 
 def change_language(language):
     config = load_configs(WEBUI_CONFIG)
-    if language == "简体中文":
-        config['settings']['language'] = "zh_CN"
-    elif language == "English":
-        config['settings']['language'] = "en_US"
-    elif language == "日本語":
-        config['settings']['language'] = "ja_JP"
-    elif language == "繁體中文":
-        config['settings']['language'] = "zh_TW"
+    if language in language_dict.keys():
+        config['settings']['language'] = language_dict[language]
     else:
         config['settings']['language'] = "Auto"
     save_configs(config, WEBUI_CONFIG)
@@ -1195,16 +1197,10 @@ def change_language(language):
 def get_language():
     config = load_configs(WEBUI_CONFIG)
     language = config['settings']['language']
-    if language == "zh_CN":
-        return "简体中文"
-    elif language == "en_US":
-        return "English"
-    elif language == "ja_JP":
-        return "日本語"
-    elif language == "zh_TW":
-        return "繁體中文"
-    else:
-        return "Auto"
+    for key, value in language_dict.items():
+        if value == language:
+            return key
+    return "Auto"
 
 
 def save_port_to_config(port):
@@ -1748,7 +1744,7 @@ with gr.Blocks(
                         plantform_info = gr.Textbox(label=i18n("系统信息"), value=get_platform(), interactive=False)
                     with gr.Row():
                         set_webui_port = gr.Number(label=i18n("设置WebUI端口, 0为自动"), value=webui_config["settings"].get("port", 0), interactive=True)
-                        set_language = gr.Dropdown(label=i18n("选择语言"), choices=LANGUAGE_LIST, value=get_language(), interactive=True)
+                        set_language = gr.Dropdown(label=i18n("选择语言"), choices=language_dict.keys(), value=get_language(), interactive=True)
                         set_download_link = gr.Dropdown(label=i18n("选择MSST模型下载链接"), choices=["Auto", i18n("huggingface.co (需要魔法)"), i18n("hf-mirror.com (镜像站可直连)")], value=webui_config['settings']['download_link'] if webui_config['settings']['download_link'] else "Auto", interactive=True)
                         open_share_link = gr.Checkbox(label=i18n("开启公共链接: 开启后, 他人可通过公共链接访问WebUI。链接有效时长为72小时。"), value=webui_config['settings']['share_link'], interactive=True)
                     with gr.Row():
