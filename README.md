@@ -1,8 +1,8 @@
 <div align="center">
 
 # MSST-WebUI
-
-Music Source Separation Training Inference Webui, besides, we packed UVR together!
+[![Try it on Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb)[![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest)[![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers)<br>
+WebUI of Music-Source-Separation-Training-Inference , and we packed UVR together!
 </div>
 
 ## Introduction
