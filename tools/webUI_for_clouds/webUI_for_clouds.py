@@ -26,7 +26,7 @@ from pydub import AudioSegment
 from rich.console import Console
 from torch import cuda, backends
 from multiprocessing import cpu_count
-from .download_models import download_model
+from download_models import download_model
 
 
 PACKAGE_VERSION = "1.5"
