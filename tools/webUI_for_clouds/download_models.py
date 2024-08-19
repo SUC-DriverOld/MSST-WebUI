@@ -43,10 +43,10 @@ def get_msst_model(model_name):
 
 def get_uvr_models(model_name):
     config = load_configs(VR_MODEL)
-    for model in config:
-        if model["name"] == model_name:
-            model_path = model["model_path"]
-            download_link = model["download_link"]
+    for key in config.keys():
+        if key == model_name:
+            model_path = config[key]["model_path"]
+            download_link = config[key]["download_link"]
             return model_path, download_link
 
 def download(url, path):

@@ -1,6 +1,7 @@
 # It is recommended to install torch torchvision and torchaudio manually.
 # Use command: pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 # torch>=2.0.1
+--no-build-isolation
 
 numpy
 pandas
@@ -26,7 +27,7 @@ spafe==0.3.2
 protobuf==3.20.3
 torch_audiomentations
 asteroid==0.7.0
-samplerate
+samplerate --only-binary=:all:
 auraloss
 torchseg
 mir_eval
