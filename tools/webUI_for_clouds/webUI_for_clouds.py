@@ -328,6 +328,19 @@ def stop_all_thread():
             gr.Info(i18n("已停止进程"))
 
 
+def run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, force_cpu):
+    if not input_audio:
+        return i18n("请上传一个音频文件。")
+    if os.path.exists(TEMP_PATH):
+        shutil.rmtree(TEMP_PATH)
+    os.makedirs(TEMP_PATH)
+    shutil.copy(input_audio, TEMP_PATH)
+    input_path = TEMP_PATH
+    if download_model("msst", selected_model):
+        run_inference(selected_model, input_path, store_dir,extract_instrumental, gpu_id, force_cpu)
+        return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
+
+
 def run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, force_cpu):
     if not bool(re.match(r'^(\d+)(?:\s(?!\1)\d+)*$', gpu_id)):
         raise gr.Error(i18n("GPU ID格式错误, 请重新输入"))
@@ -354,6 +367,26 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
     msst_inference = threading.Thread(target=run_command, args=(command,), name="msst_inference")
     msst_inference.start()
     msst_inference.join()
+
+
+def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
+    vr_multiple_audio_input = None
+    if not os.path.isfile(vr_single_audio):
+        return i18n("请上传一个音频文件")
+    if not vr_select_model:
+        return i18n("请选择模型")
+    if not vr_store_dir:
+        return i18n("请选择输出目录")
+    if not os.path.exists(vr_store_dir):
+        os.makedirs(vr_store_dir)
+    if os.path.exists(TEMP_PATH):
+        shutil.rmtree(TEMP_PATH)
+    os.makedirs(TEMP_PATH)
+    shutil.copy(vr_single_audio, TEMP_PATH)
+    vr_single_audio = os.path.join(TEMP_PATH, os.path.basename(vr_single_audio))
+    if download_model("uvr", vr_select_model):
+        vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
+        return i18n("处理完成, 结果已保存至") + vr_store_dir
 
 
 def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
@@ -492,6 +525,18 @@ def delete_func(preset_name):
         return output_message, preset_name_delete, preset_name_select, preset_flow_delete, select_preset_backup
     else:
         return i18n("预设不存在")
+
+
+def run_single_inference_flow(input_audio, store_dir, preset_name, force_cpu):
+    if not input_audio:
+        return i18n("请上传一个音频文件")
+    if os.path.exists(TEMP_PATH):
+        shutil.rmtree(TEMP_PATH)
+    os.makedirs(TEMP_PATH)
+    shutil.copy(input_audio, TEMP_PATH)
+    input_folder = TEMP_PATH
+    msg = run_inference_flow(input_folder, store_dir, preset_name, force_cpu)
+    return msg
 
 
 def run_inference_flow(input_folder, store_dir, preset_name, force_cpu):
@@ -795,25 +840,6 @@ def check_webui_update():
         return i18n("检查更新失败")
 
 
-def change_language(language):
-    config = load_configs(WEBUI_CONFIG)
-    if language in language_dict.keys():
-        config['settings']['language'] = language_dict[language]
-    else:
-        config['settings']['language'] = "Auto"
-    save_configs(config, WEBUI_CONFIG)
-    return i18n("语言已更改, 重启WebUI生效")
-
-
-def get_language():
-    config = load_configs(WEBUI_CONFIG)
-    language = config['settings']['language']
-    for key, value in language_dict.items():
-        if value == language:
-            return key
-    return "Auto"
-
-
 def change_download_link(link):
     config = load_configs(WEBUI_CONFIG)
     if link == i18n("huggingface.co (需要魔法)"):
@@ -846,7 +872,11 @@ with gr.Blocks(
                 with gr.Column():
                     force_cpu = gr.Checkbox(label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "), value=False, interactive=True)
                     extract_instrumental = gr.Checkbox(label=i18n("同时输出次级音轨"), value=False, interactive=True)
-            multiple_audio_input = gr.Textbox(label=i18n("输入目录"), value="input/", interactive=True)
+            with gr.Tabs():
+                with gr.TabItem(label=i18n("单个音频上传")):
+                    single_audio = gr.File(label=i18n("单个音频上传"), type="filepath")
+                with gr.TabItem(label=i18n("批量音频上传")):
+                    multiple_audio_input = gr.Textbox(label=i18n("输入目录"), value="input/", interactive=True)
             store_dir = gr.Textbox(label=i18n("输出目录"), value="results/", interactive=True)
             with gr.Accordion(i18n("推理参数设置 (一般不需要动) "), open=False):
                 gr.Markdown(value=i18n("只有在点击保存后才会生效。参数直接写入配置文件, 无法撤销。假如不知道如何设置, 请保持默认值。<br>请牢记自己修改前的参数数值, 防止出现问题以后无法恢复。请确保输入正确的参数, 否则可能会导致模型无法正常运行。<br>假如修改后无法恢复, 请点击``重置``按钮, 这会使得配置文件恢复到默认值。"))
@@ -857,11 +887,14 @@ with gr.Blocks(
                 normalize = gr.Checkbox(label=i18n("normalize: 是否对音频进行归一化处理 (部分模型没有此参数)"), value=False, interactive=False)
                 reset_config_button = gr.Button(i18n("重置配置"), variant="secondary")
                 save_config_button = gr.Button(i18n("保存配置"), variant="primary")
-            inference_multiple = gr.Button(i18n("批量音频分离"), variant="primary")
+            with gr.Row():
+                inference_single = gr.Button(i18n("单个音频分离"), variant="primary")
+                inference_multiple = gr.Button(i18n("批量音频分离"), variant="primary")
             with gr.Row():
                 output_message = gr.Textbox(label="Output Message", scale=4)
                 stop_thread = gr.Button(i18n("强制停止"), scale=1)
 
+            inference_single.click(fn=run_inference_single,inputs=[selected_model, single_audio, store_dir, extract_instrumental, gpu_id, force_cpu],outputs=output_message)
             inference_multiple.click(fn=run_multi_inference, inputs=[selected_model, multiple_audio_input, store_dir, extract_instrumental, gpu_id, force_cpu],outputs=output_message)
             selected_model.change(fn=update_inference_settings,inputs=[selected_model],outputs=[batch_size, dim_t, num_overlap, normalize])
             save_config_button.click(fn=save_config,inputs=[selected_model, batch_size, dim_t, num_overlap, normalize],outputs=output_message)
@@ -880,7 +913,11 @@ with gr.Blocks(
                 vr_use_cpu = gr.Checkbox(label=i18n("使用CPU"), value=False, interactive=True)
                 vr_primary_stem_only = gr.Checkbox(label=vr_primary_stem_label, value=False, interactive=True)
                 vr_secondary_stem_only = gr.Checkbox(label=vr_secondary_stem_label, value=False, interactive=True)
-            vr_multiple_audio_input = gr.Textbox(label=i18n("输入目录"),value="input/",interactive=True)
+            with gr.Tabs():
+                with gr.TabItem(label=i18n("单个音频上传")):
+                    vr_single_audio = gr.File(label="单个音频上传", type="filepath")
+                with gr.TabItem(label=i18n("批量音频上传")):
+                    vr_multiple_audio_input = gr.Textbox(label=i18n("输入目录"),value="input/",interactive=True)
             vr_store_dir = gr.Textbox(label=i18n("输出目录"), value="results/", interactive=True)
             with gr.Accordion(i18n("以下是一些高级设置, 一般保持默认即可"), open=False):
                 with gr.Row():
@@ -893,12 +930,15 @@ with gr.Blocks(
                     vr_high_end_process = gr.Checkbox(label=i18n("High End Process: 将输出音频缺失的频率范围镜像输出"), value=False, interactive=True)
                     vr_enable_post_process = gr.Checkbox(label=i18n("Enable Post Process: 识别人声输出中残留的人工痕迹, 可改善某些歌曲的分离效果"), value=False, interactive=True)
                 vr_debug_mode = gr.Checkbox(label=i18n("Debug Mode: 启用调试模式, 向开发人员反馈时, 请开启此模式"), value=False, interactive=True)
-            vr_start_multi_inference = gr.Button(i18n("批量音频分离"), variant="primary")
+            with gr.Row():
+                vr_start_single_inference = gr.Button(i18n("单个音频分离"), variant="primary")
+                vr_start_multi_inference = gr.Button(i18n("批量音频分离"), variant="primary")
             with gr.Row():
                 vr_output_message = gr.Textbox(label="Output Message", scale=4)
                 stop_thread = gr.Button(i18n("强制停止"), scale=1)
 
             vr_select_model.change(fn=load_vr_model_stem,inputs=vr_select_model,outputs=[vr_primary_stem_only, vr_secondary_stem_only])
+            vr_start_single_inference.click(fn=vr_inference_single,inputs=[vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode],outputs=vr_output_message)
             vr_start_multi_inference.click(fn=vr_inference_multi,inputs=[vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode],outputs=vr_output_message)
             stop_thread.click(fn=stop_all_thread)
 
@@ -908,9 +948,15 @@ with gr.Blocks(
                 with gr.TabItem(label=i18n("使用预设")):
                     preset_dropdown = gr.Dropdown(label=i18n("请选择预设"),choices=list(presets.keys()),value=None,interactive=True)
                     force_cpu = gr.Checkbox(label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "), value=False, interactive=True)
-                    input_folder_flow = gr.Textbox(label=i18n("输入目录"), value="input/", interactive=True)
+                    with gr.Tabs():
+                        with gr.TabItem(label=i18n("单个音频上传")):
+                            single_audio_flow = gr.File(label=i18n("单个音频上传"), type="filepath")
+                        with gr.TabItem(label=i18n("批量音频上传")):
+                            input_folder_flow = gr.Textbox(label=i18n("输入目录"), value="input/", interactive=True)
                     store_dir_flow = gr.Textbox(label=i18n("输出目录"), value="results/", interactive=True)
-                    inference_flow = gr.Button(i18n("批量音频分离"), variant="primary")
+                    with gr.Row():
+                        single_inference_flow = gr.Button(i18n("单个音频分离"), variant="primary")
+                        inference_flow = gr.Button(i18n("批量音频分离"), variant="primary")
                     with gr.Row():
                         output_message_flow = gr.Textbox(label="Output Message", scale=4)
                         stop_thread = gr.Button(i18n("强制停止"), scale=1)
@@ -943,6 +989,7 @@ with gr.Blocks(
                 
 
             inference_flow.click(fn=run_inference_flow,inputs=[input_folder_flow, store_dir_flow, preset_dropdown, force_cpu],outputs=output_message_flow)
+            single_inference_flow.click(fn=run_single_inference_flow,inputs=[single_audio_flow, store_dir_flow, preset_dropdown, force_cpu],outputs=output_message_flow)
             model_type.change(update_model_name, inputs=model_type, outputs=model_name)
             model_name.change(update_model_stem, inputs=[model_type, model_name], outputs=stem)
             add_to_flow.click(add_to_flow_func, [model_type, model_name, stem, secondary_output, preset_flow], preset_flow)
@@ -973,8 +1020,8 @@ with gr.Blocks(
                 with gr.TabItem(label=i18n("计算SDR")):
                     gr.Markdown(value=i18n("上传两个**wav音频文件**并计算它们的[SDR](https://www.aicrowd.com/challenges/music-demixing-challenge-ismir-2021#evaluation-metric)。<br>SDR是一个用于评估模型质量的数值。数值越大, 模型算法结果越好。"))
                     with gr.Row():
-                        true_audio = gr.Textbox(label=i18n("原始音频"), value="input/no_audio.wav", interactive=True)
-                        estimated_audio = gr.Textbox(label=i18n("分离后的音频"), value="input/no_audio.wav", interactive=True)
+                        true_audio = gr.File(label=i18n("原始音频"),type="filepath", interactive=True)
+                        estimated_audio = gr.File(label=i18n("分离后的音频"),type="filepath", interactive=True)
                     compute_sdr_button = gr.Button(i18n("计算SDR"), variant="primary")
                     output_message_sdr = gr.Textbox(label="Output Message")
                 with gr.TabItem(label = i18n("Ensemble模式")):
@@ -995,10 +1042,12 @@ with gr.Blocks(
                             gr.Markdown(i18n("1. min_fft可用于进行更保守的合成, 它将减少更激进模型的影响。<br>2. 最好合成等质量的模型。在这种情况下, 它将带来增益。如果其中一个模型质量不好, 它将降低整体质量。<br>3. 在原仓库作者的实验中, 与其他方法相比, avg_wave在SDR分数上总是更好或相等。<br>4. 上传的文件名**不能包含空格**, 最终会在输出目录下生成一个`ensemble_<集成模式>.wav`。"))
                 with gr.TabItem(label=i18n("歌声转MIDI")):
                     gr.Markdown(value=i18n("歌声转MIDI功能使用开源项目[SOME](https://github.com/openvpi/SOME/), 可以将分离得到的**干净的歌声**转换成.mid文件。<br>【必须】若想要使用此功能, 请先下载权重文件[model_steps_64000_simplified.ckpt](https://hf-mirror.com/Sucial/SOME_Models/resolve/main/model_steps_64000_simplified.ckpt)并将其放置在程序目录下的`tools/SOME_weights`文件夹内。文件命名不可随意更改! <br>【重要】只能上传wav格式的音频! "))
-                    some_input_audio = gr.Textbox(label=i18n("上传wav格式音频"), value="input/no_audio.wav", interactive=True)
-                    audio_bpm = gr.Number(label=i18n("输入音频BPM"), value=120, interactive=True)
-                    some_output_folder = gr.Textbox(label=i18n("输出目录"),value="results/some/", interactive=True)
-                    some_button = gr.Button(i18n("开始转换"), variant="primary")
+                    with gr.Row():
+                        some_input_audio = gr.File(label=i18n("上传wav格式音频"), type="filepath")
+                        with gr.Column():
+                            audio_bpm = gr.Number(label=i18n("输入音频BPM"), value=120, interactive=True)
+                            some_output_folder = gr.Textbox(label=i18n("输出目录"),value="results/some/",interactive=True)
+                            some_button = gr.Button(i18n("开始转换"), variant="primary")
                     output_message_some = gr.Textbox(label="Output Message")
                     gr.Markdown(i18n("### 注意事项"))
                     gr.Markdown(i18n("1. 音频BPM (每分钟节拍数) 可以通过MixMeister BPM Analyzer等软件测量获取。<br>2. 为保证MIDI提取质量, 音频文件请采用干净清晰无混响底噪人声。<br>3. 输出MIDI不带歌词信息, 需要用户自行添加歌词。<br>4. 实际使用体验中部分音符会出现断开的现象, 需自行修正。SOME的模型主要面向DiffSinger唱法模型自动标注, 比正常用户在创作中需要的MIDI更加精细, 因而可能导致模型倾向于对音符进行切分。<br>5. 提取的MIDI没有量化/没有对齐节拍/不适配BPM, 需自行到各编辑器中手动调整。"))
@@ -1073,7 +1122,6 @@ with gr.Blocks(
             with gr.Row():
                 gpu_list = gr.Textbox(label=i18n("GPU信息"), value=get_device(), interactive=False)
                 plantform_info = gr.Textbox(label=i18n("系统信息"), value=get_platform(), interactive=False)
-                set_language = gr.Dropdown(label=i18n("选择语言"), choices=language_dict.keys(), value=get_language(), interactive=True)
             with gr.Row():
                 update_message = gr.Textbox(label=i18n("检查更新"), value=i18n("当前版本: ") + PACKAGE_VERSION + i18n(", 请点击检查更新按钮"), interactive=False,scale=4)
                 check_update = gr.Button(i18n("检查更新"), scale=1)
@@ -1082,6 +1130,5 @@ with gr.Blocks(
 
             check_update.click(fn=check_webui_update, outputs=update_message)
             reset_all_webui_config.click(fn=reset_webui_config,outputs=setting_output_message)
-            set_language.change(fn=change_language,inputs=[set_language],outputs=setting_output_message)
 
 app.launch(share=True)
