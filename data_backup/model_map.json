@@ -41,6 +41,12 @@
       "config_path": "configs/config_htdemucs_6stems.yaml",
       "model_type": "htdemucs",
       "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/multi_stem_models/HTDemucs4_6stems.th"
+    },
+    {
+      "name": "model_scnet_sdr_9.3244.ckpt",
+      "config_path": "configs/config_scnet_large.yaml",
+      "model_type": "scnet",
+      "link": "https://huggingface.co/Sucial/Music_Source_Sepetration_Models/resolve/main/model_scnet_sdr_9.3244.ckpt"
     }
   ],
   "single_stem_models": [
