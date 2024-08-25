@@ -57,6 +57,7 @@
         "port": 0,
         "language": "Auto",
         "download_link": "Auto",
+        "local_link": false,
         "share_link": false
     },
     "inference_backup": {
@@ -117,6 +118,7 @@
         "port": 0,
         "language": "Auto",
         "download_link": "Auto",
+        "local_link": false,
         "share_link": false
     }
 }

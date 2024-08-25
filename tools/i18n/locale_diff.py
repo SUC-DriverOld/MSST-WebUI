@@ -14,6 +14,6 @@ def locale_diff(template, target):
         json.dump(template_key, f, ensure_ascii=False, indent=4)
 
 template = "locale/template.json"
-target = ["locale/en_US.json", "locale/ja_JP.json"]
+target = ["locale/en_US.json", "locale/ja_JP.json", "locale/emoji.json"]
 for t in target:
     locale_diff(template, t)

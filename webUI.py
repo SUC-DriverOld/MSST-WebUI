@@ -1235,6 +1235,18 @@ def change_share_link(flag):
         return i18n("公共链接已关闭, 重启WebUI生效")
 
 
+def change_local_link(flag):
+    config = load_configs(WEBUI_CONFIG)
+    if flag:
+        config['settings']['local_link'] = True
+        save_configs(config, WEBUI_CONFIG)
+        return i18n("已开启局域网分享, 重启WebUI生效")
+    else:
+        config['settings']['local_link'] = False
+        save_configs(config, WEBUI_CONFIG)
+        return i18n("已关闭局域网分享, 重启WebUI生效")
+
+
 setup_webui()
 with gr.Blocks(
         theme=gr.Theme.load('tools/themes/theme_schema@1.2.2.json')
@@ -1746,6 +1758,8 @@ with gr.Blocks(
                         set_webui_port = gr.Number(label=i18n("设置WebUI端口, 0为自动"), value=webui_config["settings"].get("port", 0), interactive=True)
                         set_language = gr.Dropdown(label=i18n("选择语言"), choices=language_dict.keys(), value=get_language(), interactive=True)
                         set_download_link = gr.Dropdown(label=i18n("选择MSST模型下载链接"), choices=["Auto", i18n("huggingface.co (需要魔法)"), i18n("hf-mirror.com (镜像站可直连)")], value=webui_config['settings']['download_link'] if webui_config['settings']['download_link'] else "Auto", interactive=True)
+                    with gr.Row():
+                        open_local_link = gr.Checkbox(label=i18n("对本地局域网开放WebUI: 开启后, 同一局域网内的设备可通过'本机IP:端口'的方式访问WebUI。"), value=webui_config['settings']['local_link'], interactive=True)
                         open_share_link = gr.Checkbox(label=i18n("开启公共链接: 开启后, 他人可通过公共链接访问WebUI。链接有效时长为72小时。"), value=webui_config['settings']['share_link'], interactive=True)
                     with gr.Row():
                         select_uvr_model_dir = gr.Textbox(label=i18n("选择UVR模型目录"),value=webui_config['settings']['uvr_model_dir'] if webui_config['settings']['uvr_model_dir'] else "pretrain/VR_Models",interactive=True,scale=4)
@@ -1783,8 +1797,9 @@ with gr.Blocks(
             set_language.change(fn=change_language,inputs=[set_language],outputs=setting_output_message)
             set_download_link.change(fn=change_download_link,inputs=[set_download_link],outputs=setting_output_message)
             open_share_link.change(fn=change_share_link,inputs=[open_share_link],outputs=setting_output_message)
+            open_local_link.change(fn=change_local_link,inputs=[open_local_link],outputs=setting_output_message)
 
-server_port = webui_config["settings"].get("port", 0)
-share_flag = webui_config["settings"].get("share_link", False)
-if server_port == 0: server_port = None
-app.launch(inbrowser=True, server_port=server_port, share=share_flag)
+local_link = "0.0.0.0" if webui_config["settings"].get("local_link", False) else None
+server_port = None if webui_config["settings"].get("port", 0) == 0 else webui_config["settings"].get("port", 0)
+isShare = webui_config["settings"].get("share_link", False)
+app.launch(inbrowser=True, server_name=local_link, server_port=server_port, share=isShare)
