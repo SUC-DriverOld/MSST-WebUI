@@ -115,6 +115,12 @@
       "config_path": "configs/deverb_bs_roformer_8_384dim_10depth.yaml",
       "model_type": "bs_roformer",
       "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/deverb_bs_roformer_8_384dim_10depth.ckpt"
+    },
+    {
+      "name": "dereverb_mdx23c_sdr_6.9096.ckpt",
+      "config_path": "configs/config_dereverb_mdx23c.yaml",
+      "model_type": "mdx23c",
+      "link": "https://huggingface.co/Sucial/Music_Source_Sepetration_Models/resolve/main/dereverb_mdx23c_sdr_6.9096.ckpt"
     }
   ],
   "vocal_models": [
