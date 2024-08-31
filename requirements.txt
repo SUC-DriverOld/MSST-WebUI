@@ -4,7 +4,7 @@
 
 --only-binary=samplerate
 
-numpy
+numpy==1.23.5
 pandas
 scipy
 soundfile

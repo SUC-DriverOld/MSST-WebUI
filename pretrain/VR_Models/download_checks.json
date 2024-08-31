@@ -30,7 +30,9 @@
                         "VR Arch Single Model v4: MGM_HIGHEND_v4": "MGM_HIGHEND_v4.pth",
                         "VR Arch Single Model v4: MGM_LOWEND_A_v4": "MGM_LOWEND_A_v4.pth",
                         "VR Arch Single Model v4: MGM_LOWEND_B_v4": "MGM_LOWEND_B_v4.pth",
-                        "VR Arch Single Model v4: MGM_MAIN_v4": "MGM_MAIN_v4.pth"
+                        "VR Arch Single Model v4: MGM_MAIN_v4": "MGM_MAIN_v4.pth",
+                        "VR Arch Single Model v5: UVR-DeReverb-aufr33-jarredou": "UVR-DeReverb-aufr33-jarredou_4band_v4_ms_fullband.pth"
+                        
                 },
     
     "mdx_download_list": {      
