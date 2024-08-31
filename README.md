@@ -7,19 +7,29 @@ WebUI of Music-Source-Separation-Training-Inference , and we packed UVR together
 
 ## Introduction
 
-This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training), which is a music source separation training framework. You can use this webUI to infer the MSST model and UVR VR.Models (The inference code comes from [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator), and we do some changes on it), and the preset process page allows you to customize the processing flow yourself. You can install models in the "Install Models" interface. If you have downloaded [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui) before, you do not need to download VR.Models again. You can go to the "Settings" page and directly select your UVR5 model folder. Finally, we also provide some convenient tools in the webUI.
+This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training), which is a music source separation training framework. You can use this webUI to infer the MSST model and UVR VR.Models (The inference code comes from [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator), and we do some changes on it), and the preset process page allows you to customize the processing flow yourself. You can install models in the "Install Models" interface. If you have downloaded [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui) before, you do not need to download VR.Models again. You can go to the "Settings" page and directly select your UVR5 model folder. Finally, we also provide some convenient tools such as [SOME: Vocals to MIDI](https://github.com/openvpi/SOME/) in the webUI.
 
 ## Usage
 
-### You can go to [Releases](https://github.com/SUC-DriverOld/MSST-WebUI/releases) to download the installer
+**Windows**: Download the installer from [Releases](https://github.com/SUC-DriverOld/MSST-WebUI/releases) and run it. Or you can clone this repository and run from source.<br>
+**Linux/MacOS**: Clone this repository and run from source.<br>
+**Google Colab**: [Click here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) to run the webUI on Google Colab.
 
-### 中国用户可以从下方链接下载
-
-下载地址：[123盘](https://www.123pan.com/s/1bmETd-AefWh.html) 提取码:1145 | [百度网盘](https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q?pwd=1145) 提取码:1145 | [B站教程视频](https://www.bilibili.com/video/BV18m42137rm) | [飞书教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)
+> ### 中国用户可以从下方链接下载安装包
+> 
+> 下载地址1：[123云盘](https://www.123pan.com/s/1bmETd-AefWh.html) 提取码: 1145<br>
+> 下载地址2：[百度网盘](https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q?pwd=1145) 提取码: 1145<br>
+> 相关使用教程： [B站教程视频](https://www.bilibili.com/video/BV18m42137rm) | [飞书教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)
 
 ## Run from source
 
 - Clone this repository.
+
+  ```bash
+  git clone https://github.com/SUC-DriverOld/MSST-WebUI.git
+  cd MSST-WebUI
+  ```
+
 - Create Python environment and install the requirements.
 
   ```bash
@@ -27,20 +37,27 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
   conda activate msst
   pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
   pip install -r requirements.txt
+  ```
+- After installing the requirements, go to `site-packages` folder, open `librosa\util\utils.py` and go to line **2185**. Change the line from `np.dtype(complex): np.dtype(np.float).type,` to `np.dtype(complex): np.dtype(float).type,`. If you do not know how to do this, you can use the following command.
 
-  # After installing the requirements, go to site-packages folder, open "librosa\util\utils.py" and go to line 2185.
-  # Change the line from "np.dtype(complex): np.dtype(np.float).type," to "np.dtype(complex): np.dtype(float).type,".
+  ```bash
+  pip uninstall librosa -y
+  pip install tools/webUI_for_clouds/librosa-0.9.2-py3-none-any.whl
   ```
 
-> [!NOTE]
-> 1. You may meet some problems when using UVR-Separate, they comes from dependances Librosa. This issue occurs in the line around 2100 lines in `libsora/util/utils.py` with `np.dtype(np.float).type`. You can manually specify it as `np.dtype(float).type` to resolve this issue.（Do not attempt to install an older version of NumPy to solve this problem, as older versions of NumPy do not support Python 3.10, and using a version of Python other than 3.10 may prevent other modules from being installed.）
-> 2. We use `gradio==4.38.1` to run the webUI, it may have conflict when installing requirements (Actually you can ignore this warning, it will not affect the running of the webUI). You can change the version of `gradio` to `4.8.0` to solve this problem, but it may couse some bugs.
+- Run the webUI use the following command.
 
-- Run the webui use the following command.
+  ```bash
+  python webUI.py
+  ```
 
-   ```bash
-   python webUI.py
-   ```
+- If you run webUI on a cloud platform, use this command instead. To change the language on cloud platform, you need to open `data/webui_config.json` and change the `language` field. For example "zh_CN" for Chinese, "en_US" for English.
+
+  ```bash
+  python tools/webUI_for_clouds/webUI_for_clouds.py
+  ```
+
+- After running the webUI, you can open the webUI in your browser by visiting the address `http://localhost:7860`. For platforms on clouds, you can use the public links shown after running to connect to the webUI.
 
 ## Command Line
 
@@ -70,9 +87,8 @@ options:
 Use `uvr_inference.py`
 
 > [!NOTE]
-> Only VR_Models can be used for UVR Inference.
-> You can use other models like MDX23C models and HTDemucs models in MSST Inference.
-> Fix: You can now import folder_path for UVR Inference!
+> 1. Only `VR_Models` can be used for UVR Inference. You can use other models like MDX23C models and HTDemucs models in MSST Inference.<br>
+> 2. We do some changes on the code and now you can import folder_path for UVR Inference!
 
 ```bash
 usage: uvr_inference.py [-h] [-d] [-e] [-l] [--log_level LOG_LEVEL] [-m MODEL_FILENAME] 
@@ -123,7 +139,7 @@ VR Architecture Parameters:
 
 ### Train MSST
 
-Use `train.py`
+Use `train.py`. If you use multi-GPUs, try to use `train_accelerate.py`. But it's still under experiment.
 
 ```bash
 usage: train.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--results_path RESULTS_PATH] [--data_path DATA_PATH [DATA_PATH ...]]
@@ -153,5 +169,6 @@ options:
 - [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)
 - [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator)
 - [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui)
+- [SOME: Vocals to MIDI](https://github.com/openvpi/SOME/)
 - [@KitsuneX07](https://github.com/KitsuneX07) | [bilibili@阿狸不吃隼舞](https://space.bilibili.com/403335715)
 - [@SUC-DriverOld](https://github.com/SUC-DriverOld) | [Bilibili@Sucial丶](https://space.bilibili.com/445022409)
