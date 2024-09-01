@@ -91,11 +91,10 @@ Use `uvr_inference.py`
 > 2. We do some changes on the code and now you can import folder_path for UVR Inference!
 
 ```bash
-usage: uvr_inference.py [-h] [-d] [-e] [-l] [--log_level LOG_LEVEL] [-m MODEL_FILENAME] 
-                        [--output_format OUTPUT_FORMAT] [--output_dir OUTPUT_DIR] [--model_file_dir MODEL_FILE_DIR] [--extra_output_dir EXTRA_OUTPUT_DIR]
-                        [--invert_spect] [--normalization NORMALIZATION] [--single_stem SINGLE_STEM] [--sample_rate SAMPLE_RATE] [--use_cpu] [--save_another_stem]
-                        [--vr_batch_size VR_BATCH_SIZE] [--vr_window_size VR_WINDOW_SIZE] [--vr_aggression VR_AGGRESSION] [--vr_enable_tta] [--vr_high_end_process] [--vr_enable_post_process]
-                        [--vr_post_process_threshold VR_POST_PROCESS_THRESHOLD] 
+usage: uvr_inference.py [-h] [-d] [-m MODEL_FILENAME] [--output_format OUTPUT_FORMAT] [--output_dir OUTPUT_DIR] [--model_file_dir MODEL_FILE_DIR]
+                        [--extra_output_dir EXTRA_OUTPUT_DIR] [--invert_spect] [--normalization NORMALIZATION] [--single_stem SINGLE_STEM] [--use_cpu] [--save_another_stem]
+                        [--vr_batch_size VR_BATCH_SIZE] [--vr_window_size VR_WINDOW_SIZE] [--vr_aggression VR_AGGRESSION] [--vr_enable_tta] [--vr_high_end_process]
+                        [--vr_enable_post_process] [--vr_post_process_threshold VR_POST_PROCESS_THRESHOLD]
                         [audio_file]
 
 Separate audio file into different stems.
@@ -105,32 +104,26 @@ positional arguments:
 
 options:
   -h, --help                                             show this help message and exit
-
-Info and Debugging:
   -d, --debug                                            Enable debug logging, equivalent to --log_level=debug.
-  -e, --env_info                                         Print environment information and exit.
-  -l, --list_models                                      List all supported models and exit.
-  --log_level LOG_LEVEL                                  Log level, e.g. info, debug, warning (default: info).
 
 Separation I/O Params:
-  -m MODEL_FILENAME, --model_filename MODEL_FILENAME     model to use for separation (default: model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt). Example: -m 2_HP-UVR.pth
+  -m MODEL_FILENAME, --model_filename MODEL_FILENAME     model to use for separation (default: 1_HP-UVR.pth). Example: -m 2_HP-UVR.pth
   --output_format OUTPUT_FORMAT                          output format for separated files, any common format (default: FLAC). Example: --output_format=MP3
   --output_dir OUTPUT_DIR                                directory to write output files (default: <current dir>). Example: --output_dir=/app/separated
-  --model_file_dir MODEL_FILE_DIR                        model files directory (default: /tmp/audio-separator-models/). Example: --model_file_dir=/app/models
+  --model_file_dir MODEL_FILE_DIR                        model files directory (default: pretrain/VR_Models). Example: --model_file_dir=/app/models
   --extra_output_dir EXTRA_OUTPUT_DIR                    extra output directory for saving another stem. If not provided, output_dir will be used. Example: --extra_output_dir=/app/extra_output
 
 Common Separation Parameters:
   --invert_spect                                         invert secondary stem using spectogram (default: False). Example: --invert_spect
   --normalization NORMALIZATION                          max peak amplitude to normalize input and output audio to (default: 0.9). Example: --normalization=0.7
-  --single_stem SINGLE_STEM                              output only single stem, e.g. Instrumental, Vocals, Drums, Bass, Guitar, Piano, Other. Example: --single_stem=Instrumental
-  --sample_rate SAMPLE_RATE                              modify the sample rate of the output audio (default: 44100). Example: --sample_rate=44100
+  --single_stem SINGLE_STEM                              output only single stem, e.g. Instrumental, Vocals, Drums, Bass, Guitar, Piano, Other. Example: --single_stem=Instrumental   
   --use_cpu                                              use CPU instead of GPU for inference
   --save_another_stem                                    save another stem when using flow inference (default: False). Example: --save_another_stem
 
 VR Architecture Parameters:
-  --vr_batch_size VR_BATCH_SIZE                          number of batches to process at a time. higher = more RAM, slightly faster processing (default: 4). Example: --vr_batch_size=16        
-  --vr_window_size VR_WINDOW_SIZE                        balance quality and speed. 1024 = fast but lower, 320 = slower but better quality. (default: 512). Example: --vr_window_size=320       
-  --vr_aggression VR_AGGRESSION                          intensity of primary stem extraction, -100 - 100. typically 5 for vocals & instrumentals (default: 5). Example: --vr_aggression=2      
+  --vr_batch_size VR_BATCH_SIZE                          number of batches to process at a time. higher = more RAM, slightly faster processing (default: 4). Example: --vr_batch_size=16
+  --vr_window_size VR_WINDOW_SIZE                        balance quality and speed. 1024 = fast but lower, 320 = slower but better quality. (default: 512). Example: --vr_window_size=320
+  --vr_aggression VR_AGGRESSION                          intensity of primary stem extraction, -100 - 100. typically 5 for vocals & instrumentals (default: 5). Example: --vr_aggression=2
   --vr_enable_tta                                        enable Test-Time-Augmentation; slow but improves quality (default: False). Example: --vr_enable_tta
   --vr_high_end_process                                  mirror the missing frequency range of the output (default: False). Example: --vr_high_end_process
   --vr_enable_post_process                               identify leftover artifacts within vocal output; may improve separation for some songs (default: False). Example: --vr_enable_post_process

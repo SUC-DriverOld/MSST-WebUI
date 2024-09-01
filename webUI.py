@@ -29,15 +29,13 @@ from torch import cuda, backends
 from multiprocessing import cpu_count
 
 PACKAGE_VERSION = "1.5.1"
-PRESETS = "data/preset_data.json"
-BACKUP = "backup/"
-MODELS = "data/model_map.json"
 WEBUI_CONFIG = "data/webui_config.json"
 WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
-VR_MODEL = "data/vr_model.json"
+PRESETS = "data/preset_data.json"
+BACKUP = "backup/"
+MSST_MODEL = "data/msst_model_map.json"
+VR_MODEL = "data/vr_model_map.json"
 MODEL_FOLDER = "pretrain/"
-CONFIG_TEMPLATE_FOLDER = "configs_template/"
-VERSION_CONFIG = "data/version.json"
 TEMP_PATH = "temp"
 MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit']
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"
@@ -57,54 +55,42 @@ stop_all_threads = False
 stop_infer_flow = False
 
 def setup_webui():
+    def copy_folders():
+        if os.path.exists("configs"):
+            shutil.rmtree("configs")
+        shutil.copytree("configs_backup", "configs")
+        if os.path.exists("data"):
+            shutil.rmtree("data")
+        shutil.copytree("data_backup", "data")
+
     if not os.path.exists("data"):
         shutil.copytree("data_backup", "data")
         print(i18n("[INFO] 正在初始化data目录"))
     if not os.path.exists("configs"):
         shutil.copytree("configs_backup", "configs")
         print(i18n("[INFO] 正在初始化configs目录"))
-    if not os.path.exists("configs_template"):
-        shutil.copytree("configs_backup", "configs_template")
-        print(i18n("[INFO] 正在初始化configs_template目录"))
     if not os.path.exists("input"): os.makedirs("input")
     if not os.path.exists("results"): os.makedirs("results")
     if os.path.exists("data"):
-        if not os.path.isfile(VERSION_CONFIG):
-            print(i18n("[INFO] 正在初始化版本配置文件"))
-            if os.path.exists("configs"):
-                shutil.rmtree("configs")
-                shutil.copytree("configs_backup", "configs")
-            if os.path.exists("configs_template"):
-                shutil.rmtree("configs_template")
-                shutil.copytree("configs_backup", "configs_template")
-            if os.path.exists("data"):
-                shutil.rmtree("data")
-                shutil.copytree("data_backup", "data")
-        else:
-            version_config = load_configs(VERSION_CONFIG)
-            version = version_config["version"]
-            if version != PACKAGE_VERSION:
-                print(i18n("[INFO] 检测到") + version + i18n("旧版配置, 正在更新至最新版") + PACKAGE_VERSION)
-                presets_config = load_configs(PRESETS)
-                webui_config = load_configs(WEBUI_CONFIG)
-                webui_config_backup = load_configs(WEBUI_CONFIG_BACKUP)
-                for module in webui_config_backup.keys():
-                    for key in webui_config_backup[module]:
-                        try: webui_config_backup[module][key] = webui_config[module][key]
-                        except KeyError: continue
-                if os.path.exists("configs"):
-                    shutil.rmtree("configs")
-                    shutil.copytree("configs_backup", "configs")
-                if os.path.exists("configs_template"):
-                    shutil.rmtree("configs_template")
-                    shutil.copytree("configs_backup", "configs_template")
-                if os.path.exists("data"):
-                    shutil.rmtree("data")
-                    shutil.copytree("data_backup", "data")
-                save_configs(webui_config_backup, WEBUI_CONFIG)
-                save_configs(presets_config, PRESETS)
-                version_config["version"] = PACKAGE_VERSION
-                save_configs(version_config, VERSION_CONFIG)
+        webui_config = load_configs(WEBUI_CONFIG)
+        version = webui_config.get("version", None)
+        if not version:
+            try: version = load_configs("data/version.json")["version"]
+            except Exception: 
+                copy_folders()
+                version = PACKAGE_VERSION
+        if version != PACKAGE_VERSION:
+            print(i18n("[INFO] 检测到") + version + i18n("旧版配置, 正在更新至最新版") + PACKAGE_VERSION)
+            presets_config = load_configs(PRESETS)
+            webui_config_backup = load_configs(WEBUI_CONFIG_BACKUP)
+            for module in ["training", "inference", "tools", "settings"]:
+                for key in webui_config_backup[module]:
+                    try: webui_config_backup[module][key] = webui_config[module][key]
+                    except KeyError: continue
+            copy_folders()
+            save_configs(webui_config_backup, WEBUI_CONFIG)
+            save_configs(presets_config, PRESETS)
+
     os.environ["PATH"] += os.pathsep + os.path.abspath("ffmpeg/bin/")
     print(i18n("[INFO] 设备信息：") + str(get_device()))
 
@@ -178,13 +164,13 @@ def print_command(command):
 
 def load_augmentations_config():
     try:
-        with open("configs_template/augmentations_template.yaml", 'r', encoding='utf-8') as f:
+        with open("configs/augmentations_template.yaml", 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
-        return i18n("错误: 无法找到增强配置文件模板, 请检查文件configs_template/augmentations_template.yaml是否存在。")
+        return i18n("错误: 无法找到增强配置文件模板, 请检查文件configs/augmentations_template.yaml是否存在。")
 
 def load_selected_model(model_type=None):
-    config = load_configs(MODELS)
+    config = load_configs(MSST_MODEL)
     if not model_type:
         webui_config = load_configs(WEBUI_CONFIG)
         model_type = webui_config["inference"]["model_type"]
@@ -201,7 +187,7 @@ def load_selected_model(model_type=None):
     return None
 
 def load_msst_model():
-    config = load_configs(MODELS)
+    config = load_configs(MSST_MODEL)
     model_list = []
     model_dir = [os.path.join(MODEL_FOLDER, keys) for keys in config.keys()]
     for dirs in model_dir:
@@ -211,7 +197,7 @@ def load_msst_model():
     return model_list
 
 def get_msst_model(model_name):
-    config = load_configs(MODELS)
+    config = load_configs(MSST_MODEL)
     webui_config = load_configs(WEBUI_CONFIG)
     main_link = webui_config['settings']['download_link']
     if main_link == "Auto":
@@ -231,10 +217,17 @@ def get_msst_model(model_name):
     raise gr.Error(i18n("模型不存在!"))
 
 def load_vr_model():
+    model_list = []
+    downloaded_model = []
+    vr_config = load_configs(VR_MODEL)
+    for model in vr_config.keys():
+        model_list.append(model)
     config = load_configs(WEBUI_CONFIG)
     vr_model_path = config['settings']['uvr_model_dir']
-    ckpt_files = [f for f in os.listdir(vr_model_path) if f.endswith('.pth')]
-    return ckpt_files
+    for files in os.listdir(vr_model_path):
+        if files.endswith('.pth') and files in model_list:
+            downloaded_model.append(files)
+    return downloaded_model
 
 def load_vr_model_stem(model):
     config = load_configs(VR_MODEL)
@@ -340,7 +333,6 @@ def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_
 def save_uvr_modeldir(select_uvr_model_dir):
     if not os.path.exists(select_uvr_model_dir):
         return i18n("请选择正确的模型目录")
-    copy_uvr_config(select_uvr_model_dir)
     config = load_configs(WEBUI_CONFIG)
     config['settings']['uvr_model_dir'] = select_uvr_model_dir
     save_configs(config, WEBUI_CONFIG)
@@ -348,7 +340,6 @@ def save_uvr_modeldir(select_uvr_model_dir):
 
 def reset_settings():
     try:
-        copy_uvr_config(os.path.join(MODEL_FOLDER, "VR_Models"))
         config = load_configs(WEBUI_CONFIG)
         config_backup = load_configs(WEBUI_CONFIG_BACKUP)
         for key in config_backup['settings'][key]:
@@ -375,33 +366,18 @@ def reset_webui_config():
         print(e)
         return i18n("记录重置失败!")
 
-def copy_uvr_config(path):
-    download_checks = "data_backup/download_checks.json"
-    mdx_model_data = "data_backup/mdx_model_data.json"
-    vr_model_data = "data_backup/vr_model_data.json"
-    shutil.copy(download_checks, path)
-    shutil.copy(mdx_model_data, path)
-    shutil.copy(vr_model_data, path)
-
 def init_selected_model():
+    batch_size, dim_t, num_overlap = "", "", ""
     config = load_configs(WEBUI_CONFIG)
     selected_model = config['inference']['selected_model']
-    if not selected_model:
-        return
     _, config_path, _, _ = get_msst_model(selected_model)
     config = load_configs(config_path)
     if config.inference.get('batch_size'):
         batch_size = config.inference.get('batch_size')
-    else:
-        batch_size = ""
     if config.inference.get('dim_t'):
         dim_t = config.inference.get('dim_t')
-    else:
-        dim_t = ""
     if config.inference.get('num_overlap'):
         num_overlap = config.inference.get('num_overlap')
-    else:
-        num_overlap = ""
     return batch_size, dim_t, num_overlap
 
 def init_selected_vr_model():
@@ -613,7 +589,6 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
             single_stem = f"--single_stem \"{secondary_stem}\""
         else:
             single_stem = ""
-    sample_rate = 44100
     vr_batch_size = int(vr_batch_size)
     vr_aggression = int(vr_aggression)
     use_cpu = "--use_cpu" if vr_use_cpu else ""
@@ -622,7 +597,7 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
     vr_enable_post_process = "--vr_enable_post_process" if vr_enable_post_process else ""
     save_another_stem = "--save_another_stem" if save_another_stem else ""
     extra_output_dir = f"--extra_output_dir \"{extra_output_dir}\"" if extra_output_dir else ""
-    command = f"{PYTHON} uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} --sample_rate {sample_rate} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold} {save_another_stem} {extra_output_dir}"
+    command = f"{PYTHON} uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold} {save_another_stem} {extra_output_dir}"
     vr_inference = threading.Thread(target=run_command, args=(command,), name="vr_inference")
     vr_inference.start()
     vr_inference.join()
@@ -972,11 +947,11 @@ def upgrade_download_model_name(model_type_dropdown):
         model_map = load_configs(VR_MODEL)
         return gr.Dropdown(label=i18n("选择模型"), choices=[keys for keys in model_map.keys()])
     else:
-        model_map = load_configs(MODELS)
+        model_map = load_configs(MSST_MODEL)
         return gr.Dropdown(label=i18n("选择模型"), choices=[model["name"] for model in model_map[model_type_dropdown]])
 
 def download_model(model_type, model_name):
-    models = load_configs(MODELS)
+    models = load_configs(MSST_MODEL)
     model_choices = list(models.keys())
     model_choices.append("UVR_VR_Models")
     if model_type not in model_choices:
@@ -993,7 +968,7 @@ def download_model(model_type, model_name):
         model_path = webui_config['settings']['uvr_model_dir']
         os.makedirs(model_path, exist_ok=True)
         return download_file(model_url, os.path.join(model_path, model_name), model_name)
-    presets = load_configs(MODELS)
+    presets = load_configs(MSST_MODEL)
     model_mapping = load_msst_model()
     if model_name in model_mapping:
         return i18n("模型") + model_name + i18n("已安装")
@@ -1030,7 +1005,7 @@ def download_file(url, path, model_name):
         return i18n("模型") + model_name + i18n("下载失败")
 
 def manual_download_model(model_type, model_name):
-    models = load_configs(MODELS)
+    models = load_configs(MSST_MODEL)
     model_choices = list(models.keys())
     model_choices.append("UVR_VR_Models")
     if model_type not in model_choices:
@@ -1044,7 +1019,7 @@ def manual_download_model(model_type, model_name):
             return i18n("模型") + model_name + i18n("不存在")
         model_url = vr_model_map[model_name]["download_link"]
     else:
-        presets = load_configs(MODELS)
+        presets = load_configs(MSST_MODEL)
         model_mapping = load_msst_model()
         if model_name in model_mapping:
             return i18n("模型") + model_name + i18n("已安装")
@@ -1199,7 +1174,7 @@ with gr.Blocks(
     with gr.Tabs():
         webui_config = load_configs(WEBUI_CONFIG)
         presets = load_configs(PRESETS)
-        models = load_configs(MODELS)
+        models = load_configs(MSST_MODEL)
         vr_model = load_configs(VR_MODEL)
 
         with gr.TabItem(label=i18n("MSST分离")):
@@ -1486,7 +1461,7 @@ with gr.Blocks(
                     restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
                 with gr.Column(scale=1):
                     gr.Markdown(i18n("### 注意事项"))
-                    gr.Markdown(value=i18n("1. MSST模型默认下载在pretrain/<模型类型>文件夹下。UVR模型默认下载在设置中的UVR模型目录中。<br>2. **请勿删除**UVR模型目录下的download_checks.json, mdx_model_data.json, vr_model_data.json这三个文件! <br>3. 下加载进度可以打开终端查看。如果一直卡着不动或者速度很慢, 在确信网络正常的情况下请尝试重启WebUI。<br>4. 若下载失败, 会在模型目录**留下一个损坏的模型**, 请**务必**打开模型目录手动删除! <br>5. 点击“重启WebUI”按钮后, 会短暂性的失去连接, 随后会自动开启一个新网页。"))
+                    gr.Markdown(value=i18n("1. MSST模型默认下载在pretrain/<模型类型>文件夹下。UVR模型默认下载在设置中的UVR模型目录中。<br>3. 下加载进度可以打开终端查看。如果一直卡着不动或者速度很慢, 在确信网络正常的情况下请尝试重启WebUI。<br>4. 若下载失败, 会在模型目录**留下一个损坏的模型**, 请**务必**打开模型目录手动删除! <br>5. 点击“重启WebUI”按钮后, 会短暂性的失去连接, 随后会自动开启一个新网页。"))
                     gr.Markdown(i18n("### 下面是一些模型下载链接"))
                     gr.Markdown(i18n("[Huggingface镜像站](https://hf-mirror.com/KitsuneX07/Music_Source_Sepetration_Models) | [Huggingface](https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models) | [UVR模型仓库地址](https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models)<br>你也可以在此整合包下载链接中的All_Models文件夹中找到所有可用的模型并下载。"))
 
@@ -1671,10 +1646,10 @@ with gr.Blocks(
                                 └───...<br>
                             """)
                     with gr.Accordion(i18n("Step 3: 选择并修改修改配置文件"), open=False):
-                        gr.Markdown(value=i18n("请先明确你想要训练的模型类型, 然后选择对应的配置文件进行修改。<br>目前有以下几种模型类型: ") + str(MODEL_TYPE) + i18n("<br>确定好模型类型后, 你可以前往整合包根目录中的configs_template文件夹下找到对应的配置文件模板。复制一份模板, 然后根据你的需求进行修改。修改完成后记下你的配置文件路径, 以便后续使用。<br>特别说明: config_musdb18_xxx.yaml是针对MUSDB18数据集的配置文件。<br>"))
+                        gr.Markdown(value=i18n("请先明确你想要训练的模型类型, 然后选择对应的配置文件进行修改。<br>目前有以下几种模型类型: ") + str(MODEL_TYPE) + i18n("<br>确定好模型类型后, 你可以前往整合包根目录中的configs_backup文件夹下找到对应的配置文件模板。复制一份模板, 然后根据你的需求进行修改。修改完成后记下你的配置文件路径, 以便后续使用。<br>特别说明: config_musdb18_xxx.yaml是针对MUSDB18数据集的配置文件。<br>"))
                         open_config_template = gr.Button(
                             i18n("打开配置文件模板文件夹"), variant="primary")
-                        open_config_template.click(open_folder, inputs=gr.Textbox(CONFIG_TEMPLATE_FOLDER, visible=False))
+                        open_config_template.click(open_folder, inputs=gr.Textbox("configs_backup", visible=False))
                         gr.Markdown(value=i18n("你可以使用下表根据你的GPU选择用于训练的BS_Roformer模型的batch_size参数。表中提供的批量大小值适用于单个GPU。如果你有多个GPU, 则需要将该值乘以GPU的数量。"))
                         roformer_data = {
                             "chunk_size": [131584, 131584, 131584, 131584, 131584, 131584, 263168, 263168, 352800, 352800, 352800, 352800],
