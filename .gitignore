@@ -8,7 +8,6 @@ data/
 ffmpeg/bin/*.exe
 workenv/
 temp/
-pretrain/
 webui.exe
 webui.vmp.exe
 backup/
@@ -19,3 +18,9 @@ test.py
 
 !pretrain/*.json
 !.gitkeep
+
+*.ckpt
+*.pt
+*.pth
+*.th
+*.chpt

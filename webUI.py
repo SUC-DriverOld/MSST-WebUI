@@ -950,6 +950,24 @@ def upgrade_download_model_name(model_type_dropdown):
         model_map = load_configs(MSST_MODEL)
         return gr.Dropdown(label=i18n("选择模型"), choices=[model["name"] for model in model_map[model_type_dropdown]])
 
+def get_vr_model_link(model_name):
+    vr_model_map = load_configs(VR_MODEL)
+    if model_name not in vr_model_map.keys():
+        return i18n("模型") + model_name + i18n("不存在")
+    model_url = vr_model_map[model_name]["download_link"]
+    webui_config = load_configs(WEBUI_CONFIG)
+    model_path = webui_config['settings']['uvr_model_dir']
+    main_link = webui_config['settings']['download_link']
+    if main_link == "Auto":
+        language = locale.getdefaultlocale()[0]
+        if language in ["zh_CN", "zh_TW", "zh_HK", "zh_SG"]:
+            main_link = "hf-mirror.com"
+        else: main_link = "huggingface.co"
+    try:
+        model_url = model_url.replace("huggingface.co", main_link)
+    except: pass
+    return model_url, model_path
+
 def download_model(model_type, model_name):
     models = load_configs(MSST_MODEL)
     model_choices = list(models.keys())
@@ -960,12 +978,7 @@ def download_model(model_type, model_name):
         downloaded_model = load_vr_model()
         if model_name in downloaded_model:
             return i18n("模型") + model_name + i18n("已安装")
-        vr_model_map = load_configs(VR_MODEL)
-        if model_name not in vr_model_map.keys():
-            return i18n("模型") + model_name + i18n("不存在")
-        model_url = vr_model_map[model_name]["download_link"]
-        webui_config = load_configs(WEBUI_CONFIG)
-        model_path = webui_config['settings']['uvr_model_dir']
+        model_url, model_path = get_vr_model_link(model_name)
         os.makedirs(model_path, exist_ok=True)
         return download_file(model_url, os.path.join(model_path, model_name), model_name)
     presets = load_configs(MSST_MODEL)
@@ -1014,10 +1027,7 @@ def manual_download_model(model_type, model_name):
         downloaded_model = load_vr_model()
         if model_name in downloaded_model:
             return i18n("模型") + model_name + i18n("已安装")
-        vr_model_map = load_configs(VR_MODEL)
-        if model_name not in vr_model_map.keys():
-            return i18n("模型") + model_name + i18n("不存在")
-        model_url = vr_model_map[model_name]["download_link"]
+        model_url, _ = get_vr_model_link(model_name)
     else:
         presets = load_configs(MSST_MODEL)
         model_mapping = load_msst_model()

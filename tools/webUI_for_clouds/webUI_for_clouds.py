@@ -28,15 +28,13 @@ from multiprocessing import cpu_count
 from download_models import download_model
 
 PACKAGE_VERSION = "1.5.1"
-PRESETS = "data/preset_data.json"
-BACKUP = "backup/"
-MODELS = "data/model_map.json"
 WEBUI_CONFIG = "data/webui_config.json"
 WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
-VR_MODEL = "data/vr_model.json"
+PRESETS = "data/preset_data.json"
+BACKUP = "backup/"
+MSST_MODEL = "data/msst_model_map.json"
+VR_MODEL = "data/vr_model_map.json"
 MODEL_FOLDER = "pretrain/"
-CONFIG_TEMPLATE_FOLDER = "configs_template/"
-VERSION_CONFIG = "data/version.json"
 TEMP_PATH = "temp"
 MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit']
 FFMPEG = "ffmpeg"
@@ -109,7 +107,7 @@ def print_command(command):
     print("\033[32m" + "Use command: " + command + "\033[0m")
 
 def load_selected_model(model_type=None):
-    config = load_configs(MODELS)
+    config = load_configs(MSST_MODEL)
     if not model_type:
         webui_config = load_configs(WEBUI_CONFIG)
         model_type = webui_config["inference"]["model_type"]
@@ -126,7 +124,7 @@ def load_selected_model(model_type=None):
     return None
 
 def load_msst_model():
-    config = load_configs(MODELS)
+    config = load_configs(MSST_MODEL)
     model_list = []
     for keys in config.keys():
         for model in config[keys]:
@@ -134,7 +132,7 @@ def load_msst_model():
     return model_list
 
 def get_msst_model(model_name):
-    config = load_configs(MODELS)
+    config = load_configs(MSST_MODEL)
     webui_config = load_configs(WEBUI_CONFIG)
     main_link = webui_config['settings']['download_link']
     if main_link == "Auto":
@@ -409,7 +407,6 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
             single_stem = f"--single_stem \"{secondary_stem}\""
         else:
             single_stem = ""
-    sample_rate = 44100
     vr_batch_size = int(vr_batch_size)
     vr_aggression = int(vr_aggression)
     use_cpu = "--use_cpu" if vr_use_cpu else ""
@@ -418,7 +415,7 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
     vr_enable_post_process = "--vr_enable_post_process" if vr_enable_post_process else ""
     save_another_stem = "--save_another_stem" if save_another_stem else ""
     extra_output_dir = f"--extra_output_dir \"{extra_output_dir}\"" if extra_output_dir else ""
-    command = f"{PYTHON} uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} --sample_rate {sample_rate} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold} {save_another_stem} {extra_output_dir}"
+    command = f"{PYTHON} uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold} {save_another_stem} {extra_output_dir}"
     vr_inference = threading.Thread(target=run_command, args=(command,), name="vr_inference")
     vr_inference.start()
     vr_inference.join()
@@ -833,7 +830,7 @@ with gr.Blocks(
     with gr.Tabs():
         webui_config = load_configs(WEBUI_CONFIG)
         presets = load_configs(PRESETS)
-        models = load_configs(MODELS)
+        models = load_configs(MSST_MODEL)
         vr_model = load_configs(VR_MODEL)
 
         with gr.TabItem(label=i18n("MSST分离")):

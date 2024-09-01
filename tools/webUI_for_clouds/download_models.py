@@ -1,11 +1,10 @@
 import json
-import locale
 import os
 import logging
 
-MSST_MODEL = "data/model_map.json"
+MSST_MODEL = "data/msst_model_map.json"
 WEBUI_CONFIG = "data/webui_config.json"
-VR_MODEL = "data/vr_model.json"
+VR_MODEL = "data/vr_model_map.json"
 
 log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"
 date_format = "%H:%M:%S"
@@ -63,8 +62,8 @@ def download_model(model_type, model_name):
     for keys in msst_config.keys():
         for model in msst_config[keys]:
             msst_models.append(model["name"])
-    uvr_condig = load_configs(VR_MODEL)
-    uvr_models = uvr_condig.keys()
+    uvr_config = load_configs(VR_MODEL)
+    uvr_models = uvr_config.keys()
     downloaded_msst_models = load_msst_model()
     downloaded_uvr_models = load_vr_model()
     if model_name not in msst_models and model_name not in uvr_models:
