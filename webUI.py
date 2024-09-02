@@ -32,12 +32,14 @@ PACKAGE_VERSION = "1.5.1"
 WEBUI_CONFIG = "data/webui_config.json"
 WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
 PRESETS = "data/preset_data.json"
-BACKUP = "backup/"
 MSST_MODEL = "data/msst_model_map.json"
 VR_MODEL = "data/vr_model_map.json"
+BACKUP = "backup/"
 MODEL_FOLDER = "pretrain/"
 TEMP_PATH = "temp"
+UNOFFICIAL_MODEL = "config_unofficial"
 MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit']
+MODEL_CHOICES = ["vocal_models", "multi_stem_models", "single_stem_models", "UVR_VR_Models"]
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"
 PYTHON = ".\\workenv\\python.exe" if os.path.isfile(".\\workenv\\python.exe") else sys.executable
 
@@ -161,7 +163,6 @@ def save_configs(config, config_path):
 def print_command(command):
     print("\033[32m" + "Use command: " + command + "\033[0m")
 
-
 def load_augmentations_config():
     try:
         with open("configs/augmentations_template.yaml", 'r', encoding='utf-8') as f:
@@ -170,18 +171,14 @@ def load_augmentations_config():
         return i18n("错误: 无法找到增强配置文件模板, 请检查文件configs/augmentations_template.yaml是否存在。")
 
 def load_selected_model(model_type=None):
-    config = load_configs(MSST_MODEL)
     if not model_type:
         webui_config = load_configs(WEBUI_CONFIG)
         model_type = webui_config["inference"]["model_type"]
     if model_type:
-        model_list = []
         downloaded_model = []
-        for model in config[model_type]:
-            model_list.append(model["name"])
         model_dir = os.path.join(MODEL_FOLDER, model_type)
         for files in os.listdir(model_dir):
-            if files.endswith(('.ckpt', '.pth', '.th', '.chpt')) and files in model_list:
+            if files.endswith(('.ckpt', '.th', '.chpt')):
                 downloaded_model.append(files)
         return downloaded_model
     return None
@@ -192,7 +189,7 @@ def load_msst_model():
     model_dir = [os.path.join(MODEL_FOLDER, keys) for keys in config.keys()]
     for dirs in model_dir:
         for files in os.listdir(dirs):
-            if files.endswith(('.ckpt', '.pth', '.th', '.chpt')):
+            if files.endswith(('.ckpt', '.th', '.chpt')):
                 model_list.append(files)
     return model_list
 
@@ -212,39 +209,67 @@ def get_msst_model(model_name):
                 model_path = os.path.join(MODEL_FOLDER, keys, model_name)
                 config_path = model["config_path"]
                 download_link = model["link"]
-                download_link = download_link.replace("huggingface.co", main_link)
+                try:
+                    download_link = download_link.replace("huggingface.co", main_link)
+                except: pass
+                return model_path, config_path, model_type, download_link
+    try:
+        unofficial_config = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
+    except FileNotFoundError:
+        raise gr.Error(i18n("模型不存在!"))
+    for keys in unofficial_config.keys():
+        for model in unofficial_config[keys]:
+            if model["name"] == model_name:
+                model_type = model["model_type"]
+                model_path = os.path.join(MODEL_FOLDER, keys, model_name)
+                config_path = model["config_path"]
+                download_link = model["link"]
                 return model_path, config_path, model_type, download_link
     raise gr.Error(i18n("模型不存在!"))
 
 def load_vr_model():
-    model_list = []
     downloaded_model = []
-    vr_config = load_configs(VR_MODEL)
-    for model in vr_config.keys():
-        model_list.append(model)
     config = load_configs(WEBUI_CONFIG)
     vr_model_path = config['settings']['uvr_model_dir']
     for files in os.listdir(vr_model_path):
-        if files.endswith('.pth') and files in model_list:
+        if files.endswith('.pth'):
             downloaded_model.append(files)
     return downloaded_model
 
-def load_vr_model_stem(model):
+def get_vr_model(model):
     config = load_configs(VR_MODEL)
+    webui_config = load_configs(WEBUI_CONFIG)
+    model_path = webui_config['settings']['uvr_model_dir']
+    main_link = webui_config['settings']['download_link']
+    if main_link == "Auto":
+        language = locale.getdefaultlocale()[0]
+        if language in ["zh_CN", "zh_TW", "zh_HK", "zh_SG"]:
+            main_link = "hf-mirror.com"
+        else: main_link = "huggingface.co"
     for keys in config.keys():
         if keys == model:
             primary_stem = config[keys]["primary_stem"]
             secondary_stem = config[keys]["secondary_stem"]
-            vr_primary_stem_only = gr.Checkbox(label=f"{primary_stem} Only", value=False, interactive=True)
-            vr_secondary_stem_only = gr.Checkbox(label=f"{secondary_stem} Only", value=False, interactive=True)
-            return vr_primary_stem_only, vr_secondary_stem_only
+            model_url = config[keys]["download_link"]
+            try:
+                model_url = model_url.replace("huggingface.co", main_link)
+            except: pass
+            return primary_stem, secondary_stem, model_url, model_path
+    try:
+        unofficial_config = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
+    except FileNotFoundError:
+        raise gr.Error(i18n("模型不存在!"))
+    for keys in unofficial_config.keys():
+        if keys == model:
+            primary_stem = unofficial_config[keys]["primary_stem"]
+            secondary_stem = unofficial_config[keys]["secondary_stem"]
+            model_url = unofficial_config[keys]["download_link"]
+            return primary_stem, secondary_stem, model_url, model_path
     raise gr.Error(i18n("模型不存在!"))
 
-def load_presets_list():
-    config = load_configs(PRESETS)
-    if config == {}:
-        return [i18n("无预设")]
-    return list(config.keys())
+def load_vr_model_stem(model):
+    primary_stem, secondary_stem, _, _= get_vr_model(model)
+    return gr.Checkbox(label=f"{primary_stem} Only", value=False, interactive=True), gr.Checkbox(label=f"{secondary_stem} Only", value=False, interactive=True)
 
 def select_folder():
     root = tk.Tk()
@@ -277,8 +302,7 @@ def open_folder(folder):
         raise gr.Error(i18n("请先选择文件夹!"))
     if not os.path.exists(folder):
         os.makedirs(folder)
-    path_to_open = folder
-    absolute_path = os.path.abspath(path_to_open)
+    absolute_path = os.path.abspath(folder)
     if platform.system() == "Windows":
         os.system(f"explorer {absolute_path}")
     elif platform.system() == "Darwin":
@@ -287,27 +311,23 @@ def open_folder(folder):
         os.system(f"xdg-open {absolute_path}")
 
 def save_training_config(train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers, train_device_ids, train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path, train_accelerate):
-    try:
-        config = load_configs(WEBUI_CONFIG)
-        config['training']['model_type'] = train_model_type
-        config['training']['config_path'] = train_config_path
-        config['training']['dataset_type'] = train_dataset_type
-        config['training']['dataset_path'] = train_dataset_path
-        config['training']['valid_path'] = train_valid_path
-        config['training']['num_workers'] = train_num_workers
-        config['training']['device_ids'] = train_device_ids
-        config['training']['seed'] = train_seed
-        config['training']['pin_memory'] = train_pin_memory
-        config['training']['use_multistft_loss'] = train_use_multistft_loss
-        config['training']['use_mse_loss'] = train_use_mse_loss
-        config['training']['use_l1_loss'] = train_use_l1_loss
-        config['training']['accelerate'] = train_accelerate
-        config['training']['results_path'] = train_results_path
-        save_configs(config, WEBUI_CONFIG)
-        return i18n("配置保存成功!")
-    except Exception as e:
-        print(e)
-        return i18n("配置保存失败!")
+    config = load_configs(WEBUI_CONFIG)
+    config['training']['model_type'] = train_model_type
+    config['training']['config_path'] = train_config_path
+    config['training']['dataset_type'] = train_dataset_type
+    config['training']['dataset_path'] = train_dataset_path
+    config['training']['valid_path'] = train_valid_path
+    config['training']['num_workers'] = train_num_workers
+    config['training']['device_ids'] = train_device_ids
+    config['training']['seed'] = train_seed
+    config['training']['pin_memory'] = train_pin_memory
+    config['training']['use_multistft_loss'] = train_use_multistft_loss
+    config['training']['use_mse_loss'] = train_use_mse_loss
+    config['training']['use_l1_loss'] = train_use_l1_loss
+    config['training']['accelerate'] = train_accelerate
+    config['training']['results_path'] = train_results_path
+    save_configs(config, WEBUI_CONFIG)
+    return i18n("配置保存成功!")
 
 def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
     config = load_configs(WEBUI_CONFIG)
@@ -388,21 +408,15 @@ def init_selected_vr_model():
         vr_primary_stem_only = i18n("仅输出主音轨")
         vr_secondary_stem_only = i18n("仅输出次音轨")
         return vr_primary_stem_only, vr_secondary_stem_only
-    for keys in config.keys():
-        if keys == model:
-            primary_stem = config[keys]["primary_stem"]
-            secondary_stem = config[keys]["secondary_stem"]
-            vr_primary_stem_only = f"{primary_stem} Only"
-            vr_secondary_stem_only = f"{secondary_stem} Only"
-            return vr_primary_stem_only, vr_secondary_stem_only
-    vr_primary_stem_only = i18n("仅输出主音轨")
-    vr_secondary_stem_only = i18n("仅输出次音轨")
+    primary_stem, secondary_stem, _, _ = get_vr_model(model)
+    vr_primary_stem_only = f"{primary_stem} Only"
+    vr_secondary_stem_only = f"{secondary_stem} Only"
     return vr_primary_stem_only, vr_secondary_stem_only
 
 def update_train_start_check_point(path):
     if not os.path.isdir(path):
         raise gr.Error(i18n("请先选择模型保存路径! "))
-    ckpt_files = [f for f in os.listdir(path) if f.endswith(('.ckpt', '.pth', '.th'))]
+    ckpt_files = [f for f in os.listdir(path) if f.endswith(('.ckpt', '.chpt', '.th'))]
     return gr.Dropdown(label=i18n("初始模型"), choices=ckpt_files if ckpt_files else ["None"])
 
 def update_selected_model(model_type):
@@ -445,6 +459,8 @@ def save_config(selected_model, batch_size, dim_t, num_overlap, normalize):
 
 def reset_config(selected_model):
     _, original_config_path, _, _ = get_msst_model(selected_model)
+    if original_config_path.startswith(UNOFFICIAL_MODEL):
+        return i18n("非官方模型不支持重置配置!")
     dir_path, file_name = os.path.split(original_config_path)
     backup_dir_path = dir_path.replace("configs", "configs_backup", 1)
     backup_config_path = os.path.join(backup_dir_path, file_name)
@@ -468,12 +484,13 @@ def run_command(command):
                     child.terminate()
                 process.terminate()
                 stop_all_threads = False
+                gr.Info(i18n("已停止进程"))
                 return
         if process.returncode != 0:
             raise gr.Error(i18n("发生错误! 请前往终端查看详细信息"))
     except Exception as e:
         print(e)
-        raise gr.Error(i18n("发生错误! 请前往终端查看详细信息"))
+        gr.Error(i18n("发生错误! 请前往终端查看详细信息"))
 
 def stop_all_thread():
     global stop_all_threads, stop_infer_flow
@@ -481,7 +498,6 @@ def stop_all_thread():
         if thread.name in ["msst_inference", "vr_inference", "msst_training", "msst_valid"]:
             stop_all_threads = True
             stop_infer_flow = True
-            gr.Info(i18n("已停止进程"))
 
 def run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, force_cpu):
     config = load_configs(WEBUI_CONFIG)
@@ -567,11 +583,7 @@ def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output
     return i18n("处理完成, 结果已保存至") + vr_store_dir
 
 def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode, save_another_stem=False, extra_output_dir=None):
-    config = load_configs(WEBUI_CONFIG)
-    model_file_dir = config['settings']['uvr_model_dir']
-    model_mapping = load_configs(VR_MODEL)
-    primary_stem = model_mapping[vr_select_model]["primary_stem"]
-    secondary_stem = model_mapping[vr_select_model]["secondary_stem"]
+    primary_stem, secondary_stem, _, model_file_dir = get_vr_model(vr_select_model)
     audio_file = vr_audio_input
     model_filename = vr_select_model
     output_format = vr_output_format
@@ -612,12 +624,8 @@ def update_model_name(model_type):
 
 def update_model_stem(model_type, model_name):
     if model_type == "UVR_VR_Models":
-        config = load_configs(VR_MODEL)
-        for keys in config.keys():
-            if keys == model_name:
-                primary_stem = config[keys]["primary_stem"]
-                secondary_stem = config[keys]["secondary_stem"]
-                return gr.Dropdown(label=i18n("输出音轨"), choices=[primary_stem, secondary_stem], interactive=True)
+        primary_stem, secondary_stem, _, _ = get_vr_model(model_name)
+        return gr.Dropdown(label=i18n("输出音轨"), choices=[primary_stem, secondary_stem], interactive=True)
     else:
         return gr.Dropdown(label=i18n("输出音轨"), choices=["primary_stem"], value="primary_stem", interactive=False)
 
@@ -734,15 +742,15 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, isSingle
         model_name = model_list[step]["model_name"]
         console.rule(f"[yellow]Step {i+1}: Running inference using {model_name}", style="yellow")
         if model_list[step]["model_type"] == "UVR_VR_Models":
-            vr_model_config = load_configs(VR_MODEL)
+            primary_stem, secondary_stem, _, _ = get_vr_model(model_name)
             stem = model_list[step]["stem"]
             vr_select_model = model_name
             vr_window_size = config['inference']['vr_window_size']
             vr_aggression = config['inference']['vr_aggression']
             vr_output_format = "wav"
             vr_use_cpu = force_cpu
-            vr_primary_stem_only = True if stem == vr_model_config[model_name]["primary_stem"] else False
-            vr_secondary_stem_only = True if stem == vr_model_config[model_name]["secondary_stem"] else False
+            vr_primary_stem_only = True if stem == primary_stem else False
+            vr_secondary_stem_only = True if stem == secondary_stem else False
             vr_audio_input = input_to_use
             vr_store_dir = tmp_store_dir
             vr_batch_size = config['inference']['vr_batch_size']
@@ -841,7 +849,7 @@ def convert_audio(uploaded_files, ffmpeg_output_format, ffmpeg_output_folder):
             success_files.append(output_file)
         except subprocess.CalledProcessError:
             print(f"Fail to convert file: {uploaded_file_path}\n")
-            continue  # 如果转换失败, 则跳过当前文件
+            continue
     if not success_files:
         return i18n("所有文件转换失败, 请检查文件格式和ffmpeg路径。")
     else:
@@ -950,47 +958,27 @@ def upgrade_download_model_name(model_type_dropdown):
         model_map = load_configs(MSST_MODEL)
         return gr.Dropdown(label=i18n("选择模型"), choices=[model["name"] for model in model_map[model_type_dropdown]])
 
-def get_vr_model_link(model_name):
-    vr_model_map = load_configs(VR_MODEL)
-    if model_name not in vr_model_map.keys():
-        return i18n("模型") + model_name + i18n("不存在")
-    model_url = vr_model_map[model_name]["download_link"]
-    webui_config = load_configs(WEBUI_CONFIG)
-    model_path = webui_config['settings']['uvr_model_dir']
-    main_link = webui_config['settings']['download_link']
-    if main_link == "Auto":
-        language = locale.getdefaultlocale()[0]
-        if language in ["zh_CN", "zh_TW", "zh_HK", "zh_SG"]:
-            main_link = "hf-mirror.com"
-        else: main_link = "huggingface.co"
-    try:
-        model_url = model_url.replace("huggingface.co", main_link)
-    except: pass
-    return model_url, model_path
-
 def download_model(model_type, model_name):
-    models = load_configs(MSST_MODEL)
-    model_choices = list(models.keys())
-    model_choices.append("UVR_VR_Models")
-    if model_type not in model_choices:
+    if model_type not in MODEL_CHOICES:
         return i18n("请选择模型类型")
     if model_type == "UVR_VR_Models":
         downloaded_model = load_vr_model()
         if model_name in downloaded_model:
             return i18n("模型") + model_name + i18n("已安装")
-        model_url, model_path = get_vr_model_link(model_name)
+        _, _, model_url, model_path = get_vr_model(model_name)
         os.makedirs(model_path, exist_ok=True)
         return download_file(model_url, os.path.join(model_path, model_name), model_name)
-    presets = load_configs(MSST_MODEL)
-    model_mapping = load_msst_model()
-    if model_name in model_mapping:
-        return i18n("模型") + model_name + i18n("已安装")
-    if model_type not in presets:
-        return i18n("模型类型") + model_type + i18n("不存在")
-    _, _, _, model_url = get_msst_model(model_name)
-    model_path = f"pretrain/{model_type}/{model_name}"
-    os.makedirs(os.path.dirname(model_path), exist_ok=True)
-    return download_file(model_url, model_path, model_name)
+    else:
+        presets = load_configs(MSST_MODEL)
+        model_mapping = load_msst_model()
+        if model_name in model_mapping:
+            return i18n("模型") + model_name + i18n("已安装")
+        if model_type not in presets:
+            return i18n("模型类型") + model_type + i18n("不存在")
+        _, _, _, model_url = get_msst_model(model_name)
+        model_path = f"pretrain/{model_type}/{model_name}"
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        return download_file(model_url, model_path, model_name)
 
 def download_file(url, path, model_name):
     try:
@@ -1018,16 +1006,13 @@ def download_file(url, path, model_name):
         return i18n("模型") + model_name + i18n("下载失败")
 
 def manual_download_model(model_type, model_name):
-    models = load_configs(MSST_MODEL)
-    model_choices = list(models.keys())
-    model_choices.append("UVR_VR_Models")
-    if model_type not in model_choices:
+    if model_type not in MODEL_CHOICES:
         return i18n("请选择模型类型")
     if model_type == "UVR_VR_Models":
         downloaded_model = load_vr_model()
         if model_name in downloaded_model:
             return i18n("模型") + model_name + i18n("已安装")
-        model_url, _ = get_vr_model_link(model_name)
+        _, _, model_url, _ = get_vr_model(model_name)
     else:
         presets = load_configs(MSST_MODEL)
         model_mapping = load_msst_model()
@@ -1038,6 +1023,86 @@ def manual_download_model(model_type, model_name):
         _, _, _, model_url = get_msst_model(model_name)
     webbrowser.open(model_url)
     return i18n("已打开") + model_name + i18n("的下载链接")
+
+def update_vr_param(is_BV_model, is_VR51_model, model_param):
+    balance_value = gr.Number(label="balance_value", value=0.0, minimum=0.0, maximum=0.9, step=0.1, interactive=True, visible=True if is_BV_model else False)
+    out_channels = gr.Number(label="Out Channels", value=32, minimum=1, step=1, interactive=True, visible=True if is_VR51_model else False)
+    out_channels_lstm = gr.Number(label="Out Channels (LSTM layer)", value=128, minimum=1, step=1, interactive=True, visible=True if is_VR51_model else False)
+    upload_param = gr.File(label=i18n("上传参数文件"), type="filepath", interactive=True, visible=True if model_param == i18n("上传参数") else False)
+    return balance_value, out_channels, out_channels_lstm, upload_param
+
+def install_unmsst_model(unmsst_model, unmsst_config, unmodel_class, unmodel_type, unmsst_model_link):
+    if not os.path.exists(os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json")):
+        os.makedirs(UNOFFICIAL_MODEL, exist_ok=True)
+    try:
+        model_map = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
+    except FileNotFoundError:
+        model_map = {"multi_stem_models": [], "single_stem_models": [], "vocal_models": []}
+    try:
+        if unmsst_model.endswith((".ckpt", ".chpt", ".th")):
+            shutil.copy(unmsst_model, os.path.join(MODEL_FOLDER, unmodel_class))
+        else: return i18n("请上传'ckpt', 'chpt', 'th'格式的模型文件")
+        if unmsst_config.endswith(".yaml"):
+            shutil.copy(unmsst_config, UNOFFICIAL_MODEL)
+        else: return i18n("请上传'.yaml'格式的配置文件")
+        config = {
+            "name": os.path.basename(unmsst_model),
+            "config_path": os.path.join(UNOFFICIAL_MODEL, os.path.basename(unmsst_config)),
+            "model_type": unmodel_type,
+            "link": unmsst_model_link
+        }
+        model_map[unmodel_class].append(config)
+        save_configs(model_map, os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
+        return i18n("模型") + os.path.basename(unmsst_model) + i18n("安装成功。重启WebUI以刷新模型列表")
+    except Exception as e:
+        print(e)
+        return i18n("模型") + os.path.basename(unmsst_model) + i18n("安装失败")
+
+def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model_param, is_karaoke_model, is_BV_model, is_VR51_model, balance_value, out_channels, out_channels_lstm, upload_param, unvr_model_link):
+    if not os.path.exists(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json")):
+        os.makedirs(UNOFFICIAL_MODEL, exist_ok=True)
+    try:
+        model_map = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
+    except FileNotFoundError:
+        model_map = {}
+    try:
+        if unvr_model.endswith(".pth"):
+            shutil.copy(unvr_model, "pretrain/VR_Models")
+        else: return i18n("请上传'.pth'格式的模型文件")
+        if unvr_primary_stem != "" and unvr_secondary_stem != "" and unvr_primary_stem != unvr_secondary_stem:
+            model_name = os.path.basename(unvr_model)
+            model_map[model_name] = {}
+            model_map[model_name]["model_path"] = os.path.join(MODEL_FOLDER, "VR_Models", model_name)
+            model_map[model_name]["primary_stem"] = unvr_primary_stem
+            model_map[model_name]["secondary_stem"] = unvr_secondary_stem
+            model_map[model_name]["download_link"] = unvr_model_link
+        else: return i18n("请输入正确的音轨名称")
+        if model_param == i18n("上传参数"):
+            if upload_param.endswith(".json"):
+                shutil.copy(upload_param, "models/vocal_remover/uvr_lib_v5/vr_network/modelparams")
+                model_map[model_name]["vr_model_param"] = os.path.basename(upload_param)[:-5]
+            else: return i18n("请上传'.json'格式的参数文件")
+        else: model_map[model_name]["vr_model_param"] = model_param
+        if is_karaoke_model:
+            model_map[model_name]["is_karaoke"] = True
+        if is_BV_model:
+            model_map[model_name]["is_bv_model"] = True
+            model_map[model_name]["is_bv_model_rebalanced"] = balance_value
+        if is_VR51_model:
+            model_map[model_name]["nout"] = out_channels
+            model_map[model_name]["nout_lstm"] = out_channels_lstm
+        save_configs(model_map, os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
+        return i18n("模型") + os.path.basename(unvr_model) + i18n("安装成功。重启WebUI以刷新模型列表")
+    except Exception as e:
+        print(e)
+        return i18n("模型") + os.path.basename(unvr_model) + i18n("安装失败")
+
+def get_all_model_param():
+    model_param = [i18n("上传参数")]
+    for file in os.listdir("models/vocal_remover/uvr_lib_v5/vr_network/modelparams"):
+        if file.endswith(".json"):
+            model_param.append(file[:-5])
+    return model_param
 
 def start_training(train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers, train_device_ids, train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path, train_start_check_point, train_accelerate):
     model_type = train_model_type
@@ -1242,7 +1307,7 @@ with gr.Blocks(
             stop_thread.click(fn=stop_all_thread)
 
         with gr.TabItem(label=i18n("UVR分离")):
-            gr.Markdown(value=i18n("说明: 本整合包仅融合了UVR的VR Architecture模型, MDX23C和HtDemucs类模型可以直接使用前面的MSST音频分离。<br>使用UVR模型进行音频分离时, 若有可用的GPU, 软件将自动选择, 否则将使用CPU进行分离。<br>UVR分离使用项目: [https://github.com/nomadkaraoke/python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) 并进行了优化。"))
+            gr.Markdown(value=i18n("说明: 本整合包仅融合了UVR的VR Architecture模型, MDX23C和HtDemucs类模型可以直接使用前面的MSST音频分离。<br>UVR分离使用项目: [https://github.com/nomadkaraoke/python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) 并进行了优化。"))
             vr_select_model = gr.Dropdown(label=i18n("选择模型"), choices=load_vr_model(), value=webui_config['inference']['vr_select_model'] if webui_config['inference']['vr_select_model'] else None,interactive=True)
             with gr.Row():
                 vr_window_size = gr.Dropdown(label=i18n("Window Size: 窗口大小, 用于平衡速度和质量"), choices=["320", "512", "1024"], value=webui_config['inference']['vr_window_size'] if webui_config['inference']['vr_window_size'] else "512", interactive=True)
@@ -1321,7 +1386,7 @@ with gr.Blocks(
                     gr.Markdown(i18n("注意: MSST模型仅支持输出主要音轨, UVR模型支持自定义主要音轨输出。<br>同时输出次级音轨: 选择True将同时输出该次分离得到的次级音轨, **此音轨将直接保存至**输出目录下的secondary_output文件夹, **不会经过后续流程处理**<br>"))
                     preset_name_input = gr.Textbox(label=i18n("预设名称"), placeholder=i18n("请输入预设名称"), interactive=True)
                     with gr.Row():
-                        model_type = gr.Dropdown(label=i18n("选择模型类型"), choices=["vocal_models", "multi_stem_models", "single_stem_models", "UVR_VR_Models"], interactive=True)
+                        model_type = gr.Dropdown(label=i18n("选择模型类型"), choices=MODEL_CHOICES, interactive=True)
                         model_name = gr.Dropdown(label=i18n("选择模型"), choices=[i18n("请先选择模型类型")], interactive=True, scale=2)
                         stem = gr.Dropdown(label=i18n("输出音轨"), choices=[i18n("请先选择模型")], interactive=True)
                         secondary_output = gr.Dropdown(label=i18n("同时输出次级音轨"), choices=["True", "False"], value="False", interactive=True)
@@ -1333,7 +1398,7 @@ with gr.Blocks(
                     output_message_make = gr.Textbox(label="Output Message")
                 with gr.TabItem(label=i18n("管理预设")):
                     gr.Markdown(i18n("此页面提供查看预设, 删除预设, 备份预设, 恢复预设等功能"))
-                    preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=load_presets_list(), interactive=True)
+                    preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=list(presets.keys()), interactive=True)
                     gr.Markdown(i18n("`model_type`: 模型类型；`model_name`: 模型名称；`stem`: 主要输出音轨；<br>`secondary_output`: 同时输出次级音轨。选择True将同时输出该次分离得到的次级音轨, **此音轨将直接保存至**输出目录下的secondary_output文件夹, **不会经过后续流程处理**"))
                     preset_flow_delete = gr.Dataframe(pd.DataFrame({"model_type": [i18n("请先选择预设")], "model_name": [i18n("请先选择预设")], "stem": [i18n("请先选择预设")], "secondary_output": [i18n("请先选择预设")]}), interactive=False, label=None)
                     delete_button = gr.Button(i18n("删除所选预设"), scale=1)
@@ -1397,8 +1462,8 @@ with gr.Blocks(
                     with gr.Row():
                         true_audio = gr.File(label=i18n("原始音频"), type="filepath")
                         estimated_audio = gr.File(label=i18n("分离后的音频"), type="filepath")
-                        output_message_sdr = gr.Textbox(label="Output Message")
                     compute_sdr_button = gr.Button(i18n("计算SDR"), variant="primary")
+                    output_message_sdr = gr.Textbox(label="Output Message")
                 with gr.TabItem(label = i18n("Ensemble模式")):
                     gr.Markdown(value = i18n("可用于集成不同算法的结果。具体的文档位于/docs/ensemble.md"))
                     with gr.Row():
@@ -1452,28 +1517,62 @@ with gr.Blocks(
             some_button.click(fn=some_inference,inputs=[some_input_audio, audio_bpm, some_output_folder],outputs=output_message_some)
 
         with gr.TabItem(label=i18n("安装模型")):
-            uvr_model_folder = webui_config['settings']['uvr_model_dir']
-            gr.Markdown(value=i18n("自动从Huggingface镜像站或Github下载模型。<br>若自动下载出现报错或下载过慢, 请点击手动下载, 跳转至下载链接。手动下载完成后, 请根据你选择的模型类型放置到对应文件夹内。"))
-            gr.Markdown(value=i18n("### 当前UVR模型目录: ") + f"`{uvr_model_folder}`" + i18n(", 如需更改, 请前往设置页面。"))
-            with gr.Row():
-                with gr.Column(scale=3):
+            with gr.Tabs():
+                with gr.TabItem(label=i18n("下载官方模型")):
+                    uvr_model_folder = webui_config['settings']['uvr_model_dir']
+                    gr.Markdown(value=i18n("若自动下载出现报错或下载过慢, 请点击手动下载, 跳转至下载链接。手动下载完成后, 请根据你选择的模型类型放置到对应文件夹内。"))
+                    gr.Markdown(value=i18n("### 当前UVR模型目录: ") + f"`{uvr_model_folder}`" + i18n(", 如需更改, 请前往设置页面。"))
                     with gr.Row():
-                        model_type_dropdown = gr.Dropdown(label=i18n("选择模型类型"), choices=["vocal_models", "multi_stem_models", "single_stem_models", "UVR_VR_Models"], scale=1)
-                        download_model_name_dropdown = gr.Dropdown(label=i18n("选择模型"), choices=[i18n("请先选择模型类型")], scale=3)
+                        with gr.Column(scale=3):
+                            with gr.Row():
+                                model_type_dropdown = gr.Dropdown(label=i18n("选择模型类型"), choices=MODEL_CHOICES, scale=1)
+                                download_model_name_dropdown = gr.Dropdown(label=i18n("选择模型"), choices=[i18n("请先选择模型类型")], scale=3)
+                            with gr.Row():
+                                open_model_dir = gr.Button(i18n("打开MSST模型目录"))
+                                open_uvr_model_dir = gr.Button(i18n("打开UVR模型目录"))
+                            with gr.Row():
+                                download_button = gr.Button(i18n("自动下载"), variant="primary")
+                                manual_download_button = gr.Button(i18n("手动下载"), variant="primary")
+                            output_message_download = gr.Textbox(label="Output Message")
+                            restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
+                        with gr.Column(scale=1):
+                            gr.Markdown(i18n("### 注意事项"))
+                            gr.Markdown(value=i18n("1. MSST模型默认下载在pretrain/<模型类型>文件夹下。UVR模型默认下载在设置中的UVR模型目录中。<br>3. 下加载进度可以打开终端查看。如果一直卡着不动或者速度很慢, 在确信网络正常的情况下请尝试重启WebUI。<br>4. 若下载失败, 会在模型目录**留下一个损坏的模型**, 请**务必**打开模型目录手动删除! <br>5. 点击“重启WebUI”按钮后, 会短暂性的失去连接, 随后会自动开启一个新网页。"))
+                            gr.Markdown(i18n("### 模型下载链接"))
+                            gr.Markdown(i18n("1. 自动从Github, Huggingface或镜像站下载模型。<br>2. 你也可以在此整合包下载链接中的All_Models文件夹中找到所有可用的模型并下载。"))
+                            gr.Markdown(value=i18n("### 模型安装完成后, 需重启WebUI刷新模型列表"))
+                with gr.TabItem(label=i18n("安装非官方MSST模型")):
+                    gr.Markdown(value=i18n("你可以从其他途径获取非官方MSST模型, 在此页面完成配置文件设置后, 即可正常使用。<br>注意: 仅支持'.ckpt', '.th', '.chpt'格式的模型。模型显示名字为模型文件名。<br>选择模型类型: 共有三个可选项。依次代表人声相关模型, 多音轨分离模型, 单音轨分离模型。仅用于区分模型大致类型, 可任意选择。<br>选择模型类别: 此选项关系到模型是否能正常推理使用, 必须准确选择!"))
                     with gr.Row():
-                        open_model_dir = gr.Button(i18n("打开MSST模型目录"))
-                        open_uvr_model_dir = gr.Button(i18n("打开UVR模型目录"))
+                        unmsst_model = gr.File(label=i18n("上传非官方MSST模型"), type="filepath")
+                        unmsst_config = gr.File(label=i18n("上传非官方MSST模型配置文件"), type="filepath")
                     with gr.Row():
-                        download_button = gr.Button(i18n("自动下载"), variant="primary")
-                        manual_download_button = gr.Button(i18n("手动下载"), variant="primary")
-                    output_message_download = gr.Textbox(label="Output Message")
-                    gr.Markdown(value=i18n("### 安装完成后, 请点击下方按钮重启WebUI"))
-                    restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
-                with gr.Column(scale=1):
-                    gr.Markdown(i18n("### 注意事项"))
-                    gr.Markdown(value=i18n("1. MSST模型默认下载在pretrain/<模型类型>文件夹下。UVR模型默认下载在设置中的UVR模型目录中。<br>3. 下加载进度可以打开终端查看。如果一直卡着不动或者速度很慢, 在确信网络正常的情况下请尝试重启WebUI。<br>4. 若下载失败, 会在模型目录**留下一个损坏的模型**, 请**务必**打开模型目录手动删除! <br>5. 点击“重启WebUI”按钮后, 会短暂性的失去连接, 随后会自动开启一个新网页。"))
-                    gr.Markdown(i18n("### 下面是一些模型下载链接"))
-                    gr.Markdown(i18n("[Huggingface镜像站](https://hf-mirror.com/KitsuneX07/Music_Source_Sepetration_Models) | [Huggingface](https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models) | [UVR模型仓库地址](https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models)<br>你也可以在此整合包下载链接中的All_Models文件夹中找到所有可用的模型并下载。"))
+                        unmodel_class = gr.Dropdown(label=i18n("选择模型类型"), choices=["vocal_models", "multi_stem_models", "single_stem_models"], interactive=True)
+                        unmodel_type = gr.Dropdown(label=i18n("选择模型类别"), choices=MODEL_TYPE, interactive=True)
+                        unmsst_model_link = gr.Textbox(label=i18n("模型下载链接 (非必须，若无，可跳过)"), value="", interactive=True, scale=2)
+                    unmsst_model_install = gr.Button(i18n("安装非官方MSST模型"), variant="primary")
+                    output_message_unmsst = gr.Textbox(label="Output Message")
+                with gr.TabItem(label=i18n("安装非官方VR模型")):
+                    gr.Markdown(value=i18n("你可以从其他途径获取非官方UVR模型, 在此页面完成配置文件设置后, 即可正常使用。<br>注意: 仅支持'.pth'格式的模型。模型显示名字为模型文件名。"))
+                    with gr.Row():
+                        unvr_model = gr.File(label=i18n("上传非官方UVR模型"), type="filepath")
+                        with gr.Column():
+                            with gr.Row():
+                                unvr_primary_stem = gr.Textbox(label=i18n("主要音轨名称"), value="", interactive=True)
+                                unvr_secondary_stem = gr.Textbox(label=i18n("次要音轨名称"), value="", interactive=True)
+                            model_param = gr.Dropdown(label=i18n("选择模型参数"), choices=get_all_model_param(), interactive=True)
+                            with gr.Row():
+                                is_karaoke_model = gr.Checkbox(label=i18n("是否为Karaoke模型"), value=False, interactive=True)
+                                is_BV_model = gr.Checkbox(label=i18n("是否为BV模型"), value=False, interactive=True)
+                                is_VR51_model = gr.Checkbox(label=i18n("是否为VR 5.1模型"), value=False, interactive=True)
+                    balance_value = gr.Number(label="balance_value", value=0.0, minimum=0.0, maximum=0.9, step=0.1, interactive=True, visible=False)
+                    with gr.Row():
+                        out_channels = gr.Number(label="Out Channels", value=32, minimum=1, step=1, interactive=True, visible=False)
+                        out_channels_lstm = gr.Number(label="Out Channels (LSTM layer)", value=128, minimum=1, step=1, interactive=True, visible=False)
+                    upload_param = gr.File(label=i18n("上传参数文件"), type="filepath", interactive=True, visible=False)
+                    unvr_model_link = gr.Textbox(label=i18n("模型下载链接 (非必须，若无，可跳过)"), value="", interactive=True)
+                    unvr_model_install = gr.Button(i18n("安装非官方UVR模型"), variant="primary")
+                    output_message_unvr = gr.Textbox(label="Output Message")
 
             model_type_dropdown.change(fn=upgrade_download_model_name,inputs=[model_type_dropdown],outputs=[download_model_name_dropdown])
             download_button.click(fn=download_model,inputs=[model_type_dropdown, download_model_name_dropdown],outputs=output_message_download)
@@ -1481,9 +1580,14 @@ with gr.Blocks(
             open_model_dir.click(open_folder, inputs=gr.Textbox(MODEL_FOLDER, visible=False))
             open_uvr_model_dir.click(open_folder, inputs=gr.Textbox(uvr_model_folder, visible=False))
             restart_webui.click(webui_restart)
+            is_BV_model.change(fn=update_vr_param, inputs=[is_BV_model, is_VR51_model, model_param], outputs=[balance_value, out_channels, out_channels_lstm, upload_param])
+            is_VR51_model.change(fn=update_vr_param, inputs=[is_BV_model, is_VR51_model, model_param], outputs=[balance_value, out_channels, out_channels_lstm, upload_param])
+            model_param.change(fn=update_vr_param, inputs=[is_BV_model, is_VR51_model, model_param], outputs=[balance_value, out_channels, out_channels_lstm, upload_param])
+            unmsst_model_install.click(fn=install_unmsst_model, inputs=[unmsst_model, unmsst_config, unmodel_class, unmodel_type, unmsst_model_link], outputs=output_message_unmsst)
+            unvr_model_install.click(fn=install_unvr_model, inputs=[unvr_model, unvr_primary_stem, unvr_secondary_stem, model_param, is_karaoke_model, is_BV_model, is_VR51_model, balance_value, out_channels, out_channels_lstm, upload_param, unvr_model_link], outputs=output_message_unvr)
 
         with gr.TabItem(label=i18n("MSST训练")):
-            gr.Markdown(value=i18n("此页面提供数据集制作教程, 训练参数选择, 以及一键训练。有关配置文件的修改和数据集文件夹的详细说明请参考MSST原项目: [https://github.com/ZFTurbo/Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)<br>在开始下方的模型训练之前, 请先进行训练数据的制作。"))
+            gr.Markdown(value=i18n("此页面提供数据集制作教程, 训练参数选择, 以及一键训练。有关配置文件的修改和数据集文件夹的详细说明请参考MSST原项目: [https://github.com/ZFTurbo/Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)<br>在开始下方的模型训练之前, 请先进行训练数据的制作。<br>说明: 数据集类型即训练集制作Step 1中你选择的类型, 1: Type1; 2: Type2; 3: Type3; 4: Type4, 必须与你的数据集类型相匹配。"))
             with gr.Tabs():
                 with gr.TabItem(label=i18n("训练")):
                     with gr.Row():
@@ -1494,7 +1598,6 @@ with gr.Blocks(
                         train_dataset_type = gr.Dropdown(label=i18n("数据集类型"),choices=[1, 2, 3, 4],value=webui_config['training']['dataset_type'] if webui_config['training']['dataset_type'] else None,interactive=True,scale=1)
                         train_dataset_path = gr.Textbox(label=i18n("数据集路径"),value=webui_config['training']['dataset_path'] if webui_config['training']['dataset_path'] else i18n("请输入或选择数据集文件夹"),interactive=True,scale=3)
                         select_train_dataset_path = gr.Button(i18n("选择数据集文件夹"), scale=1)
-                    gr.Markdown(value=i18n("说明: 数据集类型即训练集制作Step 1中你选择的类型, 1: Type1; 2: Type2; 3: Type3; 4: Type4, 必须与你的数据集类型相匹配。"))
                     with gr.Row():
                         train_valid_path = gr.Textbox(label=i18n("验证集路径"),value=webui_config['training']['valid_path'] if webui_config['training']['valid_path'] else i18n("请输入或选择验证集文件夹"),interactive=True,scale=4)
                         select_train_valid_path = gr.Button(i18n("选择验证集文件夹"), scale=1)

@@ -11,6 +11,7 @@ import torch
 from models.vocal_remover.vr_separator import VRSeparator
 
 VR_MODEL_MAP = "data/vr_model_map.json"
+UNOFFICIAL_MODEL_MAP = "config_unofficial/unofficial_vr_model.json"
 
 class Separator:
     def __init__(
@@ -178,9 +179,15 @@ class Separator:
 
     def load_model_data(self, model_name):
         vr_model_data_object = json.load(open(VR_MODEL_MAP, encoding="utf-8"))
-        model_data = vr_model_data_object[model_name]
-        self.logger.debug(f"Model data loaded from UVR JSON: {model_data}")
-        return model_data
+        if model_name in vr_model_data_object.keys():
+            model_data = vr_model_data_object[model_name]
+            self.logger.debug(f"Model data loaded from UVR JSON: {model_data}")
+            return model_data
+        else:
+            unofficial_model_data = json.load(open(UNOFFICIAL_MODEL_MAP, encoding="utf-8"))
+            model_data = unofficial_model_data[model_name]
+            self.logger.debug(f"Model data loaded from unofficial UVR JSON: {model_data}")
+            return model_data
 
     def load_model(self, model_filename="1_HP-UVR.pth"):
         self.logger.info(f"Loading model {model_filename}...")

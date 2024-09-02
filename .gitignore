@@ -15,6 +15,7 @@ tools/SOME_weights/model_steps_64000_simplified.ckpt
 input/
 results/
 test.py
+config_unofficial/
 
 !pretrain/*.json
 !.gitkeep
