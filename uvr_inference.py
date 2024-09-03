@@ -2,6 +2,7 @@ import sys
 import os
 import argparse
 import logging
+import time
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 from models.vocal_remover.separator import Separator
@@ -20,7 +21,8 @@ def inference(parser, args):
         parser.print_help()
         sys.exit(1)
 
-    logger.info(f"Separator beginning with input file: {args.audio_file}")
+    start_time = time.time()
+    logger.info(f"Separator beginning with input file or folder: {args.audio_file}")
 
     separator = Separator(
         log_formatter=log_formatter,
@@ -46,7 +48,8 @@ def inference(parser, args):
     )
     separator.load_model(model_filename=args.model_filename)
     output_files = separator.separate(args.audio_file)
-    logger.info(f"Separation complete! Output file(s): {' '.join(output_files)}")
+    logger.info(f"Separator finished in {time.time() - start_time:.2f} seconds.")
+    logger.info(f"Results are saved to: {output_files}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Separate audio file into different stems.", formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=60))

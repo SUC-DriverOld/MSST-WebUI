@@ -8,6 +8,7 @@ import logging
 import warnings
 import json
 import torch
+from tqdm import tqdm
 from models.vocal_remover.vr_separator import VRSeparator
 
 VR_MODEL_MAP = "data/vr_model_map.json"
@@ -61,7 +62,7 @@ class Separator:
             self.logger.info("Output directory not specified. Using current working directory.")
 
         self.output_dir = output_dir
-        self.logger.info(f"Separator instantiating with output_dir: {output_dir}, output_format: {output_format}")
+        self.logger.debug(f"Separator instantiating with output_dir: {output_dir}, output_format: {output_format}")
 
         if extra_output_dir is None:
             extra_output_dir = output_dir
@@ -70,7 +71,7 @@ class Separator:
         
         self.extra_output_dir = extra_output_dir
         if self.save_another_stem:
-            self.logger.info(f"Separator instantiating with extra_output_dir: {extra_output_dir}")
+            self.logger.debug(f"Separator instantiating with extra_output_dir: {extra_output_dir}")
 
         # Create the model directory if it does not exist
         os.makedirs(self.model_file_dir, exist_ok=True)
@@ -219,19 +220,17 @@ class Separator:
         self.logger.debug(f"Instantiating vr_separator class")
         self.model_instance = VRSeparator(common_config=common_params, arch_config=self.vr_params_params)
         self.logger.debug("Loading model completed.")
-        self.logger.info(f'Load model duration: {time.strftime("%H:%M:%S", time.gmtime(int(time.perf_counter() - load_model_start_time)))}')
+        self.logger.debug(f'Load model duration: {time.strftime("%H:%M:%S", time.gmtime(int(time.perf_counter() - load_model_start_time)))}')
 
     def separate_onefile(self, file_path):
-        self.logger.info(f"Starting separation process for audio_file_path: {file_path}")
-        separate_start_time = time.perf_counter()
+        self.logger.debug(f"Starting separation process for audio_file: {file_path}")
         self.logger.debug(f"Normalization threshold set to {self.normalization_threshold}, waveform will be lowered to this max amplitude to avoid clipping.")
 
         file_output_files = self.model_instance.separate(file_path)
         self.model_instance.clear_gpu_cache()
         self.model_instance.clear_file_specific_paths()
 
-        self.logger.debug("Separation process completed.")
-        self.logger.info(f'Separation duration: {time.strftime("%H:%M:%S", time.gmtime(int(time.perf_counter() - separate_start_time)))}')
+        self.logger.debug(f"Separation audio_file: {file_path} completed.")
 
         return file_output_files
 
@@ -244,8 +243,10 @@ class Separator:
             self.logger.error(f"The provided folder path does not exist: {folder_path}")
             return output_files
 
-        for filename in os.listdir(folder_path):
+        all_audio_files = tqdm(os.listdir(folder_path), desc="Total progress")
+        for filename in all_audio_files:
             file_path = os.path.join(folder_path, filename)
+            all_audio_files.set_postfix({"track": filename})
 
             if not filename.lower().endswith(('.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg', '.wma')): 
                 self.logger.warning(f"Skipping not supported audio file: {filename}")

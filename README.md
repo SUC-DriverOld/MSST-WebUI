@@ -1,7 +1,10 @@
 <div align="center">
 
 # MSST-WebUI
-[![Try it on Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb)[![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest)[![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers)<br>
+[![Try it on Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb)
+[![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest)
+[![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers)<br>
 WebUI of Music-Source-Separation-Training-Inference , and we packed UVR together!
 </div>
 
@@ -15,11 +18,11 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 **Linux/MacOS**: Clone this repository and run from source.<br>
 **Google Colab**: [Click here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) to run the webUI on Google Colab.
 
-> ### 中国用户可以从下方链接下载安装包
-> 
-> 下载地址1：[123云盘](https://www.123pan.com/s/1bmETd-AefWh.html) 提取码: 1145<br>
-> 下载地址2：[百度网盘](https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q?pwd=1145) 提取码: 1145<br>
-> 相关使用教程： [B站教程视频](https://www.bilibili.com/video/BV18m42137rm) | [飞书教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)
+### 中国用户可以从下方链接下载安装包
+
+下载地址1：[123云盘](https://www.123pan.com/s/1bmETd-AefWh.html) 提取码: 1145<br>
+下载地址2：[百度网盘](https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q?pwd=1145) 提取码: 1145<br>
+相关使用教程： [B站教程视频](https://www.bilibili.com/video/BV18m42137rm) | [飞书教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)
 
 ## Run from source
 
@@ -66,20 +69,23 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 Use `Inference.py`
 
 ```bash
-usage: inference.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--input_folder INPUT_FOLDER]
-                    [--store_dir STORE_DIR] [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [--extract_instrumental] [--extra_store_dir EXTRA_STORE_DIR] [--force_cpu]
+usage: msst_inference.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--input_folder INPUT_FOLDER]
+                         [--output_format OUTPUT_FORMAT] [--store_dir STORE_DIR] [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [--extract_instrumental]
+                         [--extra_store_dir EXTRA_STORE_DIR] [--force_cpu] [--use_tta]
 
 options:
-  -h, --help                                  show this help message and exit
-  --model_type MODEL_TYPE                     One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit
-  --config_path CONFIG_PATH                   path to config file
-  --start_check_point START_CHECK_POINT       Initial checkpoint to valid weights
-  --input_folder INPUT_FOLDER                 folder with mixtures to process
-  --store_dir STORE_DIR                       path to store results as wav file
-  --device_ids DEVICE_IDS [DEVICE_IDS ...]    list of gpu ids
-  --extract_instrumental                      invert vocals to get instrumental if provided
-  --extra_store_dir EXTRA_STORE_DIR           path to store extracted instrumental. If not provided, store_dir will be used
-  --force_cpu                                 Force the use of CPU even if CUDA is available
+  -h, --help                                show this help message and exit
+  --model_type MODEL_TYPE                   One of bandit, bandit_v2, bs_roformer, htdemucs, mdx23c, mel_band_roformer, scnet, scnet_unofficial, segm_models, swin_upernet, torchseg
+  --config_path CONFIG_PATH                 path to config file
+  --start_check_point START_CHECK_POINT     Initial checkpoint to valid weights
+  --input_folder INPUT_FOLDER               folder with mixtures to process
+  --output_format OUTPUT_FORMAT             output format for separated files, one of wav, flac, mp3
+  --store_dir STORE_DIR                     path to store results files
+  --device_ids DEVICE_IDS [DEVICE_IDS ...]  list of gpu ids
+  --extract_instrumental                    invert vocals to get instrumental if provided
+  --extra_store_dir EXTRA_STORE_DIR         path to store extracted instrumental. If not provided, store_dir will be used
+  --force_cpu                               Force the use of CPU even if CUDA is available
+  --use_tta                                 Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality.
 ```
 
 ### UVR Inference

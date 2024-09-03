@@ -78,6 +78,7 @@ class CommonSeparator:
         # Model specific properties
         self.primary_stem_name = self.model_data.get("primary_stem", "primary_stem")
         self.secondary_stem_name = self.model_data.get("secondary_stem", "secondary_stem")
+        self.logger.info(f"primary_stem: {self.primary_stem_name}, secondary_stem: {self.secondary_stem_name}")
 
         self.is_karaoke = self.model_data.get("is_karaoke", False)
         self.is_bv_model = self.model_data.get("is_bv_model", False)
@@ -277,7 +278,7 @@ class CommonSeparator:
         """
         Clears the file-specific variables which need to be cleared between processing different audio inputs.
         """
-        self.logger.info("Clearing input audio file paths, sources and stems...")
+        self.logger.debug("Clearing input audio file paths, sources and stems...")
 
         self.audio_file_path = None
         self.audio_file_base = None

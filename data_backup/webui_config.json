@@ -6,9 +6,12 @@
         "multiple_audio_input": null,
         "store_dir": null,
         "gpu_id": "0",
+        "output_format": "wav",
         "force_cpu": false,
         "extract_instrumental": false,
+        "use_tta": false,
         "preset": null,
+        "output_format_flow": "wav",
         "input_folder_flow": null,
         "store_dir_flow": null,
         "vr_select_model": null,
@@ -52,6 +55,7 @@
         "use_mse_loss": false,
         "use_l1_loss": false,
         "accelerate": false,
+        "pre_valid": false,
         "results_path": null
     },
     "settings": {

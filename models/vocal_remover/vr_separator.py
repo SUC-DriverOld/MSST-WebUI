@@ -107,7 +107,7 @@ class VRSeparator(CommonSeparator):
         # This should go away once we refactor to remove soundfile.write and replace with pydub like we did for the MDX rewrite
         self.wav_subtype = "PCM_16"
 
-        self.logger.info("VR Separator initialisation complete")
+        self.logger.debug("VR Separator initialisation complete")
 
     def separate(self, audio_file_path):
         """
@@ -195,7 +195,7 @@ class VRSeparator(CommonSeparator):
                 self.logger.debug(f"Resampling {stem_name} to 44100Hz.")
         
         stem_output_path = os.path.join(f"{self.audio_file_base}_{stem_name}.{self.output_format.lower()}")
-        self.logger.info(f"Saving {stem_name} stem to {stem_output_path}...")
+        self.logger.debug(f"Saving {stem_name} stem to {stem_output_path}...")
         self.final_process(stem_output_path, stem_source, stem_name, another)
         return stem_output_path
 
@@ -208,7 +208,7 @@ class VRSeparator(CommonSeparator):
         is_mp3 = audio_file.endswith(".mp3") if isinstance(audio_file, str) else False
 
         self.logger.debug(f"loading_mix iteraring through {bands_n} bands")
-        for d in tqdm(range(bands_n, 0, -1)):
+        for d in range(bands_n, 0, -1):
             bp = self.model_params.param["band"][d]
 
             wav_resolution = bp["res_type"]
@@ -245,7 +245,7 @@ class VRSeparator(CommonSeparator):
             patches = (X_mag_pad.shape[2] - 2 * self.model_run.offset) // roi_size
 
             self.logger.debug(f"inference_vr appending to X_dataset for each of {patches} patches")
-            for i in tqdm(range(patches)):
+            for i in range(patches):
                 start = i * roi_size
                 X_mag_window = X_mag_pad[:, :, start : start + self.window_size]
                 X_dataset.append(X_mag_window)
@@ -258,7 +258,7 @@ class VRSeparator(CommonSeparator):
             with torch.no_grad():
                 mask = []
 
-                for i in tqdm(range(0, patches, self.batch_size)):
+                for i in tqdm(range(0, patches, self.batch_size), leave=False, desc="Processing batches"):
 
                     X_batch = X_dataset[i : i + self.batch_size]
                     X_batch = torch.from_numpy(X_batch).to(device)
