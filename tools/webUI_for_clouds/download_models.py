@@ -44,7 +44,7 @@ def get_uvr_models(model_name):
     config = load_configs(VR_MODEL)
     for key in config.keys():
         if key == model_name:
-            model_path = config[key]["model_path"]
+            model_path = os.path.join("pretrain", "VR_Models", model_name)
             download_link = config[key]["download_link"]
             return model_path, download_link
 

@@ -324,7 +324,7 @@ def run_inference_single(selected_model, input_audio, store_dir, extract_instrum
         run_inference(selected_model, input_path, store_dir,extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
         return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
 
-def run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, force_cpu):
+def run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
     if download_model("msst", selected_model):
         run_inference(selected_model, input_folder, store_dir,extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
         return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
@@ -566,7 +566,8 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
             else:
                 save_another_stem = False
                 extra_output_dir = None
-            vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode, save_another_stem, extra_output_dir)
+            if download_model("uvr", vr_select_model):
+                vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode, save_another_stem, extra_output_dir)
         else:
             gpu_id = config['inference']['gpu_id'] if not force_cpu else "0"
             use_tta = config['inference']['use_tta']
@@ -580,7 +581,8 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
             else:
                 extract_instrumental = False
                 extra_store_dir = None
-            run_inference(model_name, input_to_use, tmp_store_dir, extract_instrumental, gpu_id, output_format_flow, force_cpu, use_tta, extra_store_dir)
+            if download_model("msst", model_name):
+                run_inference(model_name, input_to_use, tmp_store_dir, extract_instrumental, gpu_id, output_format_flow, force_cpu, use_tta, extra_store_dir)
         i += 1
     shutil.rmtree(TEMP_PATH)
     finish_time = time.time()
@@ -908,7 +910,9 @@ with gr.Blocks(
             gr.Markdown(value=i18n("预设流程允许按照预设的顺序运行多个模型。每一个模型的输出将作为下一个模型的输入。"))
             with gr.Tabs():
                 with gr.TabItem(label=i18n("使用预设")):
-                    preset_dropdown = gr.Dropdown(label=i18n("请选择预设"),choices=list(presets.keys()),value=None,interactive=True)
+                    with gr.Row():
+                        preset_dropdown = gr.Dropdown(label=i18n("请选择预设"),choices=list(presets.keys()),value=None, interactive=True, scale=4)
+                        output_format_flow = gr.Dropdown(label=i18n("输出格式"),choices=["wav", "mp3", "flac"],value="wav", interactive=True, scale=1)
                     force_cpu = gr.Checkbox(label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "), value=False, interactive=True)
                     with gr.Tabs():
                         with gr.TabItem(label=i18n("单个音频上传")):
@@ -950,8 +954,8 @@ with gr.Blocks(
                     output_message_manage = gr.Textbox(label="Output Message")
                 
 
-            inference_flow.click(fn=run_inference_flow,inputs=[input_folder_flow, store_dir_flow, preset_dropdown, force_cpu],outputs=output_message_flow)
-            single_inference_flow.click(fn=run_single_inference_flow,inputs=[single_audio_flow, store_dir_flow, preset_dropdown, force_cpu],outputs=output_message_flow)
+            inference_flow.click(fn=run_inference_flow,inputs=[input_folder_flow, store_dir_flow, preset_dropdown, force_cpu, output_format_flow],outputs=output_message_flow)
+            single_inference_flow.click(fn=run_single_inference_flow,inputs=[single_audio_flow, store_dir_flow, preset_dropdown, force_cpu, output_format_flow],outputs=output_message_flow)
             model_type.change(update_model_name, inputs=model_type, outputs=model_name)
             model_name.change(update_model_stem, inputs=[model_type, model_name], outputs=stem)
             add_to_flow.click(add_to_flow_func, [model_type, model_name, stem, secondary_output, preset_flow], preset_flow)
