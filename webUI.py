@@ -28,7 +28,7 @@ from rich.console import Console
 from torch import cuda, backends
 from multiprocessing import cpu_count
 
-PACKAGE_VERSION = "1.5.1"
+PACKAGE_VERSION = "1.6"
 WEBUI_CONFIG = "data/webui_config.json"
 WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
 PRESETS = "data/preset_data.json"
@@ -1052,8 +1052,11 @@ def install_unmsst_model(unmsst_model, unmsst_config, unmodel_class, unmodel_typ
         if unmsst_config.endswith(".yaml"):
             shutil.copy(unmsst_config, UNOFFICIAL_MODEL)
         else: return i18n("请上传'.yaml'格式的配置文件")
+        model_name = os.path.basename(unmsst_model)
+        if model_name in load_msst_model():
+            return i18n("模型") + model_name + i18n("已安装")
         config = {
-            "name": os.path.basename(unmsst_model),
+            "name": model_name,
             "config_path": os.path.join(UNOFFICIAL_MODEL, os.path.basename(unmsst_config)),
             "model_type": unmodel_type,
             "link": unmsst_model_link
@@ -1078,6 +1081,8 @@ def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model
         else: return i18n("请上传'.pth'格式的模型文件")
         if unvr_primary_stem != "" and unvr_secondary_stem != "" and unvr_primary_stem != unvr_secondary_stem:
             model_name = os.path.basename(unvr_model)
+            if model_name in load_vr_model():
+                return i18n("模型") + model_name + i18n("已安装")
             model_map[model_name] = {}
             model_map[model_name]["model_path"] = os.path.join(MODEL_FOLDER, "VR_Models", model_name)
             model_map[model_name]["primary_stem"] = unvr_primary_stem
@@ -1122,7 +1127,7 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
     num_workers = int(train_num_workers)
     device_ids = train_device_ids
     seed = int(train_seed)
-    pin_memory = train_pin_memory
+    pin_memory = "--pin_memory" if train_pin_memory else ""
     use_multistft_loss = "--use_multistft_loss" if train_use_multistft_loss else ""
     use_mse_loss = "--use_mse_loss" if train_use_mse_loss else ""
     use_l1_loss = "--use_l1_loss" if train_use_l1_loss else ""
@@ -1151,11 +1156,11 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
         start_check_point = "--start_check_point " + "\"" + os.path.join(results_path, train_start_check_point) + "\""
     else:
         return i18n("模型保存路径不存在, 请重新选择")
-    command = f"{PYTHON} {train_file} --model_type {model_type} --config_path \"{config_path}\" {start_check_point} --results_path \"{results_path}\" --data_path \"{data_path}\" --dataset_type {dataset_type} --valid_path \"{valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} --pin_memory {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss} {pre_valid}"
+    command = f"{PYTHON} {train_file} --model_type {model_type} --config_path \"{config_path}\" {start_check_point} --results_path \"{results_path}\" --data_path \"{data_path}\" --dataset_type {dataset_type} --valid_path \"{valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss} {pre_valid}"
     threading.Thread(target=run_command, args=(command,), name="msst_training").start()
     return i18n("训练启动成功! 请前往控制台查看训练信息! ")
 
-def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_path, valid_results_path, valid_device_ids, valid_num_workers, valid_extension, valid_pin_memory):
+def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_path, valid_results_path, valid_device_ids, valid_num_workers, valid_extension, valid_pin_memory, valid_use_tta):
     if valid_model_type not in MODEL_TYPE:
         return i18n("模型类型错误, 请重新选择")
     if not os.path.isfile(valid_config_path):
@@ -1169,7 +1174,8 @@ def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_
     if not bool(re.match(r'^(\d+)(?:\s(?!\1)\d+)*$', valid_device_ids)):
         return i18n("device_ids格式错误, 请重新输入")
     pin_memory = "--pin_memory" if valid_pin_memory else ""
-    command = f"{PYTHON} valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {valid_device_ids} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory}"
+    use_tta = "--use_tta" if valid_use_tta else ""
+    command = f"{PYTHON} valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {valid_device_ids} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory} {use_tta}"
     msst_valid = threading.Thread(target=run_command, args=(command,), name="msst_valid")
     msst_valid.start()
     msst_valid.join()
@@ -1669,7 +1675,9 @@ with gr.Blocks(
                         valid_device_ids = gr.Textbox(label=i18n("选择显卡, 多卡用户请使用空格分隔GPU ID"),value=webui_config['training']['device_ids'] if webui_config['training']['device_ids'] else "0",interactive=True)
                         valid_num_workers = gr.Number(label=i18n("验证集读取线程数, 0为自动"),value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,interactive=True,minimum=0,maximum=cpu_count(),step=1)
                         valid_extension = gr.Dropdown(label=i18n("选择验证集音频格式"),choices=["wav", "flac", "mp3"],value="wav",interactive=True,allow_custom_value=True)
-                    valid_pin_memory = gr.Checkbox(label=i18n("是否将加载的数据放置在固定内存中, 默认为否"), value=webui_config['training']['pin_memory'], interactive=True)
+                    with gr.Row():
+                        valid_pin_memory = gr.Checkbox(label=i18n("是否将加载的数据放置在固定内存中, 默认为否"), value=webui_config['training']['pin_memory'], interactive=True)
+                        valid_use_tta = gr.Checkbox(label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),value=False,interactive=True)
                     valid_button = gr.Button(i18n("开始验证"), variant="primary")
                     with gr.Row():
                         valid_output_message = gr.Textbox(label="Output Message", scale=4)
@@ -1680,7 +1688,7 @@ with gr.Blocks(
                     select_valid_path.click(fn=select_folder, outputs=valid_path)
                     select_valid_results_path.click(fn=select_folder, outputs=valid_results_path)
                     open_valid_results_path.click(fn=open_folder, inputs=valid_results_path)
-                    valid_button.click(fn=validate_model,inputs=[valid_model_type, valid_config_path, valid_model_path, valid_path, valid_results_path, valid_device_ids, valid_num_workers, valid_extension, valid_pin_memory],outputs=valid_output_message)
+                    valid_button.click(fn=validate_model,inputs=[valid_model_type, valid_config_path, valid_model_path, valid_path, valid_results_path, valid_device_ids, valid_num_workers, valid_extension, valid_pin_memory, valid_use_tta],outputs=valid_output_message)
                     stop_thread.click(fn=stop_all_thread)
 
                 with gr.TabItem(label=i18n("训练集制作指南")):
