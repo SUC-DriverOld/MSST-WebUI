@@ -1,7 +1,10 @@
 <div align="center">
 
 # MSST-WebUI
-[![Try it on Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb)[![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest)[![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers)<br>
+[![Try it on Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb)
+[![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest)
+[![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers)<br>
 WebUI of Music-Source-Separation-Training-Inference , and we packed UVR together!
 </div>
 
@@ -15,11 +18,11 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 **Linux/MacOS**: Clone this repository and run from source.<br>
 **Google Colab**: [Click here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) to run the webUI on Google Colab.
 
-> ### 中国用户可以从下方链接下载安装包
-> 
-> 下载地址1：[123云盘](https://www.123pan.com/s/1bmETd-AefWh.html) 提取码: 1145<br>
-> 下载地址2：[百度网盘](https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q?pwd=1145) 提取码: 1145<br>
-> 相关使用教程： [B站教程视频](https://www.bilibili.com/video/BV18m42137rm) | [飞书教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)
+### 中国用户可以从下方链接下载安装包
+
+下载地址1：[123云盘](https://www.123pan.com/s/1bmETd-AefWh.html) 提取码: 1145<br>
+下载地址2：[百度网盘](https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q?pwd=1145) 提取码: 1145<br>
+相关使用教程： [B站教程视频](https://www.bilibili.com/video/BV18m42137rm) | [飞书教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)
 
 ## Run from source
 
@@ -66,20 +69,23 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 Use `Inference.py`
 
 ```bash
-usage: inference.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--input_folder INPUT_FOLDER]
-                    [--store_dir STORE_DIR] [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [--extract_instrumental] [--extra_store_dir EXTRA_STORE_DIR] [--force_cpu]
+usage: msst_inference.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--input_folder INPUT_FOLDER]
+                         [--output_format OUTPUT_FORMAT] [--store_dir STORE_DIR] [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [--extract_instrumental]
+                         [--extra_store_dir EXTRA_STORE_DIR] [--force_cpu] [--use_tta]
 
 options:
-  -h, --help                                  show this help message and exit
-  --model_type MODEL_TYPE                     One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit
-  --config_path CONFIG_PATH                   path to config file
-  --start_check_point START_CHECK_POINT       Initial checkpoint to valid weights
-  --input_folder INPUT_FOLDER                 folder with mixtures to process
-  --store_dir STORE_DIR                       path to store results as wav file
-  --device_ids DEVICE_IDS [DEVICE_IDS ...]    list of gpu ids
-  --extract_instrumental                      invert vocals to get instrumental if provided
-  --extra_store_dir EXTRA_STORE_DIR           path to store extracted instrumental. If not provided, store_dir will be used
-  --force_cpu                                 Force the use of CPU even if CUDA is available
+  -h, --help                                show this help message and exit
+  --model_type MODEL_TYPE                   One of bandit, bandit_v2, bs_roformer, htdemucs, mdx23c, mel_band_roformer, scnet, scnet_unofficial, segm_models, swin_upernet, torchseg
+  --config_path CONFIG_PATH                 path to config file
+  --start_check_point START_CHECK_POINT     Initial checkpoint to valid weights
+  --input_folder INPUT_FOLDER               folder with mixtures to process
+  --output_format OUTPUT_FORMAT             output format for separated files, one of wav, flac, mp3
+  --store_dir STORE_DIR                     path to store results files
+  --device_ids DEVICE_IDS [DEVICE_IDS ...]  list of gpu ids
+  --extract_instrumental                    invert vocals to get instrumental if provided
+  --extra_store_dir EXTRA_STORE_DIR         path to store extracted instrumental. If not provided, store_dir will be used
+  --force_cpu                               Force the use of CPU even if CUDA is available
+  --use_tta                                 Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality.
 ```
 
 ### UVR Inference
@@ -91,11 +97,10 @@ Use `uvr_inference.py`
 > 2. We do some changes on the code and now you can import folder_path for UVR Inference!
 
 ```bash
-usage: uvr_inference.py [-h] [-d] [-e] [-l] [--log_level LOG_LEVEL] [-m MODEL_FILENAME] 
-                        [--output_format OUTPUT_FORMAT] [--output_dir OUTPUT_DIR] [--model_file_dir MODEL_FILE_DIR] [--extra_output_dir EXTRA_OUTPUT_DIR]
-                        [--invert_spect] [--normalization NORMALIZATION] [--single_stem SINGLE_STEM] [--sample_rate SAMPLE_RATE] [--use_cpu] [--save_another_stem]
-                        [--vr_batch_size VR_BATCH_SIZE] [--vr_window_size VR_WINDOW_SIZE] [--vr_aggression VR_AGGRESSION] [--vr_enable_tta] [--vr_high_end_process] [--vr_enable_post_process]
-                        [--vr_post_process_threshold VR_POST_PROCESS_THRESHOLD] 
+usage: uvr_inference.py [-h] [-d] [-m MODEL_FILENAME] [--output_format OUTPUT_FORMAT] [--output_dir OUTPUT_DIR] [--model_file_dir MODEL_FILE_DIR]
+                        [--extra_output_dir EXTRA_OUTPUT_DIR] [--invert_spect] [--normalization NORMALIZATION] [--single_stem SINGLE_STEM] [--use_cpu] [--save_another_stem]
+                        [--vr_batch_size VR_BATCH_SIZE] [--vr_window_size VR_WINDOW_SIZE] [--vr_aggression VR_AGGRESSION] [--vr_enable_tta] [--vr_high_end_process]
+                        [--vr_enable_post_process] [--vr_post_process_threshold VR_POST_PROCESS_THRESHOLD]
                         [audio_file]
 
 Separate audio file into different stems.
@@ -105,32 +110,26 @@ positional arguments:
 
 options:
   -h, --help                                             show this help message and exit
-
-Info and Debugging:
   -d, --debug                                            Enable debug logging, equivalent to --log_level=debug.
-  -e, --env_info                                         Print environment information and exit.
-  -l, --list_models                                      List all supported models and exit.
-  --log_level LOG_LEVEL                                  Log level, e.g. info, debug, warning (default: info).
 
 Separation I/O Params:
-  -m MODEL_FILENAME, --model_filename MODEL_FILENAME     model to use for separation (default: model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt). Example: -m 2_HP-UVR.pth
+  -m MODEL_FILENAME, --model_filename MODEL_FILENAME     model to use for separation (default: 1_HP-UVR.pth). Example: -m 2_HP-UVR.pth
   --output_format OUTPUT_FORMAT                          output format for separated files, any common format (default: FLAC). Example: --output_format=MP3
   --output_dir OUTPUT_DIR                                directory to write output files (default: <current dir>). Example: --output_dir=/app/separated
-  --model_file_dir MODEL_FILE_DIR                        model files directory (default: /tmp/audio-separator-models/). Example: --model_file_dir=/app/models
+  --model_file_dir MODEL_FILE_DIR                        model files directory (default: pretrain/VR_Models). Example: --model_file_dir=/app/models
   --extra_output_dir EXTRA_OUTPUT_DIR                    extra output directory for saving another stem. If not provided, output_dir will be used. Example: --extra_output_dir=/app/extra_output
 
 Common Separation Parameters:
   --invert_spect                                         invert secondary stem using spectogram (default: False). Example: --invert_spect
   --normalization NORMALIZATION                          max peak amplitude to normalize input and output audio to (default: 0.9). Example: --normalization=0.7
-  --single_stem SINGLE_STEM                              output only single stem, e.g. Instrumental, Vocals, Drums, Bass, Guitar, Piano, Other. Example: --single_stem=Instrumental
-  --sample_rate SAMPLE_RATE                              modify the sample rate of the output audio (default: 44100). Example: --sample_rate=44100
+  --single_stem SINGLE_STEM                              output only single stem, e.g. Instrumental, Vocals, Drums, Bass, Guitar, Piano, Other. Example: --single_stem=Instrumental   
   --use_cpu                                              use CPU instead of GPU for inference
   --save_another_stem                                    save another stem when using flow inference (default: False). Example: --save_another_stem
 
 VR Architecture Parameters:
-  --vr_batch_size VR_BATCH_SIZE                          number of batches to process at a time. higher = more RAM, slightly faster processing (default: 4). Example: --vr_batch_size=16        
-  --vr_window_size VR_WINDOW_SIZE                        balance quality and speed. 1024 = fast but lower, 320 = slower but better quality. (default: 512). Example: --vr_window_size=320       
-  --vr_aggression VR_AGGRESSION                          intensity of primary stem extraction, -100 - 100. typically 5 for vocals & instrumentals (default: 5). Example: --vr_aggression=2      
+  --vr_batch_size VR_BATCH_SIZE                          number of batches to process at a time. higher = more RAM, slightly faster processing (default: 4). Example: --vr_batch_size=16
+  --vr_window_size VR_WINDOW_SIZE                        balance quality and speed. 1024 = fast but lower, 320 = slower but better quality. (default: 512). Example: --vr_window_size=320
+  --vr_aggression VR_AGGRESSION                          intensity of primary stem extraction, -100 - 100. typically 5 for vocals & instrumentals (default: 5). Example: --vr_aggression=2
   --vr_enable_tta                                        enable Test-Time-Augmentation; slow but improves quality (default: False). Example: --vr_enable_tta
   --vr_high_end_process                                  mirror the missing frequency range of the output (default: False). Example: --vr_high_end_process
   --vr_enable_post_process                               identify leftover artifacts within vocal output; may improve separation for some songs (default: False). Example: --vr_enable_post_process

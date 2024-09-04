@@ -25,7 +25,7 @@ import torch.nn.functional as F
 from accelerate import Accelerator
 
 from dataset import MSSDataset
-from utils import get_model_from_config, demix_track_demucs, demix_track, sdr
+from utils import get_model_from_config, demix, sdr
 from train import masked_loss, manual_seed, load_not_compatible_weights
 import warnings
 
@@ -55,11 +55,7 @@ def valid(model, valid_loader, args, config, device, verbose=False):
         path = path_list[0]
         mix, sr = sf.read(path)
         folder = os.path.dirname(path)
-        mixture = torch.tensor(mix.T, dtype=torch.float32)
-        if args.model_type == 'htdemucs':
-            res = demix_track_demucs(config, model, mixture, device)
-        else:
-            res = demix_track(config, model, mixture, device)
+        res = demix(config, model, mix.T, device, model_type=args.model_type) # mix.T
         for instr in instruments:
             if instr != 'other' or config.training.other_fix is False:
                 track, sr1 = sf.read(folder + '/{}.wav'.format(instr))
@@ -117,6 +113,7 @@ def train_model(args):
     parser.add_argument("--use_multistft_loss", action='store_true', help="Use MultiSTFT Loss (from auraloss package)")
     parser.add_argument("--use_mse_loss", action='store_true', help="Use default MSE loss")
     parser.add_argument("--use_l1_loss", action='store_true', help="Use L1 loss")
+    parser.add_argument("--pre_valid", action='store_true', help='Run validation before training')
     if args is None:
         args = parser.parse_args()
     else:
@@ -128,14 +125,16 @@ def train_model(args):
     torch.multiprocessing.set_start_method('spawn')
 
     model, config = get_model_from_config(args.model_type, args.config_path)
-    if accelerator.is_main_process:
-        logger.info("Instruments: {}".format(config.training.instruments))
+    accelerator.logger.info("Instruments: {}".format(config.training.instruments))
 
     if not os.path.isdir(args.results_path):
         os.mkdir(args.results_path)
 
     device_ids = args.device_ids
     batch_size = config.training.batch_size
+
+    # Fix for num of steps
+    config.training.num_steps *= accelerator.num_processes
 
     trainset = MSSDataset(
         config,
@@ -166,8 +165,7 @@ def train_model(args):
     valid_loader = accelerator.prepare(valid_loader)
 
     if args.start_check_point != '':
-        if accelerator.is_main_process:
-            logger.info('Start from checkpoint: {}'.format(args.start_check_point))
+        accelerator.logger.info('Start from checkpoint: {}'.format(args.start_check_point))
         if 1:
             load_not_compatible_weights(model, args.start_check_point, verbose=False)
         else:
@@ -178,7 +176,7 @@ def train_model(args):
     optim_params = dict()
     if 'optimizer' in config:
         optim_params = dict(config['optimizer'])
-        logger.info('Optimizer params from config:\n{}'.format(optim_params))
+        accelerator.logger.info('Optimizer params from config:\n{}'.format(optim_params))
 
     if config.training.optimizer == 'adam':
         optimizer = Adam(model.parameters(), lr=config.training.lr, **optim_params)
@@ -188,30 +186,27 @@ def train_model(args):
         optimizer = RAdam(model.parameters(), lr=config.training.lr, **optim_params)
     elif config.training.optimizer == 'rmsprop':
         optimizer = RMSprop(model.parameters(), lr=config.training.lr, **optim_params)
+    elif config.training.optimizer == 'prodigy':
+        from prodigyopt import Prodigy
+        # you can choose weight decay value based on your problem, 0 by default
+        # We recommend using lr=1.0 (default) for all networks.
+        optimizer = Prodigy(model.parameters(), lr=config.training.lr, **optim_params)
     elif config.training.optimizer == 'adamw8bit':
         import bitsandbytes as bnb
         optimizer = bnb.optim.AdamW8bit(model.parameters(), lr=config.training.lr, **optim_params)
     elif config.training.optimizer == 'sgd':
-        logger.info('Use SGD optimizer')
+        accelerator.logger.info('Use SGD optimizer')
         optimizer = SGD(model.parameters(), lr=config.training.lr, **optim_params)
     else:
-        logger.info('Unknown optimizer: {}'.format(config.training.optimizer))
+        accelerator.logger.info('Unknown optimizer: {}'.format(config.training.optimizer))
         exit()
-
-    gradient_accumulation_steps = 1
-    try:
-        gradient_accumulation_steps = int(config.training.gradient_accumulation_steps)
-    except:
-        pass
 
     if accelerator.is_main_process:
         logger.info('Processes GPU: {}'.format(accelerator.num_processes))
-        logger.info("Patience: {} Reduce factor: {} Batch size: {} Grad accum steps: {} Effective batch size: {} Optimizer: {}".format(
+        logger.info("Patience: {} Reduce factor: {} Batch size: {} Optimizer: {}".format(
             config.training.patience,
             config.training.reduce_factor,
             batch_size,
-            gradient_accumulation_steps,
-            batch_size * gradient_accumulation_steps,
             config.training.optimizer,
         ))
     # Reduce LR if no SDR improvements for several epochs
@@ -228,67 +223,55 @@ def train_model(args):
             loss_options = dict(config.loss_multistft)
         except:
             loss_options = dict()
-        if accelerator.is_main_process:
-            logger.info('Loss options: {}'.format(loss_options))
+        accelerator.logger.info('Loss options: {}'.format(loss_options))
         loss_multistft = auraloss.freq.MultiResolutionSTFTLoss(
             **loss_options
         )
 
     model, optimizer, train_loader, scheduler = accelerator.prepare(model, optimizer, train_loader, scheduler)
 
-    sdr_list = valid(model, valid_loader, args, config, device, verbose=accelerator.is_main_process)
-    sdr_list = accelerator.gather(sdr_list)
-    accelerator.wait_for_everyone()
+    if args.pre_valid:
+        sdr_list = valid(model, valid_loader, args, config, device, verbose=accelerator.is_main_process)
+        sdr_list = accelerator.gather(sdr_list)
+        accelerator.wait_for_everyone()
 
-    # logger.info(sdr_list)
+        # logger.info(sdr_list)
 
-    sdr_avg = 0.0
-    instruments = config.training.instruments
-    if config.training.target_instrument is not None:
-        instruments = [config.training.target_instrument]
+        sdr_avg = 0.0
+        instruments = config.training.instruments
+        if config.training.target_instrument is not None:
+            instruments = [config.training.target_instrument]
 
-    for instr in instruments:
-        # logger.info(sdr_list[instr])
-        sdr_data = torch.cat(sdr_list[instr], dim=0).cpu().numpy()
-        sdr_val = sdr_data.mean()
-        if accelerator.is_main_process:
-            logger.info("Valid length: {}".format(valid_dataset_length))
-            logger.info("Instr SDR {}: {:.4f} Debug: {}".format(instr, sdr_val, len(sdr_data)))
-        sdr_val = sdr_data[:valid_dataset_length].mean()
-        if accelerator.is_main_process:
-            logger.info("Instr SDR {}: {:.4f} Debug: {}".format(instr, sdr_val, len(sdr_data)))
-        sdr_avg += sdr_val
-    sdr_avg /= len(instruments)
-    if len(instruments) > 1:
-        if accelerator.is_main_process:
-            logger.info('SDR Avg: {:.4f}'.format(sdr_avg))
-    sdr_list = None
+        for instr in instruments:
+            # logger.info(sdr_list[instr])
+            sdr_data = torch.cat(sdr_list[instr], dim=0).cpu().numpy()
+            sdr_val = sdr_data.mean()
+            accelerator.logger.info("Valid length: {}".format(valid_dataset_length))
+            accelerator.logger.info("Instr SDR {}: {:.4f} Debug: {}".format(instr, sdr_val, len(sdr_data)))
+            sdr_val = sdr_data[:valid_dataset_length].mean()
+            accelerator.logger.info("Instr SDR {}: {:.4f} Debug: {}".format(instr, sdr_val, len(sdr_data)))
+            sdr_avg += sdr_val
+        sdr_avg /= len(instruments)
+        if len(instruments) > 1:
+            accelerator.logger.info('SDR Avg: {:.4f}'.format(sdr_avg))
+        sdr_list = None
 
-    if accelerator.is_main_process:
-        logger.info('Train for: {}'.format(config.training.num_epochs))
+    accelerator.logger.info('Train for: {}'.format(config.training.num_epochs))
     best_sdr = -100
     for epoch in range(config.training.num_epochs):
         model.train().to(device)
-        if accelerator.is_main_process:
-            logger.info('Train epoch: {} Learning rate: {}'.format(epoch, optimizer.param_groups[0]['lr']))
+        accelerator.logger.info('Train epoch: {} Learning rate: {}'.format(epoch, optimizer.param_groups[0]['lr']))
         loss_val = 0.
         total = 0
 
-        # total_loss = None
-        if accelerator.is_main_process:
-            pbar = tqdm(train_loader)
-        else:
-            pbar = train_loader
+        pbar = tqdm(train_loader, disable=not accelerator.is_main_process)
         for i, (batch, mixes) in enumerate(pbar):
-            y = batch.to(device)
-            x = mixes.to(device)  # mixture
+            y = batch
+            x = mixes
 
             if args.model_type in ['mel_band_roformer', 'bs_roformer']:
                 # loss is computed in forward pass
                 loss = model(x, y)
-                if type(device_ids) != int:
-                    # If it's multiple GPUs sum partial loss
-                    loss = loss.mean()
             else:
                 y_ = model(x)
                 if args.use_multistft_loss:
@@ -317,6 +300,7 @@ def train_model(args):
                 accelerator.clip_grad_norm_(model.parameters(), config.training.grad_clip)
 
             optimizer.step()
+            optimizer.zero_grad()
             li = loss.item()
             loss_val += li
             total += 1
@@ -364,8 +348,10 @@ def train_model(args):
                 accelerator.save(unwrapped_model.state_dict(), store_path)
                 best_sdr = sdr_avg
 
-        scheduler.step(sdr_avg)
+            scheduler.step(sdr_avg)
+
         sdr_list = None
+        accelerator.wait_for_everyone()
 
 
 if __name__ == "__main__":
