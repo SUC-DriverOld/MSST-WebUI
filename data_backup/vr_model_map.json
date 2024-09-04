@@ -1,0 +1,186 @@
+{
+    "1_HP-UVR.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/1_HP-UVR.pth",
+        "vr_model_param": "4band_44100"
+    },
+    "2_HP-UVR.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/2_HP-UVR.pth",
+        "vr_model_param": "4band_v2"
+    },
+    "3_HP-Vocal-UVR.pth": {
+        "primary_stem": "Vocals",
+        "secondary_stem": "Instrumental",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/3_HP-Vocal-UVR.pth",
+        "vr_model_param": "4band_44100"
+    },
+    "4_HP-Vocal-UVR.pth": {
+        "primary_stem": "Vocals",
+        "secondary_stem": "Instrumental",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/4_HP-Vocal-UVR.pth",
+        "vr_model_param": "4band_44100"
+    },
+    "5_HP-Karaoke-UVR.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/5_HP-Karaoke-UVR.pth",
+        "vr_model_param": "4band_v2_sn",
+        "is_karaoke": true
+    },
+    "6_HP-Karaoke-UVR.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/6_HP-Karaoke-UVR.pth",
+        "vr_model_param": "3band_44100_msb2",
+        "is_karaoke": true
+    },
+    "7_HP2-UVR.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/7_HP2-UVR.pth",
+        "vr_model_param": "3band_44100_msb2"
+    },
+    "8_HP2-UVR.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/8_HP2-UVR.pth",
+        "vr_model_param": "4band_44100"
+    },
+    "9_HP2-UVR.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/9_HP2-UVR.pth",
+        "vr_model_param": "4band_44100"
+    },
+    "10_SP-UVR-2B-32000-1.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/10_SP-UVR-2B-32000-1.pth",
+        "vr_model_param": "2band_32000"
+    },
+    "11_SP-UVR-2B-32000-2.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/11_SP-UVR-2B-32000-2.pth",
+        "vr_model_param": "2band_32000"
+    },
+    "12_SP-UVR-3B-44100.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/12_SP-UVR-3B-44100.pth",
+        "vr_model_param": "3band_44100"
+    },
+    "13_SP-UVR-4B-44100-1.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/13_SP-UVR-4B-44100-1.pth",
+        "vr_model_param": "4band_44100"
+    },
+    "14_SP-UVR-4B-44100-2.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/14_SP-UVR-4B-44100-2.pth",
+        "vr_model_param": "4band_44100"
+    },
+    "15_SP-UVR-MID-44100-1.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/15_SP-UVR-MID-44100-1.pth",
+        "vr_model_param": "3band_44100_mid"
+    },
+    "16_SP-UVR-MID-44100-2.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/16_SP-UVR-MID-44100-2.pth",
+        "vr_model_param": "3band_44100_mid"
+    },
+    "17_HP-Wind_Inst-UVR.pth": {
+        "primary_stem": "No Woodwinds",
+        "secondary_stem": "Woodwinds",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/17_HP-Wind_Inst-UVR.pth",
+        "vr_model_param": "4band_v3"
+    },
+    "MGM_HIGHEND_v4.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/MGM_HIGHEND_v4.pth",
+        "vr_model_param": "1band_sr44100_hl1024"
+    },
+    "MGM_LOWEND_A_v4.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/MGM_LOWEND_A_v4.pth",
+        "vr_model_param": "1band_sr32000_hl512"
+    },
+    "MGM_LOWEND_B_v4.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/MGM_LOWEND_B_v4.pth",
+        "vr_model_param": "1band_sr33075_hl384"
+    },
+    "MGM_MAIN_v4.pth": {
+        "primary_stem": "Instrumental",
+        "secondary_stem": "Vocals",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/MGM_MAIN_v4.pth",
+        "vr_model_param": "1band_sr44100_hl512"
+    },
+    "UVR-BVE-4B_SN-44100-1.pth": {
+        "primary_stem": "Vocals",
+        "secondary_stem": "Instrumental",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-BVE-4B_SN-44100-1.pth",
+        "vr_model_param": "4band_v3_sn",
+        "nout": 64,
+        "nout_lstm": 128,
+        "is_bv_model": true,
+        "is_bv_model_rebalanced": 0.9
+    },
+    "UVR-De-Echo-Aggressive.pth": {
+        "primary_stem": "No Echo",
+        "secondary_stem": "Echo",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-De-Echo-Aggressive.pth",
+        "vr_model_param": "4band_v3",
+        "nout": 48,
+        "nout_lstm": 128
+    },
+    "UVR-DeEcho-DeReverb.pth": {
+        "primary_stem": "No Reverb",
+        "secondary_stem": "Reverb",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-DeEcho-DeReverb.pth",
+        "vr_model_param": "4band_v3"
+    },
+    "UVR-De-Echo-Normal.pth": {
+        "primary_stem": "No Echo",
+        "secondary_stem": "Echo",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-De-Echo-Normal.pth",
+        "vr_model_param": "4band_v3",
+        "nout": 48,
+        "nout_lstm": 128
+    },
+    "UVR-DeNoise.pth": {
+        "primary_stem": "Noise",
+        "secondary_stem": "No Noise",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-DeNoise.pth",
+        "vr_model_param": "4band_v3",
+        "nout": 48,
+        "nout_lstm": 128
+    },
+    "UVR-DeNoise-Lite.pth": {
+        "primary_stem": "Noise",
+        "secondary_stem": "No Noise",
+        "download_link": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-DeNoise-Lite.pth",
+        "vr_model_param": "1band_sr44100_hl1024",
+        "nout": 16,
+        "nout_lstm": 128
+    },
+    "UVR-DeReverb-aufr33-jarredou_4band_v4_ms_fullband.pth": {
+        "primary_stem": "Dry",
+        "secondary_stem": "Reverb",
+        "download_link": "https://huggingface.co/Sucial/Music_Source_Sepetration_Models/resolve/main/VR_Models/UVR-DeReverb-aufr33-jarredou_4band_v4_ms_fullband.pth",
+        "vr_model_param": "4band_v4_ms_fullband",
+        "nout": 32,
+        "nout_lstm": 128
+    }
+}
