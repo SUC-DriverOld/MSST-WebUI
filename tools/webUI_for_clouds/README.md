@@ -6,7 +6,8 @@
 
 > [!NOTE]
 > 1. When used on the cloud, you don't need to download the model yourself. WebUI will automatically download the model you need. 
-> 2. The jupyter notebook for Google Colab is [here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb)!
+> 2. If you want to modify the inference parameters of the preset process, edit the `data/webui_config.json` file.
+> 3. The jupyter notebook for Google Colab is [here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb)!
 
 - Make sure you have Python 3.10 and ffmpeg, if not, install them first.
 ```bash
