@@ -121,6 +121,18 @@
       "config_path": "configs/config_dereverb_mdx23c.yaml",
       "model_type": "mdx23c",
       "link": "https://huggingface.co/Sucial/Music_Source_Sepetration_Models/resolve/main/dereverb_mdx23c_sdr_6.9096.ckpt"
+    },
+    {
+      "name": "dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt",
+      "config_path": "configs/dereverb_mel_band_roformer_anvuew.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/anvuew/dereverb_mel_band_roformer/resolve/main/dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt"
+    },
+    {
+      "name": "dereverb_mel_band_roformer_less_aggressive_anvuew_sdr_18.8050.ckpt",
+      "config_path": "configs/dereverb_mel_band_roformer_anvuew.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/anvuew/dereverb_mel_band_roformer/resolve/main/dereverb_mel_band_roformer_less_aggressive_anvuew_sdr_18.8050.ckpt"
     }
   ],
   "vocal_models": [
