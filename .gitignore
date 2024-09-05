@@ -1,7 +1,7 @@
 .vscode/
 __pycache__/
 *.pyc
-configs/*.yaml
+configs/
 configs/viperx/*.yaml
 configs_template/
 data/

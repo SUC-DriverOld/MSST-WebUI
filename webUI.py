@@ -38,6 +38,7 @@ BACKUP = "backup/"
 MODEL_FOLDER = "pretrain/"
 TEMP_PATH = "temp"
 UNOFFICIAL_MODEL = "config_unofficial"
+VR_MODELPARAMS = "configs/vr_modelparams"
 MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit', 'bandit_v2', 'scnet', 'scnet_unofficial', 'torchseg']
 MODEL_CHOICES = ["vocal_models", "multi_stem_models", "single_stem_models", "UVR_VR_Models"]
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"
@@ -417,16 +418,17 @@ def init_selected_model():
 
 def init_selected_vr_model():
     webui_config = load_configs(WEBUI_CONFIG)
-    config = load_configs(VR_MODEL)
     model = webui_config['inference']['vr_select_model']
+    vr_primary_stem_only = i18n("仅输出主音轨")
+    vr_secondary_stem_only = i18n("仅输出次音轨")
     if not model:
-        vr_primary_stem_only = i18n("仅输出主音轨")
-        vr_secondary_stem_only = i18n("仅输出次音轨")
         return vr_primary_stem_only, vr_secondary_stem_only
-    primary_stem, secondary_stem, _, _ = get_vr_model(model)
-    vr_primary_stem_only = f"{primary_stem} Only"
-    vr_secondary_stem_only = f"{secondary_stem} Only"
-    return vr_primary_stem_only, vr_secondary_stem_only
+    try:
+        primary_stem, secondary_stem, _, _ = get_vr_model(model)
+        vr_primary_stem_only = f"{primary_stem} Only"
+        vr_secondary_stem_only = f"{secondary_stem} Only"
+        return vr_primary_stem_only, vr_secondary_stem_only
+    except: return vr_primary_stem_only, vr_secondary_stem_only
 
 def update_train_start_check_point(path):
     if not os.path.isdir(path):
@@ -513,7 +515,7 @@ def stop_all_thread():
             stop_all_threads = True
             stop_infer_flow = True
             gr.Info(i18n("已停止进程"))
-            print(i18n("已停止进程"))
+            print("[INFO] " + i18n("已停止进程"))
 
 def run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
     input_folder = None
@@ -1091,7 +1093,7 @@ def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model
         else: return i18n("请输入正确的音轨名称")
         if model_param == i18n("上传参数"):
             if upload_param.endswith(".json"):
-                shutil.copy(upload_param, "models/vocal_remover/uvr_lib_v5/vr_network/modelparams")
+                shutil.copy(upload_param, VR_MODELPARAMS)
                 model_map[model_name]["vr_model_param"] = os.path.basename(upload_param)[:-5]
             else: return i18n("请上传'.json'格式的参数文件")
         else: model_map[model_name]["vr_model_param"] = model_param
@@ -1111,7 +1113,7 @@ def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model
 
 def get_all_model_param():
     model_param = [i18n("上传参数")]
-    for file in os.listdir("models/vocal_remover/uvr_lib_v5/vr_network/modelparams"):
+    for file in os.listdir(VR_MODELPARAMS):
         if file.endswith(".json"):
             model_param.append(file[:-5])
     return model_param

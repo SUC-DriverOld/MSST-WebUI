@@ -18,7 +18,7 @@ from models.vocal_remover.uvr_lib_v5.vr_network import nets
 from models.vocal_remover.uvr_lib_v5.vr_network import nets_new
 from models.vocal_remover.uvr_lib_v5.vr_network.model_param_init import ModelParameters
 
-vr_params_json_dir = "models/vocal_remover/uvr_lib_v5/vr_network/modelparams"
+vr_params_json_dir = "configs/vr_modelparams"
 
 class VRSeparator(CommonSeparator):
     """
@@ -213,7 +213,7 @@ class VRSeparator(CommonSeparator):
         if self.log_level == logging.DEBUG:
             process_bands_n = tqdm(range(bands_n, 0, -1))
         else:
-            process_bands_n = range(bands_n, 0, -1)
+            process_bands_n = tqdm(range(bands_n, 0, -1), leave=False)
 
         for d in process_bands_n:
             bp = self.model_params.param["band"][d]
