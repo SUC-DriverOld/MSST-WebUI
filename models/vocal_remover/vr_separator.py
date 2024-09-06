@@ -19,6 +19,7 @@ from models.vocal_remover.uvr_lib_v5.vr_network import nets_new
 from models.vocal_remover.uvr_lib_v5.vr_network.model_param_init import ModelParameters
 
 vr_params_json_dir = "configs/vr_modelparams"
+unofficial_vr_params_dir = "config_unofficial/vr_modelparams"
 
 class VRSeparator(CommonSeparator):
     """
@@ -47,8 +48,13 @@ class VRSeparator(CommonSeparator):
         # Model params are additional technical parameter values from JSON files in separator/uvr_lib_v5/vr_network/modelparams/*.json,
         # with filenames referenced by the model_data["vr_model_param"] value
         vr_params_json_filename = f"{self.model_data['vr_model_param']}.json"
-        vr_params_json_filepath = os.path.join(vr_params_json_dir, vr_params_json_filename)
-        self.model_params = ModelParameters(vr_params_json_filepath)
+        
+        try:
+            vr_params_json_filepath = os.path.join(vr_params_json_dir, vr_params_json_filename)
+            self.model_params = ModelParameters(vr_params_json_filepath)
+        except:
+            vr_params_json_filepath = os.path.join(unofficial_vr_params_dir, vr_params_json_filename)
+            self.model_params = ModelParameters(vr_params_json_filepath)
 
         self.logger.debug(f"Model params: {self.model_params.param}")
 
