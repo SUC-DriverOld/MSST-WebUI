@@ -18,22 +18,23 @@ import warnings
 import locale
 import threading
 import psutil
+import rich
 from datetime import datetime
 from ml_collections import ConfigDict
 from tqdm import tqdm
 from mir_eval.separation import bss_eval_sources
 from tkinter import filedialog
 from pydub import AudioSegment
-from rich.console import Console
 from torch import cuda, backends
 from multiprocessing import cpu_count
 
-PACKAGE_VERSION = "1.6 pre.3"
+PACKAGE_VERSION = "1.6.0"
 WEBUI_CONFIG = "data/webui_config.json"
 WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
 PRESETS = "data/preset_data.json"
 MSST_MODEL = "data/msst_model_map.json"
 VR_MODEL = "data/vr_model_map.json"
+LANGUAGE = "data/language.json"
 BACKUP = "backup/"
 MODEL_FOLDER = "pretrain/"
 TEMP_PATH = "temp"
@@ -43,15 +44,6 @@ MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'md
 MODEL_CHOICES = ["vocal_models", "multi_stem_models", "single_stem_models", "UVR_VR_Models"]
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"
 PYTHON = ".\\workenv\\python.exe" if os.path.isfile(".\\workenv\\python.exe") else sys.executable
-
-language_dict = {
-    "Auto": "Auto",
-    "简体中文": "zh_CN",
-    "繁體中文": "zh_TW",
-    "English": "en_US",
-    "日本語": "ja_JP",
-    "😊": "emoji"
-    }
 
 warnings.filterwarnings("ignore")
 stop_all_threads = False
@@ -67,13 +59,13 @@ def setup_webui():
         shutil.copytree("data_backup", "data")
 
     if not os.path.exists("data"):
-        shutil.copytree("data_backup", "data")
         print(i18n("[INFO] 正在初始化data目录"))
+        shutil.copytree("data_backup", "data")
     if not os.path.exists("configs"):
-        shutil.copytree("configs_backup", "configs")
         print(i18n("[INFO] 正在初始化configs目录"))
-    if not os.path.exists("input"): os.makedirs("input")
-    if not os.path.exists("results"): os.makedirs("results")
+        shutil.copytree("configs_backup", "configs")
+    os.makedirs("input", exist_ok=True)
+    os.makedirs("results", exist_ok=True)
     if os.path.exists("data"):
         webui_config = load_configs(WEBUI_CONFIG)
         version = webui_config.get("version", None)
@@ -93,15 +85,8 @@ def setup_webui():
             copy_folders()
             save_configs(webui_config_backup, WEBUI_CONFIG)
             save_configs(presets_config, PRESETS)
-
     os.environ["PATH"] += os.pathsep + os.path.abspath("ffmpeg/bin/")
     print(i18n("[INFO] 设备信息：") + str(get_device()))
-
-    # fix model_path when version is lower than 1.5
-    model_name = ["denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt", "denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt", "deverb_bs_roformer_8_256dim_8depth.ckpt", "deverb_bs_roformer_8_384dim_10depth.ckpt", "deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt"]
-    for model in model_name:
-        if os.path.exists(os.path.join(MODEL_FOLDER, "vocal_models", model)):
-            shutil.move(os.path.join(MODEL_FOLDER, "vocal_models", model), os.path.join(MODEL_FOLDER, "single_stem_models", model))
 
 def webui_restart():
     os.execl(PYTHON, PYTHON, *sys.argv)
@@ -161,8 +146,10 @@ def save_configs(config, config_path):
         with open(config_path, 'w') as f:
             yaml.dump(config.to_dict(), f)
 
-def print_command(command):
-    print("\033[32m" + "Use command: " + command + "\033[0m")
+def print_command(command, title="Use command"):
+    console = rich.console.Console()
+    panel = rich.panel.Panel(command, title=title, style=rich.style.Style(color="green"), border_style="green")
+    console.print(panel)
 
 def load_augmentations_config():
     try:
@@ -373,32 +360,24 @@ def save_uvr_modeldir(select_uvr_model_dir):
     return i18n("设置保存成功! 请重启WebUI以应用。")
 
 def reset_settings():
-    try:
-        config = load_configs(WEBUI_CONFIG)
-        config_backup = load_configs(WEBUI_CONFIG_BACKUP)
-        for key in config_backup['settings'][key]:
-            config['settings'][key] = config_backup['settings'][key]
-        save_configs(config, WEBUI_CONFIG)
-        return i18n("设置重置成功, 请重启WebUI刷新! ")
-    except Exception as e:
-        print(e)
-        return i18n("设置重置失败!")
+    config = load_configs(WEBUI_CONFIG)
+    config_backup = load_configs(WEBUI_CONFIG_BACKUP)
+    for key in config_backup['settings'][key]:
+        config['settings'][key] = config_backup['settings'][key]
+    save_configs(config, WEBUI_CONFIG)
+    return i18n("设置重置成功, 请重启WebUI刷新! ")
 
 def reset_webui_config():
-    try:
-        config = load_configs(WEBUI_CONFIG)
-        config_backup = load_configs(WEBUI_CONFIG_BACKUP)
-        for key in config_backup['training'][key]:
-            config['training'][key] = config_backup['training'][key]
-        for key in config_backup['inference'][key]:
-            config['inference'][key] = config_backup['inference'][key]
-        for key in config_backup['tools'][key]:
-            config['tools'][key] = config_backup['tools'][key]
-        save_configs(config, WEBUI_CONFIG)
-        return i18n("记录重置成功, 请重启WebUI刷新! ")
-    except Exception as e:
-        print(e)
-        return i18n("记录重置失败!")
+    config = load_configs(WEBUI_CONFIG)
+    config_backup = load_configs(WEBUI_CONFIG_BACKUP)
+    for key in config_backup['training'][key]:
+        config['training'][key] = config_backup['training'][key]
+    for key in config_backup['inference'][key]:
+        config['inference'][key] = config_backup['inference'][key]
+    for key in config_backup['tools'][key]:
+        config['tools'][key] = config_backup['tools'][key]
+    save_configs(config, WEBUI_CONFIG)
+    return i18n("记录重置成功, 请重启WebUI刷新! ")
 
 def init_selected_model():
     try:
@@ -542,10 +521,9 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
         raise gr.Error(i18n("请选择模型"))
     if input_folder == "":
         raise gr.Error(i18n("请选择输入目录"))
-    if not os.path.exists(store_dir):
-        os.makedirs(store_dir)
-    if extra_store_dir and not os.path.exists(extra_store_dir):
-        os.makedirs(extra_store_dir)
+    os.makedirs(store_dir, exist_ok=True)
+    if extra_store_dir:
+        os.makedirs(extra_store_dir, exist_ok=True)
     start_check_point, config_path, model_type, _ = get_msst_model(selected_model)
     gpu_ids = gpu_id if not force_cpu else "0"
     extract_instrumental_option = "--extract_instrumental" if extract_instrumental else ""
@@ -565,8 +543,6 @@ def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_outpu
         return i18n("请选择模型")
     if not vr_store_dir:
         return i18n("请选择输出目录")
-    if not os.path.exists(vr_store_dir):
-        os.makedirs(vr_store_dir)
     if os.path.exists(TEMP_PATH):
         shutil.rmtree(TEMP_PATH)
     os.makedirs(TEMP_PATH)
@@ -583,13 +559,14 @@ def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output
         return i18n("请选择模型")
     if not vr_store_dir:
         return i18n("请选择输出目录")
-    if not os.path.exists(vr_store_dir):
-        os.makedirs(vr_store_dir)
     save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
     vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
     return i18n("处理完成, 结果已保存至") + vr_store_dir
 
 def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode, save_another_stem=False, extra_output_dir=None):
+    os.makedirs(vr_store_dir, exist_ok=True)
+    if extra_output_dir:
+        os.makedirs(extra_output_dir, exist_ok=True)
     primary_stem, secondary_stem, _, model_file_dir = get_vr_model(vr_select_model)
     audio_file = vr_audio_input
     model_filename = vr_select_model
@@ -637,11 +614,7 @@ def update_model_stem(model_type, model_name):
         return gr.Dropdown(label=i18n("输出音轨"), choices=["primary_stem"], value="primary_stem", interactive=False)
 
 def add_to_flow_func(model_type, model_name, stem, secondary_output, df):
-    if not model_type or not model_name:
-        return df
-    if model_type == "UVR_VR_Models" and not stem:
-        return df
-    if model_type == "UVR_VR_Models" and stem == "primary_stem":
+    if not model_type or not model_name or (model_type == "UVR_VR_Models" and not stem) or (model_type == "UVR_VR_Models" and stem == "primary_stem"):
         return df
     if not secondary_output or secondary_output == "":
         secondary_output = "False"
@@ -732,6 +705,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
         if model_name not in load_msst_model() and model_name not in load_vr_model():
             return i18n("模型") + model_name + i18n("不存在")
     i = 0
+    console = rich.console.Console()
     for step in model_list.keys():
         if stop_infer_flow:
             stop_infer_flow = False
@@ -746,9 +720,8 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
         elif i == len(model_list.keys()) - 1:
             input_to_use = tmp_store_dir
             tmp_store_dir = store_dir
-        console = Console()
         model_name = model_list[step]["model_name"]
-        console.rule(f"[yellow]Step {i+1}: Running inference using {model_name}", style="yellow")
+        console.print(f"[yellow]Step {i+1}: Running inference using {model_name}", style="yellow", justify='center')
         if model_list[step]["model_type"] == "UVR_VR_Models":
             primary_stem, secondary_stem, _, _ = get_vr_model(model_name)
             stem = model_list[step]["stem"]
@@ -798,7 +771,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
     shutil.rmtree(TEMP_PATH)
     finish_time = time.time()
     elapsed_time = finish_time - start_time
-    Console().rule(f"[yellow]Finished runing {preset_name}! Costs {elapsed_time:.2f}s", style="yellow")
+    console.rule(f"[yellow]Finished runing {preset_name}! Costs {elapsed_time:.2f}s", style="yellow")
     return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
 
 def preset_backup_list():
@@ -809,8 +782,6 @@ def preset_backup_list():
     for file in os.listdir(backup_dir):
         if file.startswith("preset_backup_") and file.endswith(".json"):
             backup_files.append(file)
-    if backup_files == []:
-        return [i18n("暂无备份文件")]
     return backup_files
 
 def restore_preset_func(backup_file):
@@ -827,8 +798,7 @@ def restore_preset_func(backup_file):
 
 def backup_preset_func():
     backup_dir = BACKUP
-    if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir)
+    os.makedirs(backup_dir, exist_ok=True)
     backup_file = f"preset_backup_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
     preset_data = load_configs(PRESETS)
     save_configs(preset_data, os.path.join(backup_dir, backup_file))
@@ -843,8 +813,7 @@ def convert_audio(uploaded_files, ffmpeg_output_format, ffmpeg_output_folder):
     for uploaded_file in uploaded_files:
         uploaded_file_path = uploaded_file.name
         output_path = ffmpeg_output_folder
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
+        os.makedirs(output_path, exist_ok=True)
         config = load_configs(WEBUI_CONFIG)
         config['tools']['ffmpeg_output_format'] = ffmpeg_output_format
         config['tools']['ffmpeg_output_folder'] = ffmpeg_output_folder
@@ -871,8 +840,7 @@ def merge_audios(input_folder, output_folder):
     config['tools']['merge_audio_output'] = output_folder
     save_configs(config, WEBUI_CONFIG)
     combined_audio = AudioSegment.empty()
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+    os.makedirs(output_folder, exist_ok=True)
     output_file = os.path.join(output_folder, "merged_audio.wav")
     for filename in sorted(os.listdir(input_folder)):
         if filename.endswith(('.mp3', '.wav', '.ogg', '.flac')):
@@ -886,32 +854,21 @@ def merge_audios(input_folder, output_folder):
         print(e)
         return i18n("处理失败!")
 
-def read_and_resample_audio(file_path, target_sr=44100):
-    audio, _ = librosa.load(file_path, sr=target_sr, mono=False)
-    if audio.ndim == 1:
-        audio = np.vstack((audio, audio))
-    elif audio.ndim == 2 and audio.shape[0] == 1:
-        audio = np.vstack((audio[0], audio[0]))
-    return audio
-
-def match_length(ref_audio, est_audio):
-    min_length = min(ref_audio.shape[1], est_audio.shape[1])
-    ref_audio = ref_audio[:, :min_length]
-    est_audio = est_audio[:, :min_length]
-    return ref_audio, est_audio
-
-def compute_sdr(reference, estimated):
-    sdr, _, _, _ = bss_eval_sources(reference, estimated)
-    return sdr
-
 def process_audio(true_path, estimated_path):
-    target_sr = 44100
-    true_audio = read_and_resample_audio(
-        true_path, target_sr)
-    estimated_audio = read_and_resample_audio(
-        estimated_path, target_sr)
-    true_audio, estimated_audio = match_length(true_audio, estimated_audio)
-    sdr = compute_sdr(true_audio, estimated_audio)
+    true_audio, _ = librosa.load(true_path, sr=44100, mono=False)
+    if true_audio.ndim == 1:
+        true_audio = np.vstack((true_audio, true_audio))
+    elif true_audio.ndim == 2 and true_audio.shape[0] == 1:
+        true_audio = np.vstack((true_audio[0], true_audio[0]))
+    estimated_audio, _ = librosa.load(estimated_path, sr=44100, mono=False)
+    if estimated_audio.ndim == 1:
+        estimated_audio = np.vstack((estimated_audio, estimated_audio))
+    elif estimated_audio.ndim == 2 and estimated_audio.shape[0] == 1:
+        estimated_audio = np.vstack((estimated_audio[0], estimated_audio[0]))
+    min_length = min(true_audio.shape[1], estimated_audio.shape[1])
+    true_audio = true_audio[:, :min_length]
+    estimated_audio = estimated_audio[:, :min_length]
+    sdr, _, _, _ = bss_eval_sources(true_audio, estimated_audio)
     print(f"SDR: {sdr}")
     return sdr
 
@@ -926,8 +883,7 @@ def ensemble(files, ensemble_mode, weights, output_path):
         config['tools']['ensemble_output_folder'] = output_path
         save_configs(config, WEBUI_CONFIG)
         files_argument = " ".join(files)
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
+        os.makedirs(output_path, exist_ok=True)
         output_path = os.path.join(output_path, f"ensemble_{ensemble_mode}.wav")
         command = f"{PYTHON} ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
         print_command(command)
@@ -943,8 +899,7 @@ def some_inference(audio_file, bpm, output_dir):
         return i18n("请先下载SOME预处理模型并放置在tools/SOME_weights文件夹下! ")
     if not audio_file.endswith('.wav'):
         return i18n("请上传wav格式文件")
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
     config = load_configs(WEBUI_CONFIG)
     config['tools']['some_output_folder'] = output_dir
     save_configs(config, WEBUI_CONFIG)
@@ -1141,8 +1096,7 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
         return i18n("模型类型错误, 请重新选择")
     if not os.path.isfile(config_path):
         return i18n("配置文件不存在, 请重新选择")
-    if not os.path.exists(results_path):
-        os.makedirs(results_path)
+    os.makedirs(results_path, exist_ok=True)
     if not os.path.exists(data_path):
         return i18n("数据集路径不存在, 请重新选择")
     if not os.path.exists(valid_path):
@@ -1170,8 +1124,7 @@ def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_
         return i18n("模型不存在, 请重新选择")
     if not os.path.exists(valid_path):
         return i18n("验证集路径不存在, 请重新选择")
-    if not os.path.exists(valid_results_path):
-        os.makedirs(valid_results_path)
+    os.makedirs(valid_results_path, exist_ok=True)
     if not bool(re.match(r'^(\d+)(?:\s(?!\1)\d+)*$', valid_device_ids)):
         return i18n("device_ids格式错误, 请重新输入")
     pin_memory = "--pin_memory" if valid_pin_memory else ""
@@ -1200,6 +1153,7 @@ def webui_goto_github():
 
 def change_language(language):
     config = load_configs(WEBUI_CONFIG)
+    language_dict = load_configs(LANGUAGE)
     if language in language_dict.keys():
         config['settings']['language'] = language_dict[language]
     else:
@@ -1209,6 +1163,7 @@ def change_language(language):
 
 def get_language():
     config = load_configs(WEBUI_CONFIG)
+    language_dict = load_configs(LANGUAGE)
     language = config['settings']['language']
     for key, value in language_dict.items():
         if value == language:
@@ -1345,6 +1300,7 @@ with gr.Blocks(
         presets = load_configs(PRESETS)
         models = load_configs(MSST_MODEL)
         vr_model = load_configs(VR_MODEL)
+        language_dict = load_configs(LANGUAGE)
 
         with gr.TabItem(label=i18n("MSST分离")):
             gr.Markdown(value=i18n("MSST音频分离原项目地址: [https://github.com/ZFTurbo/Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)"))
