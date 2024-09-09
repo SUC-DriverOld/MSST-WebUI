@@ -191,10 +191,10 @@
       "link": "https://huggingface.co/Sucial/Music_Source_Sepetration_Models/resolve/main/model_mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt"
     },
     {
-      "name": "model_vocals_mel_band_roformer_kj_sdr_10.98.ckpt",
-      "config_path": "configs/vocal_models/config_vocals_mel_band_roformer_kj_sdr_10.98.yaml",
+      "name": "Kim_MelBandRoformer.ckpt",
+      "config_path": "configs/vocal_models/config_Kim_MelBandRoformer.yaml",
       "model_type": "mel_band_roformer",
-      "link": "https://huggingface.co/Sucial/Music_Source_Sepetration_Models/resolve/main/model_vocals_mel_band_roformer_kj_sdr_10.98.ckpt"
+      "link": "https://huggingface.co/KitsuneX07/Music_Source_Sepetration_Models/resolve/main/vocal_models/Kim_MelBandRoformer.ckpt"
     }
   ]
 }
