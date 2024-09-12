@@ -49,6 +49,12 @@ def get_uvr_models(model_name):
             return model_path, download_link
 
 def download(url, path):
+    config = load_configs(WEBUI_CONFIG)
+    main_link = config['settings']['download_link']
+    try:
+        url = url.replace("huggingface.co", main_link)
+    except: 
+        pass
     try:
         os.system(f"wget {url} -O {path}")
         return 1
