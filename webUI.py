@@ -22,7 +22,6 @@ import rich
 from datetime import datetime
 from ml_collections import ConfigDict
 from tqdm import tqdm
-from mir_eval.separation import bss_eval_sources
 from tkinter import filedialog
 from pydub import AudioSegment
 from torch import cuda, backends
@@ -86,7 +85,9 @@ def setup_webui():
             save_configs(webui_config_backup, WEBUI_CONFIG)
             save_configs(presets_config, PRESETS)
     os.environ["PATH"] += os.pathsep + os.path.abspath("ffmpeg/bin/")
-    print(i18n("[INFO] 设备信息：") + str(get_device()))
+    print("[INFO] WebUI version: " + PACKAGE_VERSION + " Time: " + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+    print("[INFO] " + get_platform())
+    print(i18n("[INFO] 设备信息: ") + str(get_device()))
 
 def webui_restart():
     os.execl(PYTHON, PYTHON, *sys.argv)
@@ -854,23 +855,24 @@ def merge_audios(input_folder, output_folder):
         print(e)
         return i18n("处理失败!")
 
-def process_audio(true_path, estimated_path):
-    true_audio, _ = librosa.load(true_path, sr=44100, mono=False)
-    if true_audio.ndim == 1:
-        true_audio = np.vstack((true_audio, true_audio))
-    elif true_audio.ndim == 2 and true_audio.shape[0] == 1:
-        true_audio = np.vstack((true_audio[0], true_audio[0]))
-    estimated_audio, _ = librosa.load(estimated_path, sr=44100, mono=False)
-    if estimated_audio.ndim == 1:
-        estimated_audio = np.vstack((estimated_audio, estimated_audio))
-    elif estimated_audio.ndim == 2 and estimated_audio.shape[0] == 1:
-        estimated_audio = np.vstack((estimated_audio[0], estimated_audio[0]))
-    min_length = min(true_audio.shape[1], estimated_audio.shape[1])
-    true_audio = true_audio[:, :min_length]
-    estimated_audio = estimated_audio[:, :min_length]
-    sdr, _, _, _ = bss_eval_sources(true_audio, estimated_audio)
-    print(f"SDR: {sdr}")
-    return sdr
+def process_audio(reference_path, estimated_path):
+    reference, _ = librosa.load(reference_path, sr=44100, mono=False)
+    if reference.ndim == 1:
+        reference = np.vstack((reference, reference))
+    estimated, _ = librosa.load(estimated_path, sr=44100, mono=False)
+    if estimated.ndim == 1:
+        estimated = np.vstack((estimated, estimated))
+    min_length = min(reference.shape[1], estimated.shape[1])
+    reference = reference[:, :min_length]
+    estimated = estimated[:, :min_length]
+    sdr_values = []
+    for i in range(reference.shape[0]):
+        num = np.sum(np.square(reference[i])) + 1e-7
+        den = np.sum(np.square(reference[i] - estimated[i])) + 1e-7
+        sdr_values.append(round(10 * np.log10(num / den), 4))
+    average_sdr = np.mean(sdr_values)
+    print(f"[INFO] SDR Values: {sdr_values}, Average SDR: {average_sdr:.4f}")
+    return f"SDR Values: {sdr_values}, Average SDR: {average_sdr:.4f}"
 
 def ensemble(files, ensemble_mode, weights, output_path):
     if len(files) < 2:
@@ -1514,7 +1516,7 @@ with gr.Blocks(
                     with gr.Column():
                         gr.Markdown(value=i18n("上传两个**wav音频文件**并计算它们的[SDR](https://www.aicrowd.com/challenges/music-demixing-challenge-ismir-2021#evaluation-metric)。<br>SDR是一个用于评估模型质量的数值。数值越大, 模型算法结果越好。"))
                     with gr.Row():
-                        true_audio = gr.File(label=i18n("原始音频"), type="filepath")
+                        reference_audio = gr.File(label=i18n("原始音频"), type="filepath")
                         estimated_audio = gr.File(label=i18n("分离后的音频"), type="filepath")
                     compute_sdr_button = gr.Button(i18n("计算SDR"), variant="primary")
                     output_message_sdr = gr.Textbox(label="Output Message")
@@ -1563,7 +1565,7 @@ with gr.Blocks(
             open_merge_input_dir.click(fn=open_folder, inputs=merge_audio_input)
             select_merge_output_dir.click(fn=select_folder, outputs=merge_audio_output)
             open_merge_output_dir.click(fn=open_folder, inputs=merge_audio_output)
-            compute_sdr_button.click(process_audio, [true_audio, estimated_audio], outputs=output_message_sdr)
+            compute_sdr_button.click(process_audio, [reference_audio, estimated_audio], outputs=output_message_sdr)
             ensemble_button.click(fn = ensemble, inputs = [files, ensemble_type, weights, ensembl_output_path],outputs = output_message_ensemble)
             select_ensembl_output_path.click(fn = select_folder, outputs = ensembl_output_path)
             open_ensembl_output_path.click(fn = open_folder, inputs = ensembl_output_path)

@@ -1,11 +1,11 @@
 <div align="center">
 
-# How2Use MSST WebUI for Clouds
+# How to use MSST WebUI-for-Clouds
 
 </div>
 
 > [!NOTE]
-> 1. When used on the cloud, you don't need to download the model yourself. WebUI will automatically download the model you need. 
+> 1. When used on cloud, you don't need to download the model yourself. WebUI will automatically download the model you need. 
 > 2. If you want to modify the inference parameters of the preset process, edit the `data/webui_config.json` file.
 > 3. The jupyter notebook for Google Colab is [here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb)!
 
@@ -46,8 +46,8 @@ if not os.path.exists("data"):
     shutil.copytree("data_backup", "data")
 if not os.path.exists("configs"):
     shutil.copytree("configs_backup", "configs")
-if not os.path.exists("input"): os.makedirs("input")
-if not os.path.exists("results"): os.makedirs("results")
+os.makedirs("input", exist_ok=True)
+os.makedirs("results", exist_ok=True)
 
 with open("data/webui_config.json", 'r', encoding="utf-8") as f:
     config = json.load(f)
@@ -57,7 +57,8 @@ with open("data/webui_config.json", 'w', encoding="utf-8") as f:
     json.dump(config, f, indent=4)
 ```
 
-- Run the webUI.
+- Run the webUI. After running, you can use the public links shown bellow to connect to the webUI.
+
 ```bash
 python tools/webUI_for_clouds/webUI_for_clouds.py
 ```

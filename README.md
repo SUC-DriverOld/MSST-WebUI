@@ -5,7 +5,8 @@
 [![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest)
 [![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers)<br>
-WebUI of Music-Source-Separation-Training-Inference , and we packed UVR together!
+WebUI of Music-Source-Separation-Training-Inference , and we packed UVR together!<br>
+English✅ | 简体中文✅ | 繁體中文✅ | 日本語✅
 </div>
 
 ## Introduction
@@ -20,9 +21,8 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 
 ### 中国用户可以从下方链接下载安装包
 
-下载地址1：[123云盘](https://www.123pan.com/s/1bmETd-AefWh.html) 提取码: 1145<br>
-下载地址2：[百度网盘](https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q?pwd=1145) 提取码: 1145<br>
-相关使用教程： [B站教程视频](https://www.bilibili.com/video/BV18m42137rm) | [飞书教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)
+下载地址：[123云盘](https://www.123pan.com/s/1bmETd-AefWh.html) 提取码: 1145 | [百度网盘](https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q?pwd=1145) 提取码: 1145<br>
+相关使用教程： [B站教程视频](https://www.bilibili.com/video/BV18m42137rm) | [飞书教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)（视频随时落后，文档保持更新）
 
 ## Run from source
 
@@ -54,13 +54,7 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
   python webUI.py
   ```
 
-- If you run webUI on a cloud platform, use this command instead. To change the language on cloud platform, you need to open `data/webui_config.json` and change the `language` field. For example "zh_CN" for Chinese, "en_US" for English.
-
-  ```bash
-  python tools/webUI_for_clouds/webUI_for_clouds.py
-  ```
-
-- After running the webUI, you can open the webUI in your browser by visiting the address `http://localhost:7860`. For platforms on clouds, you can use the public links shown after running to connect to the webUI.
+- If you run webUI on a cloud platform, see [this document](tools/webUI_for_clouds/README.md) for more details.
 
 ## Command Line
 
@@ -88,7 +82,7 @@ options:
   --use_tta                                 Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality.
 ```
 
-### UVR Inference
+### VR Inference
 
 Use `uvr_inference.py`
 
@@ -136,7 +130,7 @@ VR Architecture Parameters:
   --vr_post_process_threshold VR_POST_PROCESS_THRESHOLD  threshold for post_process feature: 0.1-0.3 (default: 0.2). Example: --vr_post_process_threshold=0.1
 ```
 
-### Train MSST
+### MSST Training
 
 Use `train.py`. If you use multi-GPUs, try to use `train_accelerate.py`. But it's still under experiment.
 

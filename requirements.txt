@@ -31,7 +31,6 @@ asteroid==0.7.0
 samplerate
 auraloss
 torchseg
-mir_eval
 bitsandbytes
 gradio==4.38.1
 psutil
