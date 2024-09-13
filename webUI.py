@@ -78,7 +78,7 @@ def setup_webui():
             presets_config = load_configs(PRESETS)
             webui_config_backup = load_configs(WEBUI_CONFIG_BACKUP)
             for module in ["training", "inference", "tools", "settings"]:
-                for key in webui_config_backup[module]:
+                for key in webui_config_backup[module].keys():
                     try: webui_config_backup[module][key] = webui_config[module][key]
                     except KeyError: continue
             copy_folders()
@@ -363,7 +363,7 @@ def save_uvr_modeldir(select_uvr_model_dir):
 def reset_settings():
     config = load_configs(WEBUI_CONFIG)
     config_backup = load_configs(WEBUI_CONFIG_BACKUP)
-    for key in config_backup['settings'][key]:
+    for key in config_backup['settings'].keys():
         config['settings'][key] = config_backup['settings'][key]
     save_configs(config, WEBUI_CONFIG)
     return i18n("设置重置成功, 请重启WebUI刷新! ")
@@ -371,11 +371,11 @@ def reset_settings():
 def reset_webui_config():
     config = load_configs(WEBUI_CONFIG)
     config_backup = load_configs(WEBUI_CONFIG_BACKUP)
-    for key in config_backup['training'][key]:
+    for key in config_backup['training'].keys():
         config['training'][key] = config_backup['training'][key]
-    for key in config_backup['inference'][key]:
+    for key in config_backup['inference'].keys():
         config['inference'][key] = config_backup['inference'][key]
-    for key in config_backup['tools'][key]:
+    for key in config_backup['tools'].keys():
         config['tools'][key] = config_backup['tools'][key]
     save_configs(config, WEBUI_CONFIG)
     return i18n("记录重置成功, 请重启WebUI刷新! ")
