@@ -7,6 +7,11 @@ import soundfile as sf
 import numpy as np
 import argparse
 
+import logging
+log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"
+date_format = "%H:%M:%S"
+logging.basicConfig(level = logging.INFO, format = log_format, datefmt = date_format)
+logger = logging.getLogger(__name__)
 
 def stft(wave, nfft, hl):
     wave_left = np.asfortranarray(wave[0])
@@ -134,27 +139,27 @@ def ensemble_files(args):
     else:
         args = parser.parse_args(args)
 
-    print('Ensemble type: {}'.format(args.type))
-    print('Number of input files: {}'.format(len(args.files)))
+    logger.info('Ensemble type: {}'.format(args.type))
+    logger.info('Number of input files: {}'.format(len(args.files)))
     if args.weights is not None:
         weights = args.weights
     else:
         weights = np.ones(len(args.files))
-    print('Weights: {}'.format(weights))
-    print('Output file: {}'.format(args.output))
+    logger.info('Weights: {}'.format(weights))
+    logger.info('Output file: {}'.format(args.output))
     data = []
     for f in args.files:
         if not os.path.isfile(f):
-            print('Error. Can\'t find file: {}. Check paths.'.format(f))
+            logger.info('Error. Can\'t find file: {}. Check paths.'.format(f))
             exit()
-        print('Reading file: {}'.format(f))
+        logger.info('Reading file: {}'.format(f))
         wav, sr = librosa.load(f, sr=None, mono=False)
         # wav, sr = sf.read(f)
-        print("Waveform shape: {} sample rate: {}".format(wav.shape, sr))
+        logger.info("Waveform shape: {} sample rate: {}".format(wav.shape, sr))
         data.append(wav)
     data = np.array(data)
     res = average_waveforms(data, weights, args.type)
-    print('Result shape: {}'.format(res.shape))
+    logger.info('Result shape: {}'.format(res.shape))
     sf.write(args.output, res.T, sr, 'FLOAT')
 
 

@@ -7,6 +7,7 @@ import torch
 import librosa
 import numpy as np
 from tqdm import tqdm
+import logging
 
 # Check if we really need the rerun_mp3 function, remove if not
 import audioread
@@ -17,7 +18,8 @@ from models.vocal_remover.uvr_lib_v5.vr_network import nets
 from models.vocal_remover.uvr_lib_v5.vr_network import nets_new
 from models.vocal_remover.uvr_lib_v5.vr_network.model_param_init import ModelParameters
 
-vr_params_json_dir = "models/vocal_remover/uvr_lib_v5/vr_network/modelparams"
+vr_params_json_dir = "configs/vr_modelparams"
+unofficial_vr_params_dir = "config_unofficial/vr_modelparams"
 
 class VRSeparator(CommonSeparator):
     """
@@ -46,8 +48,13 @@ class VRSeparator(CommonSeparator):
         # Model params are additional technical parameter values from JSON files in separator/uvr_lib_v5/vr_network/modelparams/*.json,
         # with filenames referenced by the model_data["vr_model_param"] value
         vr_params_json_filename = f"{self.model_data['vr_model_param']}.json"
-        vr_params_json_filepath = os.path.join(vr_params_json_dir, vr_params_json_filename)
-        self.model_params = ModelParameters(vr_params_json_filepath)
+        
+        try:
+            vr_params_json_filepath = os.path.join(vr_params_json_dir, vr_params_json_filename)
+            self.model_params = ModelParameters(vr_params_json_filepath)
+        except:
+            vr_params_json_filepath = os.path.join(unofficial_vr_params_dir, vr_params_json_filename)
+            self.model_params = ModelParameters(vr_params_json_filepath)
 
         self.logger.debug(f"Model params: {self.model_params.param}")
 
@@ -208,7 +215,13 @@ class VRSeparator(CommonSeparator):
         is_mp3 = audio_file.endswith(".mp3") if isinstance(audio_file, str) else False
 
         self.logger.debug(f"loading_mix iteraring through {bands_n} bands")
-        for d in range(bands_n, 0, -1):
+
+        if self.log_level == logging.DEBUG:
+            process_bands_n = tqdm(range(bands_n, 0, -1))
+        else:
+            process_bands_n = tqdm(range(bands_n, 0, -1), leave=False)
+
+        for d in process_bands_n:
             bp = self.model_params.param["band"][d]
 
             wav_resolution = bp["res_type"]
@@ -245,7 +258,13 @@ class VRSeparator(CommonSeparator):
             patches = (X_mag_pad.shape[2] - 2 * self.model_run.offset) // roi_size
 
             self.logger.debug(f"inference_vr appending to X_dataset for each of {patches} patches")
-            for i in range(patches):
+
+            if self.log_level == logging.DEBUG:
+                process_patchse = tqdm(range(patches))
+            else:
+                process_patchse = range(patches)
+
+            for i in process_patchse:
                 start = i * roi_size
                 X_mag_window = X_mag_pad[:, :, start : start + self.window_size]
                 X_dataset.append(X_mag_window)
@@ -258,7 +277,12 @@ class VRSeparator(CommonSeparator):
             with torch.no_grad():
                 mask = []
 
-                for i in tqdm(range(0, patches, self.batch_size), leave=False, desc="Processing batches"):
+                if self.log_level == logging.DEBUG:
+                    process_batches = tqdm(range(0, patches, self.batch_size))
+                else:
+                    process_batches = tqdm(range(0, patches, self.batch_size), leave=False, desc="Processing batches")
+
+                for i in process_batches:
 
                     X_batch = X_dataset[i : i + self.batch_size]
                     X_batch = torch.from_numpy(X_batch).to(device)

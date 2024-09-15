@@ -4,7 +4,7 @@
 
 --only-binary=samplerate
 
-numpy==1.23.5
+numpy
 pandas
 scipy
 soundfile
@@ -31,13 +31,15 @@ asteroid==0.7.0
 samplerate
 auraloss
 torchseg
-mir_eval
 bitsandbytes
 gradio==4.38.1
 psutil
 accelerate
 huggingface-hub>=0.23.0
 prodigyopt
+
+# Sep 7, 2024: fastapi updated to 0.114.0, which may cause issues. Please use fastapi==0.111.0 instead.
+fastapi==0.111.0
 
 # After installing the requirements, go to site-packages folder, open "\librosa\util\utils.py" and go to line 2185
 # Change the line from "np.dtype(complex): np.dtype(np.float).type," to "np.dtype(complex): np.dtype(float).type,"

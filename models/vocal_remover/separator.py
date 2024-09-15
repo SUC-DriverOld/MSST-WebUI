@@ -235,18 +235,29 @@ class Separator:
         return file_output_files
 
     def separate(self, folder_path):
-        if os.path.isfile(folder_path):
-            return self.separate_onefile(folder_path)
         output_files = []
+        if os.path.isfile(folder_path):
+            if self.log_level == logging.DEBUG:
+                return self.separate_onefile(folder_path)
+            else:
+                process = tqdm(total=1, desc="Total progress")
+                process.set_postfix({"track": os.path.basename(folder_path)})
+                output_files = self.separate_onefile(folder_path)
+                process.update(1)
+                return output_files
 
         if not os.path.isdir(folder_path):
             self.logger.error(f"The provided folder path does not exist: {folder_path}")
             return output_files
 
-        all_audio_files = tqdm(os.listdir(folder_path), desc="Total progress")
+        if self.log_level == logging.DEBUG:
+            all_audio_files = os.listdir(folder_path)
+        else:
+            all_audio_files = tqdm(os.listdir(folder_path), desc="Total progress")
         for filename in all_audio_files:
             file_path = os.path.join(folder_path, filename)
-            all_audio_files.set_postfix({"track": filename})
+            if self.log_level != logging.DEBUG:
+                all_audio_files.set_postfix({"track": filename})
 
             if not filename.lower().endswith(('.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg', '.wma')): 
                 self.logger.warning(f"Skipping not supported audio file: {filename}")

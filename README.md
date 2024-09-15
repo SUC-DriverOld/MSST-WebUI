@@ -5,7 +5,8 @@
 [![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest)
 [![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers)<br>
-WebUI of Music-Source-Separation-Training-Inference , and we packed UVR together!
+WebUI of Music-Source-Separation-Training-Inference , and we packed UVR together!<br>
+English✅ | 简体中文✅ | 繁體中文✅ | 日本語✅
 </div>
 
 ## Introduction
@@ -20,9 +21,8 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 
 ### 中国用户可以从下方链接下载安装包
 
-下载地址1：[123云盘](https://www.123pan.com/s/1bmETd-AefWh.html) 提取码: 1145<br>
-下载地址2：[百度网盘](https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q?pwd=1145) 提取码: 1145<br>
-相关使用教程： [B站教程视频](https://www.bilibili.com/video/BV18m42137rm) | [飞书教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)
+下载地址：[123云盘](https://www.123pan.com/s/1bmETd-AefWh.html) 提取码: 1145 | [百度网盘](https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q?pwd=1145) 提取码: 1145<br>
+相关使用教程： [B站教程视频](https://www.bilibili.com/video/BV18m42137rm) | [飞书教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)（视频随时落后，文档保持更新）
 
 ## Run from source
 
@@ -54,13 +54,7 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
   python webUI.py
   ```
 
-- If you run webUI on a cloud platform, use this command instead. To change the language on cloud platform, you need to open `data/webui_config.json` and change the `language` field. For example "zh_CN" for Chinese, "en_US" for English.
-
-  ```bash
-  python tools/webUI_for_clouds/webUI_for_clouds.py
-  ```
-
-- After running the webUI, you can open the webUI in your browser by visiting the address `http://localhost:7860`. For platforms on clouds, you can use the public links shown after running to connect to the webUI.
+- If you run webUI on a cloud platform, see [this document](tools/webUI_for_clouds/README.md) for more details.
 
 ## Command Line
 
@@ -88,7 +82,7 @@ options:
   --use_tta                                 Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality.
 ```
 
-### UVR Inference
+### VR Inference
 
 Use `uvr_inference.py`
 
@@ -136,31 +130,32 @@ VR Architecture Parameters:
   --vr_post_process_threshold VR_POST_PROCESS_THRESHOLD  threshold for post_process feature: 0.1-0.3 (default: 0.2). Example: --vr_post_process_threshold=0.1
 ```
 
-### Train MSST
+### MSST Training
 
 Use `train.py`. If you use multi-GPUs, try to use `train_accelerate.py`. But it's still under experiment.
 
 ```bash
-usage: train.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--results_path RESULTS_PATH] [--data_path DATA_PATH [DATA_PATH ...]]
-                [--dataset_type DATASET_TYPE] [--valid_path VALID_PATH [VALID_PATH ...]] [--num_workers NUM_WORKERS] [--pin_memory PIN_MEMORY] [--seed SEED]
-                [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [--use_multistft_loss] [--use_mse_loss] [--use_l1_loss]
+usage: train_accelerate.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--results_path RESULTS_PATH]
+                           [--data_path DATA_PATH [DATA_PATH ...]] [--dataset_type DATASET_TYPE] [--valid_path VALID_PATH [VALID_PATH ...]] [--num_workers NUM_WORKERS]
+                           [--pin_memory] [--seed SEED] [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [--use_multistft_loss] [--use_mse_loss] [--use_l1_loss] [--pre_valid]
 
 options:
-  -h, --help                                    show this help message and exit
-  --model_type MODEL_TYPE                       One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit
-  --config_path CONFIG_PATH                     path to config file
-  --start_check_point START_CHECK_POINT         Initial checkpoint to start training
-  --results_path RESULTS_PATH                   path to folder where results will be stored (weights, metadata)
-  --data_path DATA_PATH [DATA_PATH ...]         Dataset data paths. You can provide several folders.
-  --dataset_type DATASET_TYPE                   Dataset type. Must be one of: 1, 2, 3 or 4. Details here: https://github.com/ZFTurbo/Music-Source-Separation-Training/blob/main/docs/dataset_types.md
-  --valid_path VALID_PATH [VALID_PATH ...]      validation data paths. You can provide several folders.
-  --num_workers NUM_WORKERS                     dataloader num_workers
-  --pin_memory PIN_MEMORY                       dataloader pin_memory
-  --seed SEED                                   random seed
-  --device_ids DEVICE_IDS [DEVICE_IDS ...]      list of gpu ids
-  --use_multistft_loss                          Use MultiSTFT Loss (from auraloss package)
-  --use_mse_loss                                Use default MSE loss
-  --use_l1_loss                                 Use L1 loss
+  -h, --help                                show this help message and exit
+  --model_type MODEL_TYPE                   One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit
+  --config_path CONFIG_PATH                 path to config file
+  --start_check_point START_CHECK_POINT     Initial checkpoint to start training
+  --results_path RESULTS_PATH               path to folder where results will be stored (weights, metadata)
+  --data_path DATA_PATH [DATA_PATH ...]     Dataset data paths. You can provide several folders.
+  --dataset_type DATASET_TYPE               Dataset type. Must be one of: 1, 2, 3 or 4. Details here: https://github.com/ZFTurbo/Music-Source-Separation-Training/blob/main/docs/dataset_types.md
+  --valid_path VALID_PATH [VALID_PATH ...]  validation data paths. You can provide several folders.
+  --num_workers NUM_WORKERS                 dataloader num_workers
+  --pin_memory                              dataloader pin_memory
+  --seed SEED                               random seed
+  --device_ids DEVICE_IDS [DEVICE_IDS ...]  list of gpu ids
+  --use_multistft_loss                      Use MultiSTFT Loss (from auraloss package)
+  --use_mse_loss                            Use default MSE loss
+  --use_l1_loss                             Use L1 loss
+  --pre_valid                               Run validation before training (only works for train_accelerate.py)
 ```
 
 ### Thanks

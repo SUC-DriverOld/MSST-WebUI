@@ -44,11 +44,17 @@ def get_uvr_models(model_name):
     config = load_configs(VR_MODEL)
     for key in config.keys():
         if key == model_name:
-            model_path = config[key]["model_path"]
+            model_path = os.path.join("pretrain", "VR_Models", model_name)
             download_link = config[key]["download_link"]
             return model_path, download_link
 
 def download(url, path):
+    config = load_configs(WEBUI_CONFIG)
+    main_link = config['settings']['download_link']
+    try:
+        url = url.replace("huggingface.co", main_link)
+    except: 
+        pass
     try:
         os.system(f"wget {url} -O {path}")
         return 1
