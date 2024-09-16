@@ -507,13 +507,16 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
             break
         if i == 0:
             input_to_use = input_folder
-        elif i < len(model_list.keys()) - 1 and i > 0:
+        if i < len(model_list.keys()) - 1 and i > 0:
             if input_to_use != input_folder:
                 shutil.rmtree(input_to_use)
             input_to_use = tmp_store_dir
             tmp_store_dir = f"{TEMP_PATH}/inferflow_step{i+1}_output"
-        elif i == len(model_list.keys()) - 1:
+        if i == len(model_list.keys()) - 1:
             input_to_use = tmp_store_dir
+            tmp_store_dir = store_dir
+        if len(model_list.keys()) == 1:
+            input_to_use = input_folder
             tmp_store_dir = store_dir
         model_name = model_list[step]["model_name"]
         print(f"===== Step {i+1}: Running inference using {model_name} =====")
