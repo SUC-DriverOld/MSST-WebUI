@@ -31,9 +31,9 @@ WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
 PRESETS = "data/preset_data.json"
 MSST_MODEL = "data/msst_model_map.json"
 VR_MODEL = "data/vr_model_map.json"
-BACKUP = "backup/"
-MODEL_FOLDER = "pretrain/"
-TEMP_PATH = "tmpdir/"
+BACKUP = "backup"
+MODEL_FOLDER = "pretrain"
+TEMP_PATH = "tmpdir"
 MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit', 'bandit_v2', 'scnet', 'scnet_unofficial', 'torchseg']
 MODEL_CHOICES = ["vocal_models", "multi_stem_models", "single_stem_models", "UVR_VR_Models"]
 FFMPEG = "ffmpeg"
@@ -516,7 +516,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
             input_to_use = tmp_store_dir
             tmp_store_dir = store_dir
         model_name = model_list[step]["model_name"]
-        print(f"===== Step {i+1}: Running inference using {model_name} =====", style="yellow", justify='center')
+        print(f"===== Step {i+1}: Running inference using {model_name} =====")
         if model_list[step]["model_type"] == "UVR_VR_Models":
             primary_stem, secondary_stem, _, _ = get_vr_model(model_name)
             stem = model_list[step]["stem"]
@@ -568,7 +568,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
     shutil.rmtree(TEMP_PATH)
     finish_time = time.time()
     elapsed_time = finish_time - start_time
-    print(f"===== Finished runing {preset_name}! Costs {elapsed_time:.2f}s =====", style="yellow")
+    print(f"===== Finished runing {preset_name}! Costs {elapsed_time:.2f}s =====")
     return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
 
 def preset_backup_list():
@@ -810,7 +810,7 @@ with gr.Blocks(
                 use_tta = gr.Checkbox(label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),value=False,interactive=True)
             with gr.Tabs():
                 with gr.TabItem(label=i18n("输入音频")):
-                    single_audio = gr.File(label=i18n("上传一个或多个音频文件"), type="filepath")
+                    single_audio = gr.Files(label=i18n("上传一个或多个音频文件"), type="filepath")
                 with gr.TabItem(label=i18n("输入文件夹")):
                     multiple_audio_input = gr.Textbox(label=i18n("输入目录"), value="input/", interactive=True)
             store_dir = gr.Textbox(label=i18n("输出目录"), value="results/", interactive=True)
@@ -851,7 +851,7 @@ with gr.Blocks(
                 vr_secondary_stem_only = gr.Checkbox(label=i18n("仅输出次音轨"), value=False, interactive=True)
             with gr.Tabs():
                 with gr.TabItem(label=i18n("输入音频")):
-                    vr_single_audio = gr.File(label="上传一个或多个音频文件", type="filepath")
+                    vr_single_audio = gr.Files(label="上传一个或多个音频文件", type="filepath")
                 with gr.TabItem(label=i18n("输入文件夹")):
                     vr_multiple_audio_input = gr.Textbox(label=i18n("输入目录"),value="input/",interactive=True)
             vr_store_dir = gr.Textbox(label=i18n("输出目录"), value="results/", interactive=True)
@@ -888,7 +888,7 @@ with gr.Blocks(
                     force_cpu = gr.Checkbox(label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "), value=False, interactive=True)
                     with gr.Tabs():
                         with gr.TabItem(label=i18n("输入音频")):
-                            single_audio_flow = gr.File(label=i18n("上传一个或多个音频文件"), type="filepath")
+                            single_audio_flow = gr.Files(label=i18n("上传一个或多个音频文件"), type="filepath")
                         with gr.TabItem(label=i18n("输入文件夹")):
                             input_folder_flow = gr.Textbox(label=i18n("输入目录"), value="input/", interactive=True)
                     store_dir_flow = gr.Textbox(label=i18n("输出目录"), value="results/", interactive=True)
