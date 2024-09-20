@@ -11,6 +11,7 @@ from tqdm import tqdm
 from numpy.typing import NDArray
 from typing import Dict
 
+
 def get_model_from_config(model_type, config_path):
     with open(config_path) as f:
         if model_type == 'htdemucs':
@@ -157,7 +158,6 @@ def demix_track(config, model, mix, device, pbar=False):
         return {k: v for k, v in zip(config.training.instruments, estimated_sources)}
     else:
         return {k: v for k, v in zip([config.training.target_instrument], estimated_sources)}
-
 
 def demix_track_demucs(config, model, mix, device, pbar=False):
     S = len(config.training.instruments)

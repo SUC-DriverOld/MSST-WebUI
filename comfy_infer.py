@@ -62,21 +62,8 @@ class ComfyMSST:
             output_format='wav',
             use_tta=False,
             normalize=False,
-            store_dirs=None,
+            store_dirs=None
     ):
-        """Initialize the ComfyMSST class
-        Args:
-            model_type (str): One of 'bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit', 'bandit_v2', 'scnet', 'scnet_unofficial', 'torchseg'
-            config_path (str): Path to the model configuration file
-            model_path (str): Path to the model weights file
-            device (str, optional): One of 'cpu', 'mps', 'cuda'. Defaults is Auto.
-            output_format (str, optional): One of 'wav', 'flac', 'mp3'. Defaults to 'wav'.
-            store_dirs (dict, optional): Dictionary specifying output directories for each instrument. Defaults to None.
-            use_tta (bool, optional): Defaults to False.
-            normalize (bool, optional): Defaults to False.
-        Returns:
-            None
-        """
 
         if not model_type:
             raise ValueError('model_type is required')
@@ -109,6 +96,7 @@ class ComfyMSST:
 
     def load_model(self):
         model, config = get_model_from_config(self.model_type, self.config_path)
+
         if self.model_type == 'htdemucs':
             state_dict = torch.load(self.model_path, map_location=self.device, weights_only=False)
             if 'state' in state_dict:
@@ -132,22 +120,24 @@ class ComfyMSST:
             try:
                 results = self.separate(path)
                 file_name, _ = os.path.splitext(os.path.basename(path))
-                for instr in self.config.training.instruments:  # Use model's instruments info
+                for instr in self.config.training.instruments:  # 使用模型的乐器信息
                     save_dir = self.store_dirs.get(instr)
-                    if save_dir:  # Only save if save_dir is not empty or None
+                    if save_dir:  # 只有在 save_dir 不为空或 None 时才保存
                         save_audio(results[instr], 44100, self.output_format, f"{file_name}_{instr}", save_dir)
             except Exception as e:
                 logger.warning('Cannot process track: {}'.format(path))
                 logger.warning('Error message: {}'.format(str(e)))
-                continue
 
     def separate(self, input_file):
-        instruments = self.config.training.instruments.copy()  # Use model's instruments info
-        mix, _ = load_audio(input_file)
+        instruments = self.config.training.instruments.copy()
+        if self.config.training.target_instrument is not None:
+            instruments = [self.config.training.target_instrument]
+        mix, sr = load_audio(input_file)
 
         if len(mix.shape) == 1:
             mix = np.stack([mix, mix], axis=0)
 
+        mix_orig = mix.copy()
         if 'normalize' in self.config.inference and self.config.inference['normalize']:
             mono = mix.mean(0)
             mean = mono.mean()
@@ -163,6 +153,7 @@ class ComfyMSST:
         logger.info("Start demixing...")
         for mix in track_proc_list:
             waveforms = demix(self.config, self.model, mix, self.device, pbar=True, model_type=self.model_type)
+            logger.info("Demixing completed.")
             full_result.append(waveforms)
 
         waveforms = full_result[0]
@@ -179,11 +170,28 @@ class ComfyMSST:
             waveforms[el] = waveforms[el] / len(full_result)
 
         results = {}
+        logger.info(f"instruments: {instruments}")
+
         for instr in instruments:
             estimates = waveforms[instr].T
             if 'normalize' in self.config.inference and self.config.inference['normalize']:
                 estimates = estimates * std + mean
             results[instr] = estimates
+
+        # 处理 target_instrument
+        if self.config.training.target_instrument is not None:
+            target_instrument = self.config.training.target_instrument
+            other_instruments = [instr for instr in self.config.training.instruments if instr != target_instrument]
+            logger.info(f"Extracting instrumental from {target_instrument}...")
+            logger.info(f"Other instruments: {other_instruments}")
+            if other_instruments:
+                extract_instrumental = other_instruments[0]
+                waveforms[extract_instrumental] = mix_orig - waveforms[target_instrument]
+                estimates = waveforms[extract_instrumental].T
+                if 'normalize' in self.config.inference and self.config.inference['normalize']:
+                    estimates = estimates * std + mean
+                results[extract_instrumental] = estimates
+
         return results
 
 
@@ -427,19 +435,20 @@ if __name__ == "__main__":
 
 
     # msst分离示例
+    # 留空表示不输出
     store_dirs = {
-        'piano': 'results/piano',
-        'vocals': 'results/vocals'  # 留空表示不输出
+        'vocals': 'output/vocals',
+        'instrumental': 'output/instrumental',
     }
 
     comfy_msst = ComfyMSST(
-        model_type = "htdemucs",
-        config_path = "D:\projects\python\MSST-WebUI\configs\multi_stem_models\config_htdemucs_6stems.yaml",
-        model_path = "D:\projects\python\MSST-WebUI\pretrain\multi_stem_models\HTDemucs4_6stems.th",
+        model_type = "bs_roformer",
+        config_path = r"D:\projects\python\MSST-WebUI\configs\vocal_models\model_bs_roformer_ep_368_sdr_12.9628.yaml",
+        model_path = r"D:\projects\python\MSST-WebUI\pretrain\vocal_models\model_bs_roformer_ep_368_sdr_12.9628.ckpt",
         output_format = 'wav',
         store_dirs = store_dirs,
         use_tta = False,
         normalize = False
     )
-    comfy_msst.process_folder('input')
+    comfy_msst.process_folder("input")
 
