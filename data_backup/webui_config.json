@@ -1,5 +1,5 @@
 {
-    "version": "1.6.0",
+    "version": "1.6.1",
     "inference": {
         "model_type": null,
         "selected_model": null,
@@ -64,6 +64,7 @@
         "language": "Auto",
         "download_link": "Auto",
         "local_link": false,
-        "share_link": false
+        "share_link": false,
+        "auto_clean_cache": false
     }
 }
