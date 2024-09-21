@@ -2,7 +2,6 @@ import gradio as gr
 import subprocess
 import os
 import sys
-import re
 import time
 import shutil
 import json
@@ -27,7 +26,7 @@ from pydub import AudioSegment
 from torch import cuda, backends
 from multiprocessing import cpu_count
 
-PACKAGE_VERSION = "1.6.1"
+PACKAGE_VERSION = "1.6.2"
 WEBUI_CONFIG = "data/webui_config.json"
 WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
 PRESETS = "data/preset_data.json"
@@ -39,7 +38,7 @@ MODEL_FOLDER = "pretrain"
 TEMP_PATH = "tmpdir"
 UNOFFICIAL_MODEL = "config_unofficial"
 VR_MODELPARAMS = "configs/vr_modelparams"
-MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit', 'bandit_v2', 'scnet', 'scnet_unofficial', 'torchseg']
+MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit', 'bandit_v2', 'scnet', 'scnet_unofficial', 'torchseg', 'apollo', 'bs_mamba2']
 MODEL_CHOICES = ["vocal_models", "multi_stem_models", "single_stem_models", "UVR_VR_Models"]
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"
 PYTHON = ".\\workenv\\python.exe" if os.path.isfile(".\\workenv\\python.exe") else sys.executable
@@ -89,7 +88,8 @@ def setup_webui():
             print(i18n("[INFO] 成功清理Gradio缓存"))
     os.environ["PATH"] += os.pathsep + os.path.abspath("ffmpeg/bin/")
     os.environ["GRADIO_TEMP_DIR"] = os.path.abspath("cache/")
-    print(i18n("[INFO] 设备信息: ") + str(get_device()))
+    print(i18n("[INFO] 设备信息: "), end = "")
+    print(get_device() if len(get_device()) > 1 else get_device()[0])
 
 def webui_restart():
     os.execl(PYTHON, PYTHON, *sys.argv)
@@ -117,8 +117,6 @@ def get_device():
             n_gpu = cuda.device_count()
             for i in range(n_gpu):
                 gpus.append(f"{i}: {cuda.get_device_name(i)}")
-            if len(gpus) == 1:
-                return gpus[0]
             return gpus
         elif backends.mps.is_available():
             return i18n("使用MPS")
@@ -309,7 +307,7 @@ def save_training_config(train_model_type, train_config_path, train_dataset_type
     config['training']['dataset_path'] = train_dataset_path
     config['training']['valid_path'] = train_valid_path
     config['training']['num_workers'] = train_num_workers
-    config['training']['device_ids'] = train_device_ids
+    config['training']['device'] = train_device_ids
     config['training']['seed'] = train_seed
     config['training']['pin_memory'] = train_pin_memory
     config['training']['use_multistft_loss'] = train_use_multistft_loss
@@ -342,13 +340,14 @@ def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_
     config['inference']['vr_debug_mode'] = vr_debug_mode
     save_configs(config, WEBUI_CONFIG)
 
-def save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
+def save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only):
     config = load_configs(WEBUI_CONFIG)
     config['inference']['selected_model'] = selected_model
-    config['inference']['gpu_id'] = gpu_id
+    config['inference']['device'] = gpu_id
     config['inference']['output_format'] = output_format
     config['inference']['force_cpu'] = force_cpu
     config['inference']['extract_instrumental'] = extract_instrumental
+    config['inference']['instrumental_only'] = instrumental_only
     config['inference']['use_tta'] = use_tta
     config['inference']['store_dir'] = store_dir
     config['inference']['multiple_audio_input'] = input_folder
@@ -398,6 +397,23 @@ def init_selected_model():
         return batch_size, dim_t, num_overlap
     except: return i18n("请先选择模型"), i18n("请先选择模型"), i18n("请先选择模型")
 
+def init_selected_msst_model():
+    webui_config = load_configs(WEBUI_CONFIG)
+    selected_model = webui_config['inference']['selected_model']
+    extract_instrumental_label = i18n("同时输出次级音轨")
+    instrumental_only_label = i18n("仅输出次级音轨")
+    if not selected_model:
+        return extract_instrumental_label, instrumental_only_label
+    try:
+        _, config_path, _, _ = get_msst_model(selected_model)
+        config = load_configs(config_path)
+        target_inst = config.training.get('target_instrument', None)
+        if target_inst is None:
+            extract_instrumental_label = i18n("此模型默认输出所有音轨")
+            instrumental_only_label = i18n("此模型默认输出所有音轨")
+        return extract_instrumental_label, instrumental_only_label
+    except: return extract_instrumental_label, instrumental_only_label
+
 def init_selected_vr_model():
     webui_config = load_configs(WEBUI_CONFIG)
     model = webui_config['inference']['vr_select_model']
@@ -425,22 +441,28 @@ def update_selected_model(model_type):
     return gr.Dropdown(label=i18n("选择模型"), choices=load_selected_model(), value=None, interactive=True, scale=4)
 
 def update_inference_settings(selected_model):
-    batch_size = gr.Textbox(label="batch_size", value=i18n("该模型不支持修改此值"), interactive=False)
-    dim_t = gr.Textbox(label="dim_t", value=i18n("该模型不支持修改此值"), interactive=False)
-    num_overlap = gr.Textbox(label="num_overlap", value=i18n("该模型不支持修改此值"), interactive=False)
+    batch_size = gr.Number(label="batch_size", value=i18n("该模型不支持修改此值"), interactive=False)
+    dim_t = gr.Number(label="dim_t", value=i18n("该模型不支持修改此值"), interactive=False)
+    num_overlap = gr.Number(label="num_overlap", value=i18n("该模型不支持修改此值"), interactive=False)
     normalize = gr.Checkbox(label=i18n("normalize (该模型不支持修改此值) "), value=False, interactive=False)
+    extract_instrumental = gr.Checkbox(label=i18n("同时输出次级音轨"), interactive=True)
+    instrumental_only = gr.Checkbox(label=i18n("仅输出次级音轨"), interactive=True)
     if selected_model and selected_model !="":
         _, config_path, _, _ = get_msst_model(selected_model)
         config = load_configs(config_path)
         if config.inference.get('batch_size'):
-            batch_size = gr.Textbox(label="batch_size", value=str(config.inference.get('batch_size')), interactive=True)
+            batch_size = gr.Number(label="batch_size", value=str(config.inference.get('batch_size')), interactive=True)
         if config.inference.get('dim_t'):
-            dim_t = gr.Textbox(label="dim_t", value=str(config.inference.get('dim_t')), interactive=True)
+            dim_t = gr.Number(label="dim_t", value=str(config.inference.get('dim_t')), interactive=True)
         if config.inference.get('num_overlap'):
-            num_overlap = gr.Textbox(label="num_overlap", value=str(config.inference.get('num_overlap')), interactive=True)
+            num_overlap = gr.Number(label="num_overlap", value=str(config.inference.get('num_overlap')), interactive=True)
         if config.inference.get('normalize'):
             normalize = gr.Checkbox(label="normalize", value=config.inference.get('normalize'), interactive=True)
-    return batch_size, dim_t, num_overlap, normalize
+        target_inst = config.training.get('target_instrument', None)
+        if target_inst is None:
+            extract_instrumental = gr.Checkbox(label=i18n("此模型默认输出所有音轨"), interactive=False)
+            instrumental_only = gr.Checkbox(label=i18n("此模型默认输出所有音轨"), interactive=False)
+    return batch_size, dim_t, num_overlap, normalize, extract_instrumental, instrumental_only
 
 def save_config(selected_model, batch_size, dim_t, num_overlap, normalize):
     _, config_path, _, _ = get_msst_model(selected_model)
@@ -499,7 +521,7 @@ def stop_all_thread():
             gr.Info(i18n("已停止进程"))
             print("[INFO] " + i18n("已停止进程"))
 
-def run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
+def run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only):
     input_folder = None
     if not input_audio:
         return i18n("请上传至少一个音频文件!")
@@ -509,19 +531,24 @@ def run_inference_single(selected_model, input_audio, store_dir, extract_instrum
     for audio in input_audio:
         shutil.copy(audio, TEMP_PATH)
     input_path = TEMP_PATH
-    save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
-    run_inference(selected_model, input_path, store_dir,extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
+    start_time = time.time()
+    save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only)
+    run_inference(selected_model, input_path, store_dir,extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only)
     shutil.rmtree(TEMP_PATH)
-    return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
+    return i18n("运行完成, 耗时: ") + str(round(time.time() - start_time, 2)) + "s"
 
-def run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
-    save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
-    run_inference(selected_model, input_folder, store_dir,extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
-    return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
+def run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only):
+    start_time = time.time()
+    save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only)
+    run_inference(selected_model, input_folder, store_dir,extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only)
+    return i18n("运行完成, 耗时: ") + str(round(time.time() - start_time, 2)) + "s"
 
-def run_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, extra_store_dir=None):
-    if not bool(re.match(r'^(\d+)(?:\s(?!\1)\d+)*$', gpu_id)):
-        raise gr.Error(i18n("GPU ID格式错误, 请重新输入"))
+def run_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only, extra_store_dir=None):
+    gpu_ids = []
+    if len(gpu_id) == 0:
+        raise gr.Error(i18n("请选择GPU"))
+    for gpu in gpu_id:
+        gpu_ids.append(gpu[:gpu.index(":")])
     if selected_model == "":
         raise gr.Error(i18n("请选择模型"))
     if input_folder == "":
@@ -530,12 +557,13 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
     if extra_store_dir:
         os.makedirs(extra_store_dir, exist_ok=True)
     start_check_point, config_path, model_type, _ = get_msst_model(selected_model)
-    gpu_ids = gpu_id if not force_cpu else "0"
+    gpu_ids = " ".join(gpu_ids) if not force_cpu else "0"
     extract_instrumental_option = "--extract_instrumental" if extract_instrumental else ""
     force_cpu_option = "--force_cpu" if force_cpu else ""
     use_tta_option = "--use_tta" if use_tta else ""
+    instrumental_only = "--instrumental_only" if instrumental_only else ""
     extra_store_dir = f"--extra_store_dir \"{extra_store_dir}\"" if extra_store_dir else ""
-    command = f"{PYTHON} msst_inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} --output_format {output_format} {extract_instrumental_option} {force_cpu_option} {use_tta_option} {extra_store_dir}"
+    command = f"{PYTHON} msst_inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} --output_format {output_format} {extract_instrumental_option} {instrumental_only} {force_cpu_option} {use_tta_option} {extra_store_dir}"
     msst_inference = threading.Thread(target=run_command, args=(command,), name="msst_inference")
     msst_inference.start()
     msst_inference.join()
@@ -554,10 +582,11 @@ def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_outpu
     for audio in vr_single_audio:
         shutil.copy(audio, TEMP_PATH)
     vr_single_audio = TEMP_PATH
+    start_time = time.time()
     save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
     vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
     shutil.rmtree(TEMP_PATH)
-    return i18n("处理完成, 结果已保存至") + vr_store_dir
+    return i18n("运行完成, 耗时: ") + str(round(time.time() - start_time, 2)) + "s"
 
 def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
     if not os.path.isdir(vr_multiple_audio_input):
@@ -566,9 +595,10 @@ def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output
         return i18n("请选择模型")
     if not vr_store_dir:
         return i18n("请选择输出目录")
+    start_time = time.time()
     save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
     vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
-    return i18n("处理完成, 结果已保存至") + vr_store_dir
+    return i18n("运行完成, 耗时: ") + str(round(time.time() - start_time, 2)) + "s"
 
 def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode, save_another_stem=False, extra_output_dir=None):
     os.makedirs(vr_store_dir, exist_ok=True)
@@ -618,10 +648,13 @@ def update_model_stem(model_type, model_name):
         primary_stem, secondary_stem, _, _ = get_vr_model(model_name)
         return gr.Dropdown(label=i18n("输出音轨"), choices=[primary_stem, secondary_stem], interactive=True)
     else:
-        return gr.Dropdown(label=i18n("输出音轨"), choices=["primary_stem"], value="primary_stem", interactive=False)
+        _, config_path, _, _ = get_msst_model(model_name)
+        config = load_configs(config_path)
+        stem = ["All_stems"] if config.training.get("target_instrument", None) is None else [config.training.get("target_instrument")]
+        return gr.Dropdown(label=i18n("输出音轨"), choices=stem, value=stem[0], interactive=False)
 
 def add_to_flow_func(model_type, model_name, stem, secondary_output, df):
-    if not model_type or not model_name or (model_type == "UVR_VR_Models" and not stem) or (model_type == "UVR_VR_Models" and stem == "primary_stem"):
+    if not model_type or not model_name or (model_type == "UVR_VR_Models" and not stem):
         return df
     if not secondary_output or secondary_output == "":
         secondary_output = "False"
@@ -700,8 +733,10 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
     config['inference']['preset'] = preset_name
     config['inference']['force_cpu'] = force_cpu
     config['inference']['output_format_flow'] = output_format_flow
-    config['inference']['input_folder_flow'] = input_folder
     config['inference']['store_dir_flow'] = store_dir
+    if not isSingle:
+        config['inference']['input_folder_flow'] = input_folder
+    else: pass
     save_configs(config, WEBUI_CONFIG)
     model_list = preset_data[preset_name]
     input_to_use = input_folder
@@ -765,8 +800,11 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
                 extra_output_dir = None
             vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode, save_another_stem, extra_output_dir)
         else:
-            gpu_id = config['inference']['gpu_id'] if not force_cpu else "0"
+            device = config['inference']['device']
+            if device is None or len(device) == 0 or force_cpu:
+                device = ["0:"]
             use_tta = config['inference']['use_tta']
+            instrumental_only = False
             try:
                 secondary_output = model_list[step]["secondary_output"]
             except KeyError:
@@ -777,13 +815,13 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
             else:
                 extract_instrumental = False
                 extra_store_dir = None
-            run_inference(model_name, input_to_use, tmp_store_dir, extract_instrumental, gpu_id, output_format_flow, force_cpu, use_tta, extra_store_dir)
+            run_inference(model_name, input_to_use, tmp_store_dir, extract_instrumental, device, output_format_flow, force_cpu, use_tta, instrumental_only, extra_store_dir)
         i += 1
     shutil.rmtree(TEMP_PATH)
     finish_time = time.time()
     elapsed_time = finish_time - start_time
     console.rule(f"[yellow]Finished runing {preset_name}! Costs {elapsed_time:.2f}s", style="yellow")
-    return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
+    return i18n("运行完成, 耗时: ") + str(round(elapsed_time, 2)) + "s"
 
 def preset_backup_list():
     backup_dir = BACKUP
@@ -1085,49 +1123,50 @@ def get_all_model_param():
     return model_param
 
 def start_training(train_model_type, train_config_path, train_dataset_type, train_dataset_path, train_valid_path, train_num_workers, train_device_ids, train_seed, train_pin_memory, train_use_multistft_loss, train_use_mse_loss, train_use_l1_loss, train_results_path, train_start_check_point, train_accelerate, train_pre_validate):
-    model_type = train_model_type
-    config_path = train_config_path
-    start_check_point = train_start_check_point
-    results_path = train_results_path
-    data_path = train_dataset_path
-    dataset_type = train_dataset_type
-    valid_path = train_valid_path
+    gpu_ids = []
+    if len(train_device_ids) == 0:
+        return i18n("请选择GPU")
+    for gpu in train_device_ids:
+        gpu_ids.append(gpu[:gpu.index(":")])
+    device_ids = " ".join(gpu_ids)
     num_workers = int(train_num_workers)
-    device_ids = train_device_ids
     seed = int(train_seed)
     pin_memory = "--pin_memory" if train_pin_memory else ""
     use_multistft_loss = "--use_multistft_loss" if train_use_multistft_loss else ""
     use_mse_loss = "--use_mse_loss" if train_use_mse_loss else ""
     use_l1_loss = "--use_l1_loss" if train_use_l1_loss else ""
-    pre_valid = "--pre_valid" if (train_accelerate and train_pre_validate) else ""
+    pre_valid = "--pre_valid" if train_pre_validate else ""
     if train_accelerate:
         train_file = "train_accelerate.py"
     else:
         train_file = "train.py"
     if model_type not in MODEL_TYPE:
         return i18n("模型类型错误, 请重新选择")
-    if not os.path.isfile(config_path):
+    if not os.path.isfile(train_config_path):
         return i18n("配置文件不存在, 请重新选择")
-    os.makedirs(results_path, exist_ok=True)
-    if not os.path.exists(data_path):
+    os.makedirs(train_results_path, exist_ok=True)
+    if not os.path.exists(train_dataset_path):
         return i18n("数据集路径不存在, 请重新选择")
-    if not os.path.exists(valid_path):
+    if not os.path.exists(train_valid_path):
         return i18n("验证集路径不存在, 请重新选择")
-    if dataset_type not in [1, 2, 3, 4]:
+    if train_dataset_type not in [1, 2, 3, 4]:
         return i18n("数据集类型错误, 请重新选择")
-    if not bool(re.match(r'^(\d+)(?:\s(?!\1)\d+)*$', device_ids)):
-        return i18n("device_ids格式错误, 请重新输入")
     if train_start_check_point == "None" or train_start_check_point == "":
         start_check_point = ""
-    elif os.path.exists(results_path):
-        start_check_point = "--start_check_point " + "\"" + os.path.join(results_path, train_start_check_point) + "\""
+    elif os.path.exists(train_results_path):
+        start_check_point = "--start_check_point " + "\"" + os.path.join(train_results_path, train_start_check_point) + "\""
     else:
         return i18n("模型保存路径不存在, 请重新选择")
-    command = f"{PYTHON} {train_file} --model_type {model_type} --config_path \"{config_path}\" {start_check_point} --results_path \"{results_path}\" --data_path \"{data_path}\" --dataset_type {dataset_type} --valid_path \"{valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss} {pre_valid}"
+    command = f"{PYTHON} {train_file} --model_type {train_model_type} --config_path \"{train_config_path}\" {start_check_point} --results_path \"{train_results_path}\" --data_path \"{train_dataset_path}\" --dataset_type {train_dataset_type} --valid_path \"{train_valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss} {pre_valid}"
     threading.Thread(target=run_command, args=(command,), name="msst_training").start()
     return i18n("训练启动成功! 请前往控制台查看训练信息! ")
 
 def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_path, valid_results_path, valid_device_ids, valid_num_workers, valid_extension, valid_pin_memory, valid_use_tta):
+    gpu_ids = []
+    if len(valid_device_ids) == 0:
+        return i18n("请选择GPU")
+    for gpu in valid_device_ids:
+        gpu_ids.append(gpu[:gpu.index(":")])
     if valid_model_type not in MODEL_TYPE:
         return i18n("模型类型错误, 请重新选择")
     if not os.path.isfile(valid_config_path):
@@ -1137,11 +1176,10 @@ def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_
     if not os.path.exists(valid_path):
         return i18n("验证集路径不存在, 请重新选择")
     os.makedirs(valid_results_path, exist_ok=True)
-    if not bool(re.match(r'^(\d+)(?:\s(?!\1)\d+)*$', valid_device_ids)):
-        return i18n("device_ids格式错误, 请重新输入")
     pin_memory = "--pin_memory" if valid_pin_memory else ""
     use_tta = "--use_tta" if valid_use_tta else ""
-    command = f"{PYTHON} valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {valid_device_ids} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory} {use_tta}"
+    device = " ".join(gpu_ids)
+    command = f"{PYTHON} valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {device} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory} {use_tta}"
     msst_valid = threading.Thread(target=run_command, args=(command,), name="msst_valid")
     msst_valid.start()
     msst_valid.join()
@@ -1331,12 +1369,16 @@ with gr.Blocks(
                 select_model_type = gr.Dropdown(label=i18n("选择模型类型"), choices=["vocal_models", "multi_stem_models", "single_stem_models"], value=webui_config['inference']['model_type'] if webui_config['inference']['model_type'] else None, interactive=True, scale=1)
                 selected_model = gr.Dropdown(label=i18n("选择模型"),choices=load_selected_model(),value=webui_config['inference']['selected_model'] if webui_config['inference']['selected_model'] else None,interactive=True,scale=4)
             with gr.Row():
-                gpu_id = gr.Textbox(label=i18n("选择使用的GPU ID, 多卡用户请使用空格分隔GPU ID。可前往设置页面查看显卡信息。"),value=webui_config['inference']['gpu_id'] if webui_config['inference']['gpu_id'] else "0",interactive=True)
-                output_format = gr.Dropdown(label=i18n("输出格式"),choices=["wav", "mp3", "flac"],value=webui_config['inference']['output_format'] if webui_config['inference']['output_format'] else "wav", interactive=True)
+                gpu_id = gr.CheckboxGroup(label=i18n("选择使用的GPU"),choices=get_device(),value=webui_config['inference']['device'] if webui_config['inference']['device'] else get_device()[0],interactive=True)
+                output_format = gr.Radio(label=i18n("输出格式"),choices=["wav", "mp3", "flac"],value=webui_config['inference']['output_format'] if webui_config['inference']['output_format'] else "wav", interactive=True)
             with gr.Row():
-                force_cpu = gr.Checkbox(label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),value=webui_config['inference']['force_cpu'] if webui_config['inference']['force_cpu'] else False,interactive=True)
-                extract_instrumental = gr.Checkbox(label=i18n("同时输出次级音轨"),value=webui_config['inference']['extract_instrumental'] if webui_config['inference']['extract_instrumental'] else False,interactive=True)
-                use_tta = gr.Checkbox(label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),value=webui_config['inference']['use_tta'] if webui_config['inference']['use_tta'] else False,interactive=True)
+                with gr.Column():
+                    force_cpu = gr.Checkbox(label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),value=webui_config['inference']['force_cpu'] if webui_config['inference']['force_cpu'] else False,interactive=True)
+                    use_tta = gr.Checkbox(label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),value=webui_config['inference']['use_tta'] if webui_config['inference']['use_tta'] else False,interactive=True)
+                with gr.Column():
+                    extract_instrumental_label, instrumental_only_label = init_selected_msst_model()
+                    extract_instrumental = gr.Checkbox(label=extract_instrumental_label,value=webui_config['inference']['extract_instrumental'] if webui_config['inference']['extract_instrumental'] else False,interactive=True)
+                    instrumental_only = gr.Checkbox(label=instrumental_only_label,value=webui_config['inference']['instrumental_only'] if webui_config['inference']['instrumental_only'] else False,interactive=True)
             with gr.Tabs():
                 with gr.TabItem(label=i18n("输入音频")):
                     single_audio = gr.Files(label=i18n("上传一个或多个音频文件"), type="filepath")
@@ -1356,9 +1398,9 @@ with gr.Blocks(
                 else:
                     batch_size_number, dim_t_number, num_overlap_number = i18n("请先选择模型"), i18n("请先选择模型"), i18n("请先选择模型")
                 with gr.Row():
-                    batch_size = gr.Textbox(label=i18n("batch_size: 批次大小, 一般不需要改"), value=batch_size_number)
-                    dim_t = gr.Textbox(label=i18n("dim_t: 时序维度大小, 一般不需要改 (部分模型没有此参数)"), value=dim_t_number)
-                    num_overlap = gr.Textbox(label=i18n("num_overlap: 窗口重叠长度, 数值越小速度越快, 但会牺牲效果"), value=num_overlap_number)
+                    batch_size = gr.Number(label=i18n("batch_size: 批次大小, 一般不需要改"), value=batch_size_number)
+                    dim_t = gr.Number(label=i18n("dim_t: 时序维度大小, 一般不需要改 (部分模型没有此参数)"), value=dim_t_number)
+                    num_overlap = gr.Number(label=i18n("num_overlap: 窗口重叠长度, 数值越小速度越快, 但会牺牲效果"), value=num_overlap_number)
                 normalize = gr.Checkbox(label=i18n("normalize: 是否对音频进行归一化处理 (部分模型没有此参数)"), value=False, interactive=False)
                 reset_config_button = gr.Button(i18n("重置配置"), variant="secondary")
                 save_config_button = gr.Button(i18n("保存配置"), variant="primary")
@@ -1369,10 +1411,10 @@ with gr.Blocks(
                 output_message = gr.Textbox(label="Output Message", scale=4)
                 stop_thread = gr.Button(i18n("强制停止"), scale=1)
 
-            inference_single.click(fn=run_inference_single,inputs=[selected_model, single_audio, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta],outputs=output_message)
-            inference_multiple.click(fn=run_multi_inference, inputs=[selected_model, multiple_audio_input, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta],outputs=output_message)
+            inference_single.click(fn=run_inference_single,inputs=[selected_model, single_audio, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only],outputs=output_message)
+            inference_multiple.click(fn=run_multi_inference, inputs=[selected_model, multiple_audio_input, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only],outputs=output_message)
             select_model_type.change(fn=update_selected_model, inputs=[select_model_type], outputs=[selected_model])
-            selected_model.change(fn=update_inference_settings,inputs=[selected_model],outputs=[batch_size, dim_t, num_overlap, normalize])
+            selected_model.change(fn=update_inference_settings,inputs=[selected_model],outputs=[batch_size, dim_t, num_overlap, normalize, extract_instrumental, instrumental_only])
             save_config_button.click(fn=save_config,inputs=[selected_model, batch_size, dim_t, num_overlap, normalize],outputs=output_message)
             reset_config_button.click(fn=reset_config,inputs=[selected_model],outputs=output_message)
             select_store_btn.click(fn=select_folder, outputs=store_dir)
@@ -1387,7 +1429,7 @@ with gr.Blocks(
             with gr.Row():
                 vr_window_size = gr.Dropdown(label=i18n("Window Size: 窗口大小, 用于平衡速度和质量"), choices=["320", "512", "1024"], value=webui_config['inference']['vr_window_size'] if webui_config['inference']['vr_window_size'] else "512", interactive=True)
                 vr_aggression = gr.Number(label=i18n("Aggression: 主干提取强度, 范围-100-100, 人声请选5"), minimum=-100, maximum=100, value=webui_config['inference']['vr_aggression'] if webui_config['inference']['vr_aggression'] else 5, interactive=True)
-                vr_output_format = gr.Dropdown(label=i18n("输出格式"), choices=["wav", "flac", "mp3"], value=webui_config['inference']['vr_output_format'] if webui_config['inference']['vr_output_format'] else "wav", interactive=True)
+                vr_output_format = gr.Radio(label=i18n("输出格式"), choices=["wav", "flac", "mp3"], value=webui_config['inference']['vr_output_format'] if webui_config['inference']['vr_output_format'] else "wav", interactive=True)
             with gr.Row():
                 vr_primary_stem_label, vr_secondary_stem_label = init_selected_vr_model()
                 vr_use_cpu = gr.Checkbox(label=i18n("使用CPU"), value=webui_config['inference']['vr_use_cpu'] if webui_config['inference']['vr_use_cpu'] else False, interactive=True)
@@ -1439,7 +1481,7 @@ with gr.Blocks(
                     gr.Markdown(value=i18n("该模式下的UVR推理参数将直接沿用UVR分离页面的推理参数, 如需修改请前往UVR分离页面。<br>修改完成后, 还需要任意处理一首歌才能保存参数! "))
                     with gr.Row():
                         preset_dropdown = gr.Dropdown(label=i18n("请选择预设"),choices=list(presets.keys()),value=webui_config['inference']['preset'] if webui_config['inference']['preset'] else None, interactive=True, scale=4)
-                        output_format_flow = gr.Dropdown(label=i18n("输出格式"),choices=["wav", "mp3", "flac"],value=webui_config['inference']['output_format_flow'] if webui_config['inference']['output_format_flow'] else "wav", interactive=True, scale=1)
+                        output_format_flow = gr.Radio(label=i18n("输出格式"),choices=["wav", "mp3", "flac"],value=webui_config['inference']['output_format_flow'] if webui_config['inference']['output_format_flow'] else "wav", interactive=True, scale=1)
                     force_cpu = gr.Checkbox(label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),value=webui_config['inference']['force_cpu'] if webui_config['inference']['force_cpu'] else False,interactive=True)
                     with gr.Tabs():
                         with gr.TabItem(label=i18n("输入音频")):
@@ -1680,13 +1722,13 @@ with gr.Blocks(
                         train_valid_path = gr.Textbox(label=i18n("验证集路径"),value=webui_config['training']['valid_path'] if webui_config['training']['valid_path'] else i18n("请输入或选择验证集文件夹"),interactive=True,scale=4)
                         select_train_valid_path = gr.Button(i18n("选择验证集文件夹"), scale=1)
                     with gr.Row():
+                        train_device_ids = gr.CheckboxGroup(label=i18n("选择使用的GPU"),choices=get_device(),value=webui_config['training']['device'] if webui_config['training']['device'] else get_device()[0],interactive=True)
                         train_num_workers = gr.Number(label=i18n("num_workers: 数据集读取线程数, 0为自动"),value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,interactive=True,minimum=0,maximum=cpu_count(),step=1)
-                        train_device_ids = gr.Textbox(label=i18n("device_ids: 选择显卡, 多卡用户请使用空格分隔"),value=webui_config['training']['device_ids'] if webui_config['training']['device_ids'] else "0",interactive=True)
                         train_seed = gr.Number(label=i18n("随机数种子, 0为随机"), value="0")
                     with gr.Row():
                         train_pin_memory = gr.Checkbox(label=i18n("是否将加载的数据放置在固定内存中, 默认为否"), value=webui_config['training']['pin_memory'], interactive=True)
                         train_accelerate = gr.Checkbox(label=i18n("是否使用加速训练, 对于多显卡用户会加快训练"), value=webui_config['training']['accelerate'], interactive=True)
-                        train_pre_validate = gr.Checkbox(label=i18n("是否在训练前验证模型, 仅对加速训练有效"), value=webui_config['training']['pre_valid'], interactive=True)
+                        train_pre_validate = gr.Checkbox(label=i18n("是否在训练前验证模型, 默认为否"), value=webui_config['training']['pre_valid'], interactive=True)
                     with gr.Row():
                         train_use_multistft_loss = gr.Checkbox(label=i18n("是否使用MultiSTFT Loss, 默认为否"), value=webui_config['training']['use_multistft_loss'], interactive=True)
                         train_use_mse_loss = gr.Checkbox(label=i18n("是否使用MSE loss, 默认为否"), value=webui_config['training']['use_mse_loss'], interactive=True)
@@ -1732,9 +1774,9 @@ with gr.Blocks(
                         select_valid_results_path = gr.Button(i18n("选择文件夹"), scale=1)
                         open_valid_results_path = gr.Button(i18n("打开文件夹"), scale=1)
                     with gr.Row():
-                        valid_device_ids = gr.Textbox(label=i18n("选择显卡, 多卡用户请使用空格分隔GPU ID"),value=webui_config['training']['device_ids'] if webui_config['training']['device_ids'] else "0",interactive=True)
+                        valid_device_ids = gr.CheckboxGroup(label=i18n("选择使用的GPU"),choices=get_device(),value=webui_config['training']['device'] if webui_config['training']['device'] else get_device()[0],interactive=True)
+                        valid_extension = gr.Radio(label=i18n("选择验证集音频格式"),choices=["wav", "flac", "mp3"],value="wav",interactive=True)
                         valid_num_workers = gr.Number(label=i18n("验证集读取线程数, 0为自动"),value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,interactive=True,minimum=0,maximum=cpu_count(),step=1)
-                        valid_extension = gr.Dropdown(label=i18n("选择验证集音频格式"),choices=["wav", "flac", "mp3"],value="wav",interactive=True,allow_custom_value=True)
                     with gr.Row():
                         valid_pin_memory = gr.Checkbox(label=i18n("是否将加载的数据放置在固定内存中, 默认为否"), value=webui_config['training']['pin_memory'], interactive=True)
                         valid_use_tta = gr.Checkbox(label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),value=False,interactive=True)
@@ -1799,7 +1841,7 @@ with gr.Blocks(
                     with gr.Row():
                         with gr.Column(scale=3):
                             with gr.Row():
-                                gpu_list = gr.Textbox(label=i18n("GPU信息"), value=get_device(), interactive=False)
+                                gpu_list = gr.Textbox(label=i18n("GPU信息"), value=get_device() if len(get_device()) > 1 else get_device()[0], interactive=False)
                                 plantform_info = gr.Textbox(label=i18n("系统信息"), value=get_platform(), interactive=False)
                             with gr.Row():
                                 set_webui_port = gr.Number(label=i18n("设置WebUI端口, 0为自动"), value=webui_config["settings"].get("port", 0), interactive=True)

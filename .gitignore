@@ -17,6 +17,7 @@ results/
 test.py
 config_unofficial/
 cache/
+tmpdir/
 
 !pretrain/*.json
 !.gitkeep

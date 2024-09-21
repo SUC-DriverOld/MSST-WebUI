@@ -65,7 +65,7 @@ Use `Inference.py`
 ```bash
 usage: msst_inference.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--input_folder INPUT_FOLDER]
                          [--output_format OUTPUT_FORMAT] [--store_dir STORE_DIR] [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [--extract_instrumental]
-                         [--extra_store_dir EXTRA_STORE_DIR] [--force_cpu] [--use_tta]
+                         [--instrumental_only] [--extra_store_dir EXTRA_STORE_DIR] [--force_cpu] [--use_tta]
 
 options:
   -h, --help                                show this help message and exit
@@ -77,6 +77,7 @@ options:
   --store_dir STORE_DIR                     path to store results files
   --device_ids DEVICE_IDS [DEVICE_IDS ...]  list of gpu ids
   --extract_instrumental                    invert vocals to get instrumental if provided
+  --instrumental_only                       extract instrumental only
   --extra_store_dir EXTRA_STORE_DIR         path to store extracted instrumental. If not provided, store_dir will be used
   --force_cpu                               Force the use of CPU even if CUDA is available
   --use_tta                                 Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality.
@@ -155,7 +156,7 @@ options:
   --use_multistft_loss                      Use MultiSTFT Loss (from auraloss package)
   --use_mse_loss                            Use default MSE loss
   --use_l1_loss                             Use L1 loss
-  --pre_valid                               Run validation before training (only works for train_accelerate.py)
+  --pre_valid                               Run validation before training
 ```
 
 ### Thanks

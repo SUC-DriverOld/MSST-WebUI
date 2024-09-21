@@ -65,6 +65,9 @@ def load_not_compatible_weights(model, weights, verbose=False):
     if 'state' in old_model:
         # Fix for htdemucs weights loading
         old_model = old_model['state']
+    if 'state_dict' in old_model:
+        # Fix for apollo weights loading
+        old_model = old_model['state_dict']
 
     for el in new_model:
         if el in old_model:
@@ -327,6 +330,7 @@ def train_model(args):
     parser.add_argument("--use_multistft_loss", action='store_true', help="Use MultiSTFT Loss (from auraloss package)")
     parser.add_argument("--use_mse_loss", action='store_true', help="Use default MSE loss")
     parser.add_argument("--use_l1_loss", action='store_true', help="Use L1 loss")
+    parser.add_argument("--pre_valid", action='store_true', help='Run validation before training')
     if args is None:
         args = parser.parse_args()
     else:
@@ -391,7 +395,7 @@ def train_model(args):
         logger.info('CUDA is not avilable. Run training on CPU. It will be very slow...')
         model = model.to(device)
 
-    if 0:
+    if args.pre_valid:
         valid_multi_gpu(model, args, config, verbose=True)
 
     optim_params = dict()

@@ -90,13 +90,17 @@ def run_folder(model, args, config, device):
                 if config.inference['normalize'] is True:
                     estimates = estimates * std + mean
             file_name, _ = os.path.splitext(os.path.basename(path))
-            save_separated_files(args, sr, file_name, instr, estimates, extra_store_dir)
+            if args.instrumental_only and config.training.target_instrument is not None:
+                pass
+            else:
+                save_separated_files(args, sr, file_name, instr, estimates, extra_store_dir)
 
-        if args.extract_instrumental and config.training.target_instrument is not None:
+        if (args.extract_instrumental and config.training.target_instrument is not None) or (args.instrumental_only and config.training.target_instrument is not None):
             if 'vocals' in instruments:
                 extract_instrumental = 'instrumental'
             else:
-                extract_instrumental = 'other'
+                insts = config.training.instruments.copy()
+                extract_instrumental = insts[1]
             waveforms[extract_instrumental] = mix_orig - waveforms[config.training.target_instrument]
             estimates = waveforms[extract_instrumental].T
             if 'normalize' in config.inference:
@@ -133,6 +137,7 @@ def proc_folder(args):
     parser.add_argument("--store_dir", default = "", type = str, help = "path to store results files")
     parser.add_argument("--device_ids", nargs = '+', type = int, default = 0, help = 'list of gpu ids')
     parser.add_argument("--extract_instrumental", action = 'store_true', help = "invert vocals to get instrumental if provided")
+    parser.add_argument("--instrumental_only", action = 'store_true', help = "extract instrumental only")
     parser.add_argument("--extra_store_dir", default = "", type = str, help = "path to store extracted instrumental. If not provided, store_dir will be used")
     parser.add_argument("--force_cpu", action = 'store_true', help = "Force the use of CPU even if CUDA is available")
     parser.add_argument("--use_tta", action='store_true', help="Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality.")
@@ -157,12 +162,14 @@ def proc_folder(args):
     model, config = get_model_from_config(args.model_type, args.config_path)
     if args.start_check_point != '':
         logger.info('Start from checkpoint: {}'.format(args.start_check_point))
-        if args.model_type == 'htdemucs':
-            state_dict = torch.load(args.start_check_point, map_location = device, weights_only=False)
+        if args.model_type in ['htdemucs', 'apollo']:
+            state_dict = torch.load(args.start_check_point, map_location=device, weights_only=False)
             if 'state' in state_dict:
                 state_dict = state_dict['state']
+            if 'state_dict' in state_dict:
+                state_dict = state_dict['state_dict']
         else:
-            state_dict = torch.load(args.start_check_point, map_location = device, weights_only=True)
+            state_dict = torch.load(args.start_check_point, map_location=device, weights_only=True)
         model.load_state_dict(state_dict)
     logger.info("Instruments: {}".format(config.training.instruments))
     

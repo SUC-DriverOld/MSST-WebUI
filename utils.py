@@ -63,6 +63,12 @@ def get_model_from_config(model_type, config_path):
         model = SCNet(
             **config.model
         )
+    elif model_type == 'apollo':
+        from models.look2hear import BaseModel
+        model = BaseModel.apollo(**config.model)
+    elif model_type == 'bs_mamba2':
+        from models.ts_bs_mamba2 import Separator
+        model = Separator(**config.model)
     else:
         print('Unknown model: {}'.format(model_type))
         model = None
@@ -94,7 +100,7 @@ def demix_track(config, model, mix, device, pbar=False):
     # windowingArray crossfades at segment boundaries to mitigate clicking artifacts
     windowingArray = _getWindowingArray(C, fade_size)
 
-    with torch.cuda.amp.autocast():
+    with torch.cuda.amp.autocast(enabled=config.training.get('use_amp', True)):
         with torch.inference_mode():
             if config.training.target_instrument is not None:
                 req_shape = (1, ) + tuple(mix.shape)
@@ -167,7 +173,7 @@ def demix_track_demucs(config, model, mix, device, pbar=False):
     step = C // N
     # print(S, C, N, step, mix.shape, mix.device)
 
-    with torch.cuda.amp.autocast(enabled=config.training.use_amp):
+    with torch.cuda.amp.autocast(enabled=config.training.get('use_amp', True)):
         with torch.inference_mode():
             req_shape = (S, ) + tuple(mix.shape)
             result = torch.zeros(req_shape, dtype=torch.float32)
