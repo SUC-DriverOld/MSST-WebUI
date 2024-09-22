@@ -136,19 +136,19 @@
     },
     {
       "name": "Apollo_LQ_MP3_restoration.ckpt",
-      "config_path": "configs_backup/single_stem_models/config_apollo.yaml",
+      "config_path": "configs/single_stem_models/config_apollo.yaml",
       "model_type": "apollo",
       "link": "https://huggingface.co/Sucial/Music_Source_Sepetration_Models/resolve/main/Apollo_LQ_MP3_restoration.ckpt"
     },
     {
       "name": "aspiration_mel_band_roformer_sdr_18.9845.ckpt",
-      "config_path": "configs_backup/single_stem_models/config_aspiration_mel_band_roformer.yaml",
+      "config_path": "configs/single_stem_models/config_aspiration_mel_band_roformer.yaml",
       "model_type": "mel_band_roformer",
       "link": "https://huggingface.co/Sucial/Aspiration_Mel_Band_Roformer/resolve/main/aspiration_mel_band_roformer_sdr_18.9845.ckpt"
     },
     {
       "name": "aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt",
-      "config_path": "configs_backup/single_stem_models/config_aspiration_mel_band_roformer.yaml",
+      "config_path": "configs/single_stem_models/config_aspiration_mel_band_roformer.yaml",
       "model_type": "mel_band_roformer",
       "link": "https://huggingface.co/Sucial/Aspiration_Mel_Band_Roformer/resolve/main/aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt"
     }

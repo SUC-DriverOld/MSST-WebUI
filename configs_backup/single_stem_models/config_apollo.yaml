@@ -29,5 +29,5 @@ augmentations:
   enable: false # enable or disable all augmentations (to fast disable if needed)
 
 inference:
-  batch_size: 4
-  num_overlap: 4
+  batch_size: 1
+  num_overlap: 2

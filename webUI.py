@@ -468,11 +468,11 @@ def save_config(selected_model, batch_size, dim_t, num_overlap, normalize):
     _, config_path, _, _ = get_msst_model(selected_model)
     config = load_configs(config_path)
     if config.inference.get('batch_size'):
-        config.inference['batch_size'] = int(batch_size) if batch_size.isdigit() else None
+        config.inference['batch_size'] = int(batch_size)
     if config.inference.get('dim_t'):
-        config.inference['dim_t'] = int(dim_t) if dim_t.isdigit() else None
+        config.inference['dim_t'] = int(dim_t)
     if config.inference.get('num_overlap'):
-        config.inference['num_overlap'] = int(num_overlap) if num_overlap.isdigit() else None
+        config.inference['num_overlap'] = int(num_overlap)
     if config.inference.get('normalize'):
         config.inference['normalize'] = normalize
     save_configs(config, config_path)
