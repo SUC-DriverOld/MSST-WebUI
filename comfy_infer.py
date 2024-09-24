@@ -194,7 +194,6 @@ class ComfyMSST:
 
         return results
 
-
 class ComfyVR(Separator):
     def __init__(
         self,
