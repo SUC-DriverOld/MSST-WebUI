@@ -45,6 +45,14 @@ stop_infer_flow = False
 def setup_webui():
     print("========== MSST-WebUI-For-Clouds ==========")
     print("[INFO] WebUI Version: " + PACKAGE_VERSION + ", Time: " + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+    webui_config = load_configs(WEBUI_CONFIG)
+    main_link = webui_config['settings']['download_link']
+    if main_link == "Auto":
+        language = locale.getdefaultlocale()[0]
+        if language in ["zh_CN", "zh_TW", "zh_HK", "zh_SG"]:
+            main_link = "hf-mirror.com"
+        else: main_link = "huggingface.co"
+    os.environ["HF_ENDPOINT"] = "https://" + main_link
     print("[INFO] " + get_platform())
     print(i18n("[INFO] 设备信息: "), end = "")
     print(get_device() if len(get_device()) > 1 else get_device()[0])
@@ -651,7 +659,7 @@ def convert_audio(uploaded_files, ffmpeg_output_format, ffmpeg_output_folder):
 def merge_audios(input_folder, output_folder):
     combined_audio = AudioSegment.empty()
     os.makedirs(output_folder, exist_ok=True)
-    output_file = os.path.join(output_folder, "merged_audio.wav")
+    output_file = os.path.join(output_folder, f"merged_audio_{os.path.basename(input_folder)}.wav")
     for filename in sorted(os.listdir(input_folder)):
         if filename.endswith(('.mp3', '.wav', '.ogg', '.flac')):
             file_path = os.path.join(input_folder, filename)
@@ -689,9 +697,11 @@ def ensemble(files, ensemble_mode, weights, output_path):
     if len(files) != len(weights.split()):
         return i18n("上传的文件数目与权重数目不匹配")
     else:
+        files = [f"\"{file}\"" for file in files]
+        file_basename = [os.path.splitext(os.path.basename(file))[0] for file in files]
         files_argument = " ".join(files)
         os.makedirs(output_path, exist_ok=True)
-        output_path = os.path.join(output_path, f"ensemble_{ensemble_mode}.wav")
+        output_path = os.path.join(output_path, f"ensemble_{ensemble_mode}_{'_'.join(file_basename)}.wav")
         command = f"{PYTHON} ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
         print_command(command)
         try:
@@ -1001,7 +1011,7 @@ with gr.Blocks(
                             gr.Markdown(i18n("1. `avg_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的平均值<br>2. `median_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的中位数<br>3. `min_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的最小绝对值<br>4. `max_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的最大绝对值<br>5. `avg_fft`: 在频谱图 (短时傅里叶变换 (STFT) 2D变体) 上进行集成, 独立地找到频谱图的每个像素的平均值。平均后使用逆STFT得到原始的1D波形<br>6. `median_fft`: 与avg_fft相同, 但使用中位数代替平均值 (仅在集成3个或更多来源时有用) <br>7. `min_fft`: 与avg_fft相同, 但使用最小函数代替平均值 (减少激进程度) <br>8. `max_fft`: 与avg_fft相同, 但使用最大函数代替平均值 (增加激进程度) "))
                         with gr.Column():
                             gr.Markdown(i18n("### 注意事项"))
-                            gr.Markdown(i18n("1. min_fft可用于进行更保守的合成, 它将减少更激进模型的影响。<br>2. 最好合成等质量的模型。在这种情况下, 它将带来增益。如果其中一个模型质量不好, 它将降低整体质量。<br>3. 在原仓库作者的实验中, 与其他方法相比, avg_wave在SDR分数上总是更好或相等。<br>4. 上传的文件名**不能包含空格**, 最终会在输出目录下生成一个`ensemble_<集成模式>.wav`。"))
+                            gr.Markdown(i18n("1. min_fft可用于进行更保守的合成, 它将减少更激进模型的影响。<br>2. 最好合成等质量的模型。在这种情况下, 它将带来增益。如果其中一个模型质量不好, 它将降低整体质量。<br>3. 在原仓库作者的实验中, 与其他方法相比, avg_wave在SDR分数上总是更好或相等。<br>4. 最终会在输出目录下生成一个`ensemble_<集成模式>.wav`。"))
                 with gr.TabItem(label=i18n("歌声转MIDI")):
                     gr.Markdown(value=i18n("歌声转MIDI功能使用开源项目[SOME](https://github.com/openvpi/SOME/), 可以将分离得到的**干净的歌声**转换成.mid文件。<br>【必须】若想要使用此功能, 请先下载权重文件[model_steps_64000_simplified.ckpt](https://hf-mirror.com/Sucial/SOME_Models/resolve/main/model_steps_64000_simplified.ckpt)并将其放置在程序目录下的`tools/SOME_weights`文件夹内。文件命名不可随意更改! <br>【重要】只能上传wav格式的音频! "))
                     with gr.Row():
