@@ -175,7 +175,10 @@ def load_selected_model(model_type=None):
         model_dir = os.path.join(MODEL_FOLDER, model_type)
         for files in os.listdir(model_dir):
             if files.endswith(('.ckpt', '.th', '.chpt')):
-                downloaded_model.append(files)
+                try: 
+                    get_msst_model(files)
+                    downloaded_model.append(files)
+                except: continue
         return downloaded_model
     return None
 
@@ -229,7 +232,10 @@ def load_vr_model():
     vr_model_path = config['settings']['uvr_model_dir']
     for files in os.listdir(vr_model_path):
         if files.endswith('.pth'):
-            downloaded_model.append(files)
+            try: 
+                get_vr_model(files)
+                downloaded_model.append(files)
+            except: continue
     return downloaded_model
 
 def get_vr_model(model):
