@@ -16,6 +16,7 @@ input/
 results/
 test.py
 config_unofficial/
+cache/
 
 !pretrain/*.json
 !.gitkeep

@@ -18,7 +18,6 @@ import warnings
 import locale
 import threading
 import psutil
-import rich
 from datetime import datetime
 from ml_collections import ConfigDict
 from pydub import AudioSegment
@@ -26,15 +25,15 @@ from torch import cuda, backends
 from multiprocessing import cpu_count
 from download_models import download_model
 
-PACKAGE_VERSION = "1.6.0"
+PACKAGE_VERSION = "1.6.1"
 WEBUI_CONFIG = "data/webui_config.json"
 WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
 PRESETS = "data/preset_data.json"
 MSST_MODEL = "data/msst_model_map.json"
 VR_MODEL = "data/vr_model_map.json"
-BACKUP = "backup/"
-MODEL_FOLDER = "pretrain/"
-TEMP_PATH = "temp"
+BACKUP = "backup"
+MODEL_FOLDER = "pretrain"
+TEMP_PATH = "tmpdir"
 MODEL_TYPE = ['bs_roformer', 'mel_band_roformer', 'segm_models', 'htdemucs', 'mdx23c', 'swin_upernet', 'bandit', 'bandit_v2', 'scnet', 'scnet_unofficial', 'torchseg']
 MODEL_CHOICES = ["vocal_models", "multi_stem_models", "single_stem_models", "UVR_VR_Models"]
 FFMPEG = "ffmpeg"
@@ -45,7 +44,9 @@ stop_all_threads = False
 stop_infer_flow = False
 
 def setup_webui():
-    print(f"Music-Source-Separation-Training-Inference-Webui v{PACKAGE_VERSION} For-Clouds")
+    print("========== MSST-WebUI-Clouds ==========")
+    print("[INFO] WebUI Version: " + PACKAGE_VERSION + ", Time: " + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+    print("[INFO] " + get_platform())
     print(i18n("[INFO] 设备信息：") + str(get_device()))
 
 def i18n(key):
@@ -103,10 +104,8 @@ def save_configs(config, config_path):
         with open(config_path, 'w') as f:
             yaml.dump(config.to_dict(), f)
 
-def print_command(command, title="Use command"):
-    console = rich.console.Console()
-    panel = rich.panel.Panel(command, title=title, style=rich.style.Style(color="green"), border_style="green")
-    console.print(panel)
+def print_command(command):
+    print("\033[32m" + "Use command: " + command + "\033[0m")
 
 def load_selected_model(model_type=None):
     if not model_type:
@@ -202,11 +201,11 @@ def save_training_config(train_model_type, train_config_path, train_dataset_type
 def reset_webui_config():
     config = load_configs(WEBUI_CONFIG)
     config_backup = load_configs(WEBUI_CONFIG_BACKUP)
-    for key in config_backup['training'][key]:
+    for key in config_backup['training'].keys():
         config['training'][key] = config_backup['training'][key]
-    for key in config_backup['inference'][key]:
+    for key in config_backup['inference'].keys():
         config['inference'][key] = config_backup['inference'][key]
-    for key in config_backup['tools'][key]:
+    for key in config_backup['tools'].keys():
         config['tools'][key] = config_backup['tools'][key]
     save_configs(config, WEBUI_CONFIG)
     return i18n("记录重置成功, 请重启WebUI刷新! ")
@@ -298,14 +297,16 @@ def stop_all_thread():
 
 def run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
     if not input_audio:
-        return i18n("请上传一个音频文件。")
+        return i18n("请上传至少一个音频文件!")
     if os.path.exists(TEMP_PATH):
         shutil.rmtree(TEMP_PATH)
     os.makedirs(TEMP_PATH)
-    shutil.copy(input_audio, TEMP_PATH)
+    for audio in input_audio:
+        shutil.copy(audio, TEMP_PATH)
     input_path = TEMP_PATH
     if download_model("msst", selected_model):
         run_inference(selected_model, input_path, store_dir,extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
+        shutil.rmtree(TEMP_PATH)
         return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
 
 def run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
@@ -335,8 +336,8 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
     msst_inference.join()
 
 def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
-    if not os.path.isfile(vr_single_audio):
-        return i18n("请上传一个音频文件")
+    if not vr_single_audio:
+        return i18n("请上传至少一个音频文件!")
     if not vr_select_model:
         return i18n("请选择模型")
     if not vr_store_dir:
@@ -344,10 +345,12 @@ def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_outpu
     if os.path.exists(TEMP_PATH):
         shutil.rmtree(TEMP_PATH)
     os.makedirs(TEMP_PATH)
-    shutil.copy(vr_single_audio, TEMP_PATH)
-    vr_single_audio = os.path.join(TEMP_PATH, os.path.basename(vr_single_audio))
+    for audio in vr_single_audio:
+        shutil.copy(audio, TEMP_PATH)
+    vr_single_audio = TEMP_PATH
     if download_model("uvr", vr_select_model):
         vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_single_audio, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode)
+        shutil.rmtree(TEMP_PATH)
         return i18n("处理完成, 结果已保存至") + vr_store_dir
 
 def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):
@@ -470,12 +473,13 @@ def delete_func(preset_name):
 
 def run_single_inference_flow(input_audio, store_dir, preset_name, force_cpu, output_format_flow):
     if not input_audio:
-        return i18n("请上传一个音频文件")
+        return i18n("请上传至少一个音频文件!")
     if os.path.exists(TEMP_PATH):
         shutil.rmtree(TEMP_PATH)
-    os.makedirs(TEMP_PATH)
-    shutil.copy(input_audio, TEMP_PATH)
-    input_folder = TEMP_PATH
+    os.makedirs(os.path.join(TEMP_PATH, "inferflow_step0_output"))
+    for audio in input_audio:
+        shutil.copy(audio, os.path.join(TEMP_PATH, "inferflow_step0_output"))
+    input_folder = os.path.join(TEMP_PATH, "inferflow_step0_output")
     msg = run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_format_flow, isSingle=True)
     return msg
 
@@ -497,23 +501,25 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
         if model_name not in load_msst_model() and model_name not in load_vr_model():
             return i18n("模型") + model_name + i18n("不存在")
     i = 0
-    console = rich.console.Console()
     for step in model_list.keys():
         if stop_infer_flow:
             stop_infer_flow = False
             break
         if i == 0:
             input_to_use = input_folder
-        elif i < len(model_list.keys()) - 1 and i > 0:
+        if i < len(model_list.keys()) - 1 and i > 0:
             if input_to_use != input_folder:
                 shutil.rmtree(input_to_use)
             input_to_use = tmp_store_dir
             tmp_store_dir = f"{TEMP_PATH}/inferflow_step{i+1}_output"
-        elif i == len(model_list.keys()) - 1:
+        if i == len(model_list.keys()) - 1:
             input_to_use = tmp_store_dir
             tmp_store_dir = store_dir
+        if len(model_list.keys()) == 1:
+            input_to_use = input_folder
+            tmp_store_dir = store_dir
         model_name = model_list[step]["model_name"]
-        console.print(f"[yellow]Step {i+1}: Running inference using {model_name}", style="yellow", justify='center')
+        print(f"===== Step {i+1}: Running inference using {model_name} =====")
         if model_list[step]["model_type"] == "UVR_VR_Models":
             primary_stem, secondary_stem, _, _ = get_vr_model(model_name)
             stem = model_list[step]["stem"]
@@ -565,7 +571,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
     shutil.rmtree(TEMP_PATH)
     finish_time = time.time()
     elapsed_time = finish_time - start_time
-    console.rule(f"[yellow]Finished runing {preset_name}! Costs {elapsed_time:.2f}s", style="yellow")
+    print(f"===== Finished runing {preset_name}! Costs {elapsed_time:.2f}s =====")
     return i18n("处理完成! 分离完成的音频文件已保存在") + store_dir
 
 def preset_backup_list():
@@ -806,9 +812,9 @@ with gr.Blocks(
                 extract_instrumental = gr.Checkbox(label=i18n("同时输出次级音轨"),value=False,interactive=True)
                 use_tta = gr.Checkbox(label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),value=False,interactive=True)
             with gr.Tabs():
-                with gr.TabItem(label=i18n("单个音频上传")):
-                    single_audio = gr.File(label=i18n("单个音频上传"), type="filepath")
-                with gr.TabItem(label=i18n("批量音频上传")):
+                with gr.TabItem(label=i18n("输入音频")):
+                    single_audio = gr.Files(label=i18n("上传一个或多个音频文件"), type="filepath")
+                with gr.TabItem(label=i18n("输入文件夹")):
                     multiple_audio_input = gr.Textbox(label=i18n("输入目录"), value="input/", interactive=True)
             store_dir = gr.Textbox(label=i18n("输出目录"), value="results/", interactive=True)
             with gr.Accordion(i18n("推理参数设置, 不同模型之间参数相互独立 (一般不需要动) "), open=False):
@@ -821,8 +827,8 @@ with gr.Blocks(
                 reset_config_button = gr.Button(i18n("重置配置"), variant="secondary")
                 save_config_button = gr.Button(i18n("保存配置"), variant="primary")
             with gr.Row():
-                inference_single = gr.Button(i18n("单个音频分离"), variant="primary")
-                inference_multiple = gr.Button(i18n("批量音频分离"), variant="primary")
+                inference_single = gr.Button(i18n("输入音频分离"), variant="primary")
+                inference_multiple = gr.Button(i18n("输入文件夹分离"), variant="primary")
             with gr.Row():
                 output_message = gr.Textbox(label="Output Message", scale=4)
                 stop_thread = gr.Button(i18n("强制停止"), scale=1)
@@ -847,9 +853,9 @@ with gr.Blocks(
                 vr_primary_stem_only = gr.Checkbox(label=i18n("仅输出主音轨"), value=False, interactive=True)
                 vr_secondary_stem_only = gr.Checkbox(label=i18n("仅输出次音轨"), value=False, interactive=True)
             with gr.Tabs():
-                with gr.TabItem(label=i18n("单个音频上传")):
-                    vr_single_audio = gr.File(label="单个音频上传", type="filepath")
-                with gr.TabItem(label=i18n("批量音频上传")):
+                with gr.TabItem(label=i18n("输入音频")):
+                    vr_single_audio = gr.Files(label="上传一个或多个音频文件", type="filepath")
+                with gr.TabItem(label=i18n("输入文件夹")):
                     vr_multiple_audio_input = gr.Textbox(label=i18n("输入目录"),value="input/",interactive=True)
             vr_store_dir = gr.Textbox(label=i18n("输出目录"), value="results/", interactive=True)
             with gr.Accordion(i18n("以下是一些高级设置, 一般保持默认即可"), open=False):
@@ -864,8 +870,8 @@ with gr.Blocks(
                     vr_enable_post_process = gr.Checkbox(label=i18n("Enable Post Process: 识别人声输出中残留的人工痕迹, 可改善某些歌曲的分离效果"), value=False, interactive=True)
                 vr_debug_mode = gr.Checkbox(label=i18n("Debug Mode: 启用调试模式, 向开发人员反馈时, 请开启此模式"), value=False, interactive=True)
             with gr.Row():
-                vr_start_single_inference = gr.Button(i18n("单个音频分离"), variant="primary")
-                vr_start_multi_inference = gr.Button(i18n("批量音频分离"), variant="primary")
+                vr_start_single_inference = gr.Button(i18n("输入音频分离"), variant="primary")
+                vr_start_multi_inference = gr.Button(i18n("输入文件夹分离"), variant="primary")
             with gr.Row():
                 vr_output_message = gr.Textbox(label="Output Message", scale=4)
                 stop_thread = gr.Button(i18n("强制停止"), scale=1)
@@ -884,14 +890,14 @@ with gr.Blocks(
                         output_format_flow = gr.Dropdown(label=i18n("输出格式"),choices=["wav", "mp3", "flac"],value="wav", interactive=True, scale=1)
                     force_cpu = gr.Checkbox(label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "), value=False, interactive=True)
                     with gr.Tabs():
-                        with gr.TabItem(label=i18n("单个音频上传")):
-                            single_audio_flow = gr.File(label=i18n("单个音频上传"), type="filepath")
-                        with gr.TabItem(label=i18n("批量音频上传")):
+                        with gr.TabItem(label=i18n("输入音频")):
+                            single_audio_flow = gr.Files(label=i18n("上传一个或多个音频文件"), type="filepath")
+                        with gr.TabItem(label=i18n("输入文件夹")):
                             input_folder_flow = gr.Textbox(label=i18n("输入目录"), value="input/", interactive=True)
                     store_dir_flow = gr.Textbox(label=i18n("输出目录"), value="results/", interactive=True)
                     with gr.Row():
-                        single_inference_flow = gr.Button(i18n("单个音频分离"), variant="primary")
-                        inference_flow = gr.Button(i18n("批量音频分离"), variant="primary")
+                        single_inference_flow = gr.Button(i18n("输入音频分离"), variant="primary")
+                        inference_flow = gr.Button(i18n("输入文件夹分离"), variant="primary")
                     with gr.Row():
                         output_message_flow = gr.Textbox(label="Output Message", scale=4)
                         stop_thread = gr.Button(i18n("强制停止"), scale=1)
