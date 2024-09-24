@@ -56,6 +56,13 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 
 - If you run webUI on a cloud platform, see [this document](tools/webUI_for_clouds/README.md) for more details.
 
+> [!NOTE]
+> When using model_type `swin_upernet`, you may meet the following error:
+> ```bash
+> ValueError: Make sure that the channel dimension of the pixel values match with the one set in the configuration.
+> ```
+> Please refer to [this issue](https://github.com/SUC-DriverOld/MSST-WebUI/issues/24) to solve the problem.
+
 ## Command Line
 
 ### MSST Inference
