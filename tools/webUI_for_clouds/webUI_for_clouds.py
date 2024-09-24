@@ -746,7 +746,7 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
         train_file = "train_accelerate.py"
     else:
         train_file = "train.py"
-    if model_type not in MODEL_TYPE:
+    if train_model_type not in MODEL_TYPE:
         return i18n("模型类型错误, 请重新选择")
     if not os.path.isfile(train_config_path):
         return i18n("配置文件不存在, 请重新选择")
