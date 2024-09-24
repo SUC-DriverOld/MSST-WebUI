@@ -63,29 +63,36 @@ def setup_webui():
     os.makedirs("input", exist_ok=True)
     os.makedirs("results", exist_ok=True)
     os.makedirs("cache", exist_ok=True)
-    if os.path.exists("data"):
-        webui_config = load_configs(WEBUI_CONFIG)
-        version = webui_config.get("version", None)
-        if not version:
-            try: version = load_configs("data/version.json")["version"]
-            except Exception: 
-                copy_folders()
-                version = PACKAGE_VERSION
-        if version != PACKAGE_VERSION:
-            print(i18n("[INFO] 检测到") + version + i18n("旧版配置, 正在更新至最新版") + PACKAGE_VERSION)
-            presets_config = load_configs(PRESETS)
-            webui_config_backup = load_configs(WEBUI_CONFIG_BACKUP)
-            for module in ["training", "inference", "tools", "settings"]:
-                for key in webui_config_backup[module].keys():
-                    try: webui_config_backup[module][key] = webui_config[module][key]
-                    except KeyError: continue
+    webui_config = load_configs(WEBUI_CONFIG)
+    version = webui_config.get("version", None)
+    if not version:
+        try: version = load_configs("data/version.json")["version"]
+        except Exception: 
             copy_folders()
-            save_configs(webui_config_backup, WEBUI_CONFIG)
-            save_configs(presets_config, PRESETS)
-        if webui_config["settings"].get("auto_clean_cache", False):
-            shutil.rmtree("cache")
-            os.makedirs("cache", exist_ok=True)
-            print(i18n("[INFO] 成功清理Gradio缓存"))
+            version = PACKAGE_VERSION
+    if version != PACKAGE_VERSION:
+        print(i18n("[INFO] 检测到") + version + i18n("旧版配置, 正在更新至最新版") + PACKAGE_VERSION)
+        presets_config = load_configs(PRESETS)
+        webui_config_backup = load_configs(WEBUI_CONFIG_BACKUP)
+        for module in ["training", "inference", "tools", "settings"]:
+            for key in webui_config_backup[module].keys():
+                try: webui_config_backup[module][key] = webui_config[module][key]
+                except KeyError: continue
+        copy_folders()
+        save_configs(webui_config_backup, WEBUI_CONFIG)
+        save_configs(presets_config, PRESETS)
+    if webui_config["settings"].get("auto_clean_cache", False):
+        shutil.rmtree("cache")
+        os.makedirs("cache", exist_ok=True)
+        print(i18n("[INFO] 成功清理Gradio缓存"))
+    main_link = webui_config['settings']['download_link']
+    if main_link == "Auto":
+        language = locale.getdefaultlocale()[0]
+        if language in ["zh_CN", "zh_TW", "zh_HK", "zh_SG"]:
+            main_link = "hf-mirror.com"
+        else: main_link = "huggingface.co"
+    os.environ["HF_HOME"] = os.path.abspath(MODEL_FOLDER)
+    os.environ["HF_ENDPOINT"] = "https://" + main_link
     os.environ["PATH"] += os.pathsep + os.path.abspath("ffmpeg/bin/")
     os.environ["GRADIO_TEMP_DIR"] = os.path.abspath("cache/")
     print(i18n("[INFO] 设备信息: "), end = "")
@@ -890,7 +897,7 @@ def merge_audios(input_folder, output_folder):
     save_configs(config, WEBUI_CONFIG)
     combined_audio = AudioSegment.empty()
     os.makedirs(output_folder, exist_ok=True)
-    output_file = os.path.join(output_folder, "merged_audio.wav")
+    output_file = os.path.join(output_folder, f"merged_audio_{os.path.basename(input_folder)}.wav")
     for filename in sorted(os.listdir(input_folder)):
         if filename.endswith(('.mp3', '.wav', '.ogg', '.flac')):
             file_path = os.path.join(input_folder, filename)
@@ -932,9 +939,11 @@ def ensemble(files, ensemble_mode, weights, output_path):
         config['tools']['ensemble_type'] = ensemble_mode
         config['tools']['ensemble_output_folder'] = output_path
         save_configs(config, WEBUI_CONFIG)
+        files = [f"\"{file}\"" for file in files]
+        file_basename = [os.path.splitext(os.path.basename(file))[0] for file in files]
         files_argument = " ".join(files)
         os.makedirs(output_path, exist_ok=True)
-        output_path = os.path.join(output_path, f"ensemble_{ensemble_mode}.wav")
+        output_path = os.path.join(output_path, f"ensemble_{ensemble_mode}_{'_'.join(file_basename)}.wav")
         command = f"{PYTHON} ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
         print_command(command)
         try:
@@ -1014,6 +1023,7 @@ def download_file(url, path, model_name):
                         bytes_written = 0
                         last_update_time = current_time
                 progress_bar.update(bytes_written)
+        print("[INFO] " + i18n("模型") + model_name + i18n("下载成功"))
         return i18n("模型") + model_name + i18n("下载成功")
     except Exception as e:
         print(e)

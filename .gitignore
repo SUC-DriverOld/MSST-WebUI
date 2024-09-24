@@ -18,6 +18,7 @@ test.py
 config_unofficial/
 cache/
 tmpdir/
+pretrain/hub
 
 !pretrain/*.json
 !.gitkeep
