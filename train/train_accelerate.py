@@ -13,8 +13,8 @@ import glob
 from tqdm import tqdm
 import os
 import sys
-current_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(current_dir)
+parrent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parrent_dir)
 import torch
 import auraloss
 import torch.nn as nn
@@ -24,9 +24,9 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.nn.functional as F
 from accelerate import Accelerator
 
-from dataset import MSSDataset
-from utils import get_model_from_config, demix, sdr
-from train import masked_loss, manual_seed, load_not_compatible_weights
+from utils.dataset import MSSDataset
+from utils.utils import get_model_from_config, demix, sdr
+from train.train import masked_loss, manual_seed, load_not_compatible_weights
 import warnings
 
 warnings.filterwarnings("ignore")

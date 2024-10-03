@@ -1,22 +1,23 @@
 # coding: utf-8
 __author__ = 'Roman Solovyev (ZFTurbo): https://github.com/ZFTurbo/'
 
+import os
+import sys
+parrent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parrent_dir)
 import argparse
 import time
 import librosa
-from tqdm import tqdm
-import sys
-import os
+import logging
+import warnings
 import glob
 import torch
 import numpy as np
 import soundfile as sf
 import torch.nn as nn
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_dir)
-from utils import demix, get_model_from_config
-import logging
-import warnings
+
+from tqdm import tqdm
+from utils.utils import demix, get_model_from_config
 
 warnings.filterwarnings("ignore", category = UserWarning)
 log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"

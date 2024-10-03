@@ -149,7 +149,7 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
     instrumental_only = "--instrumental_only" if instrumental_only else ""
     extra_store_dir = f"--extra_store_dir \"{extra_store_dir}\"" if extra_store_dir else ""
 
-    command = f"{PYTHON} msst_inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} --output_format {output_format} {extract_instrumental_option} {instrumental_only} {force_cpu_option} {use_tta_option} {extra_store_dir}"
+    command = f"{PYTHON} inference/msst_cli.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} --output_format {output_format} {extract_instrumental_option} {instrumental_only} {force_cpu_option} {use_tta_option} {extra_store_dir}"
 
     msst_inference = threading.Thread(target=run_command, args=(command,), name="msst_inference")
     msst_inference.start()

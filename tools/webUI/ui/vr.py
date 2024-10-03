@@ -3,7 +3,7 @@ import gradio as gr
 from tools.webUI.constant import *
 from tools.webUI.utils import i18n, load_vr_model, load_vr_model_stem, stop_all_thread, select_folder, open_folder
 from tools.webUI.init import init_selected_vr_model
-from inference.vr import vr_inference_single, vr_inference_multi
+from tools.webUI.vr import vr_inference_single, vr_inference_multi
 
 def vr(webui_config):
     gr.Markdown(value=i18n("说明: 本整合包仅融合了UVR的VR Architecture模型, MDX23C和HtDemucs类模型可以直接使用前面的MSST音频分离。<br>UVR分离使用项目: [https://github.com/nomadkaraoke/python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) 并进行了优化。"))

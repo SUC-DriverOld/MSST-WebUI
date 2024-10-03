@@ -6,23 +6,18 @@ import time
 from tqdm import tqdm
 import sys
 import os
+parrent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parrent_dir)
 import glob
-import copy
 import torch
 import soundfile as sf
 import numpy as np
-import torch.nn as nn
-import multiprocessing
-
-import warnings
-warnings.filterwarnings("ignore")
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_dir)
-
-from utils import demix, sdr, get_model_from_config
-
 import logging
+import warnings
+
+from utils.utils import demix, sdr, get_model_from_config
+
+warnings.filterwarnings("ignore")
 log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"
 date_format = "%H:%M:%S"
 logging.basicConfig(level = logging.INFO, format = log_format, datefmt = date_format)

@@ -352,7 +352,7 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
     use_tta_option = "--use_tta" if use_tta else ""
     instrumental_only = "--instrumental_only" if instrumental_only else ""
     extra_store_dir = f"--extra_store_dir \"{extra_store_dir}\"" if extra_store_dir else ""
-    command = f"{PYTHON} msst_inference.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} --output_format {output_format} {extract_instrumental_option} {instrumental_only} {force_cpu_option} {use_tta_option} {extra_store_dir}"
+    command = f"{PYTHON} inference/msst_cli.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} --output_format {output_format} {extract_instrumental_option} {instrumental_only} {force_cpu_option} {use_tta_option} {extra_store_dir}"
     msst_inference = threading.Thread(target=run_command, args=(command,), name="msst_inference")
     msst_inference.start()
     msst_inference.join()
@@ -418,7 +418,7 @@ def vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_forma
     vr_enable_post_process = "--vr_enable_post_process" if vr_enable_post_process else ""
     save_another_stem = "--save_another_stem" if save_another_stem else ""
     extra_output_dir = f"--extra_output_dir \"{extra_output_dir}\"" if extra_output_dir else ""
-    command = f"{PYTHON} uvr_inference.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold} {save_another_stem} {extra_output_dir}"
+    command = f"{PYTHON} inference/vr_cli.py \"{audio_file}\" {debug_mode} --model_filename \"{model_filename}\" --output_format {output_format} --output_dir \"{output_dir}\" --model_file_dir \"{model_file_dir}\" {invert_spect} --normalization {normalization} {single_stem} {use_cpu} --vr_batch_size {vr_batch_size} --vr_window_size {vr_window_size} --vr_aggression {vr_aggression} {vr_enable_tta} {vr_high_end_process} {vr_enable_post_process} --vr_post_process_threshold {vr_post_process_threshold} {save_another_stem} {extra_output_dir}"
     vr_inference = threading.Thread(target=run_command, args=(command,), name="vr_inference")
     vr_inference.start()
     vr_inference.join()
@@ -706,7 +706,7 @@ def ensemble(files, ensemble_mode, weights, output_path):
         files_argument = " ".join(files)
         os.makedirs(output_path, exist_ok=True)
         output_path = os.path.join(output_path, f"ensemble_{ensemble_mode}_{'_'.join(file_basename)}.wav")
-        command = f"{PYTHON} ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
+        command = f"{PYTHON} utils/ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
         print_command(command)
         try:
             subprocess.run(command, shell = True)
@@ -747,9 +747,9 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
     use_l1_loss = "--use_l1_loss" if train_use_l1_loss else ""
     pre_valid = "--pre_valid" if train_pre_validate else ""
     if train_accelerate:
-        train_file = "train_accelerate.py"
+        train_file = "train/train_accelerate.py"
     else:
-        train_file = "train.py"
+        train_file = "train/train.py"
     if train_model_type not in MODEL_TYPE:
         return i18n("模型类型错误, 请重新选择")
     if not os.path.isfile(train_config_path):
@@ -789,7 +789,7 @@ def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_
     pin_memory = "--pin_memory" if valid_pin_memory else ""
     use_tta = "--use_tta" if valid_use_tta else ""
     device = " ".join(gpu_ids)
-    command = f"{PYTHON} valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {device} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory} {use_tta}"
+    command = f"{PYTHON} train/valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {device} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory} {use_tta}"
     msst_valid = threading.Thread(target=run_command, args=(command,), name="msst_valid")
     msst_valid.start()
     msst_valid.join()

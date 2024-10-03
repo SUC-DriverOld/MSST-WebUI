@@ -1,10 +1,10 @@
 import sys
 import os
+parrent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parrent_dir)
 import argparse
 import logging
 import time
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_dir)
 from models.vocal_remover.separator import Separator
 
 def inference(parser, args):

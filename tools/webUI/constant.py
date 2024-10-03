@@ -102,3 +102,6 @@ PYTHON = ".\\workenv\\python.exe" if os.path.isfile(".\\workenv\\python.exe") el
 
 # url for check for updates
 UPDATE_URL = "https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest"
+
+# pretrained SOME weight
+SOME_WEIGHT = "tools/SOME_weights/model_steps_64000_simplified.ckpt"

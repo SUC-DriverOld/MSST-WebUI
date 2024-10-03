@@ -5,12 +5,11 @@ __version__ = '1.0.3'
 import random
 import argparse
 import time
-import copy
 from tqdm import tqdm
 import sys
 import os
-current_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(current_dir)
+parrent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parrent_dir)
 import glob
 import torch
 import soundfile as sf
@@ -23,8 +22,8 @@ from torch.cuda.amp.grad_scaler import GradScaler
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.nn.functional as F
 
-from dataset import MSSDataset
-from utils import demix, sdr, get_model_from_config
+from utils.dataset import MSSDataset
+from utils.utils import demix, sdr, get_model_from_config
 
 import warnings
 

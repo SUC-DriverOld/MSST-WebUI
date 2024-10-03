@@ -49,9 +49,9 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
     pre_valid = "--pre_valid" if train_pre_validate else ""
 
     if train_accelerate:
-        train_file = "train_accelerate.py"
+        train_file = "train/train_accelerate.py"
     else:
-        train_file = "train.py"
+        train_file = "train/train.py"
     if train_model_type not in MODEL_TYPE:
         return i18n("模型类型错误, 请重新选择")
     if not os.path.isfile(train_config_path):
@@ -97,7 +97,7 @@ def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_
     use_tta = "--use_tta" if valid_use_tta else ""
     device = " ".join(gpu_ids)
 
-    command = f"{PYTHON} valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {device} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory} {use_tta}"
+    command = f"{PYTHON} train/valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {device} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory} {use_tta}"
 
     msst_valid = threading.Thread(target=run_command, args=(command,), name="msst_valid")
     msst_valid.start()

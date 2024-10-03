@@ -3,7 +3,7 @@ import gradio as gr
 from tools.webUI.constant import *
 from tools.webUI.utils import i18n, get_device, load_selected_model, select_folder, open_folder, stop_all_thread
 from tools.webUI.init import init_selected_model, init_selected_msst_model
-from inference.msst import (
+from tools.webUI.msst import (
     run_inference_single, 
     run_multi_inference, 
     update_selected_model, 

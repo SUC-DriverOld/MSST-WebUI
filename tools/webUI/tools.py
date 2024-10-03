@@ -110,7 +110,7 @@ def ensemble(files, ensemble_mode, weights, output_path):
 
         os.makedirs(output_path, exist_ok=True)
         output_path = os.path.join(output_path, f"ensemble_{ensemble_mode}_{'_'.join(file_basename)}.wav")
-        command = f"{PYTHON} ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
+        command = f"{PYTHON} utils/ensemble.py --files {files_argument} --type {ensemble_mode} --weights {weights} --output {output_path}"
         print_command(command)
 
         try:
@@ -120,9 +120,7 @@ def ensemble(files, ensemble_mode, weights, output_path):
             return i18n("处理失败!")
 
 def some_inference(audio_file, bpm, output_dir):
-    model = "tools/SOME_weights/model_steps_64000_simplified.ckpt"
-
-    if not os.path.isfile(model):
+    if not os.path.isfile(SOME_WEIGHT):
         return i18n("请先下载SOME预处理模型并放置在tools/SOME_weights文件夹下! ")
     if not audio_file.endswith('.wav'):
         return i18n("请上传wav格式文件")
@@ -136,7 +134,7 @@ def some_inference(audio_file, bpm, output_dir):
     tempo = int(bpm)
     file_name = os.path.basename(audio_file)[0:-4]
     midi = os.path.join(output_dir, f"{file_name}.mid")
-    command = f"{PYTHON} tools/SOME/infer.py --model {model} --wav \"{audio_file}\" --midi \"{midi}\" --tempo {tempo}"
+    command = f"{PYTHON} tools/SOME/infer.py --model {SOME_WEIGHT} --wav \"{audio_file}\" --midi \"{midi}\" --tempo {tempo}"
     print_command(command)
 
     try:
