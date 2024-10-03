@@ -9,7 +9,7 @@ import warnings
 import json
 import torch
 from tqdm import tqdm
-from models.vocal_remover.vr_separator import VRSeparator
+from modules.vocal_remover.vr_separator import VRSeparator
 
 VR_MODEL_MAP = "data/vr_model_map.json"
 UNOFFICIAL_MODEL_MAP = "config_unofficial/unofficial_vr_model.json"

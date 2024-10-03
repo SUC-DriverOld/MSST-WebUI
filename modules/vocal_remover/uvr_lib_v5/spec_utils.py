@@ -5,7 +5,7 @@ import soundfile as sf
 import math
 import platform
 import traceback
-from models.vocal_remover.uvr_lib_v5 import pyrb
+from modules.vocal_remover.uvr_lib_v5 import pyrb
 from scipy.signal import correlate, hilbert
 import io
 

@@ -11,11 +11,11 @@ import json
 from tqdm import tqdm
 
 from utils.utils import demix, get_model_from_config
-from models.vocal_remover.separator import Separator
-from models.vocal_remover.vr_separator import VRSeparator
-from models.vocal_remover.uvr_lib_v5 import spec_utils
-from models.vocal_remover.uvr_lib_v5.vr_network import nets
-from models.vocal_remover.uvr_lib_v5.vr_network import nets_new
+from modules.vocal_remover.separator import Separator
+from modules.vocal_remover.vr_separator import VRSeparator
+from modules.vocal_remover.uvr_lib_v5 import spec_utils
+from modules.vocal_remover.uvr_lib_v5.vr_network import nets
+from modules.vocal_remover.uvr_lib_v5.vr_network import nets_new
 
 
 logger = logging.getLogger(__name__)

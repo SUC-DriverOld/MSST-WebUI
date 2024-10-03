@@ -5,7 +5,7 @@ sys.path.append(parrent_dir)
 import argparse
 import logging
 import time
-from models.vocal_remover.separator import Separator
+from modules.vocal_remover.separator import Separator
 
 def inference(parser, args):
     logger = logging.getLogger(__name__)

@@ -19,55 +19,55 @@ def get_model_from_config(model_type, config_path):
             config = ConfigDict(yaml.load(f, Loader=yaml.FullLoader))
 
     if model_type == 'mdx23c':
-        from models.mdx23c_tfc_tdf_v3 import TFC_TDF_net
+        from modules.mdx23c_tfc_tdf_v3 import TFC_TDF_net
         model = TFC_TDF_net(config)
     elif model_type == 'htdemucs':
-        from models.demucs4ht import get_model
+        from modules.demucs4ht import get_model
         model = get_model(config)
     elif model_type == 'segm_models':
-        from models.segm_models import Segm_Models_Net
+        from modules.segm_models import Segm_Models_Net
         model = Segm_Models_Net(config)
     elif model_type == 'torchseg':
-        from models.torchseg_models import Torchseg_Net
+        from modules.torchseg_models import Torchseg_Net
         model = Torchseg_Net(config)
     elif model_type == 'mel_band_roformer':
-        from models.bs_roformer import MelBandRoformer
+        from modules.bs_roformer import MelBandRoformer
         model = MelBandRoformer(
             **dict(config.model)
         )
     elif model_type == 'bs_roformer':
-        from models.bs_roformer import BSRoformer
+        from modules.bs_roformer import BSRoformer
         model = BSRoformer(
             **dict(config.model)
         )
     elif model_type == 'swin_upernet':
-        from models.upernet_swin_transformers import Swin_UperNet_Model
+        from modules.upernet_swin_transformers import Swin_UperNet_Model
         model = Swin_UperNet_Model(config)
     elif model_type == 'bandit':
-        from models.bandit.core.model import MultiMaskMultiSourceBandSplitRNNSimple
+        from modules.bandit.core.model import MultiMaskMultiSourceBandSplitRNNSimple
         model = MultiMaskMultiSourceBandSplitRNNSimple(
             **config.model
         )
     elif model_type == 'bandit_v2':
-        from models.bandit_v2.bandit import Bandit
+        from modules.bandit_v2.bandit import Bandit
         model = Bandit(
             **config.kwargs
         )
     elif model_type == 'scnet_unofficial':
-        from models.scnet_unofficial import SCNet
+        from modules.scnet_unofficial import SCNet
         model = SCNet(
             **config.model
         )
     elif model_type == 'scnet':
-        from models.scnet import SCNet
+        from modules.scnet import SCNet
         model = SCNet(
             **config.model
         )
     elif model_type == 'apollo':
-        from models.look2hear import BaseModel
+        from modules.look2hear import BaseModel
         model = BaseModel.apollo(**config.model)
     elif model_type == 'bs_mamba2':
-        from models.ts_bs_mamba2 import Separator
+        from modules.ts_bs_mamba2 import Separator
         model = Separator(**config.model)
     else:
         print('Unknown model: {}'.format(model_type))

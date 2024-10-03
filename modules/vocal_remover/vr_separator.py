@@ -12,11 +12,11 @@ import logging
 # Check if we really need the rerun_mp3 function, remove if not
 import audioread
 
-from models.vocal_remover.common_separator import CommonSeparator
-from models.vocal_remover.uvr_lib_v5 import spec_utils
-from models.vocal_remover.uvr_lib_v5.vr_network import nets
-from models.vocal_remover.uvr_lib_v5.vr_network import nets_new
-from models.vocal_remover.uvr_lib_v5.vr_network.model_param_init import ModelParameters
+from modules.vocal_remover.common_separator import CommonSeparator
+from modules.vocal_remover.uvr_lib_v5 import spec_utils
+from modules.vocal_remover.uvr_lib_v5.vr_network import nets
+from modules.vocal_remover.uvr_lib_v5.vr_network import nets_new
+from modules.vocal_remover.uvr_lib_v5.vr_network.model_param_init import ModelParameters
 
 vr_params_json_dir = "configs/vr_modelparams"
 unofficial_vr_params_dir = "config_unofficial/vr_modelparams"
