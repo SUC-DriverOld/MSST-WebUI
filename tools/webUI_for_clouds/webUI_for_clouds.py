@@ -581,7 +581,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
                 vr_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode, save_another_stem, extra_output_dir)
         else:
             device = config['inference']['device']
-            if len(device) == 0:
+            if device is None or len(device) == 0:
                 device = ["0"]
             use_tta = config['inference']['use_tta']
             instrumental_only = False
