@@ -3,7 +3,7 @@ from typing import List, Tuple
 import torch
 import torch.nn as nn
 
-from models.scnet_unofficial.utils import create_intervals
+from modules.scnet_unofficial.utils import create_intervals
 
 
 class Downsample(nn.Module):

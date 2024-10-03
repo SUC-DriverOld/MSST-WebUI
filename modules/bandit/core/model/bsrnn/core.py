@@ -4,13 +4,13 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from models.bandit.core.model.bsrnn import BandsplitCoreBase
-from models.bandit.core.model.bsrnn.bandsplit import BandSplitModule
-from models.bandit.core.model.bsrnn.maskestim import (
+from modules.bandit.core.model.bsrnn import BandsplitCoreBase
+from modules.bandit.core.model.bsrnn.bandsplit import BandSplitModule
+from modules.bandit.core.model.bsrnn.maskestim import (
     MaskEstimationModule,
     OverlappingMaskEstimationModule
 )
-from models.bandit.core.model.bsrnn.tfmodel import (
+from modules.bandit.core.model.bsrnn.tfmodel import (
     ConvolutionalTimeFreqModule,
     SeqBandModellingModule,
     TransformerTimeFreqModule

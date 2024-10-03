@@ -16,7 +16,7 @@ def get_model(
     weights_path,
     device,
 ):
-    from models.bandit.core.model import MultiMaskMultiSourceBandSplitRNNSimple
+    from modules.bandit.core.model import MultiMaskMultiSourceBandSplitRNNSimple
 
     f = open(config_path)
     config = ConfigDict(yaml.load(f, Loader=yaml.FullLoader))

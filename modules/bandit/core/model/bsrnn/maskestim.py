@@ -5,7 +5,7 @@ import torch
 from torch import nn
 from torch.nn.modules import activation
 
-from models.bandit.core.model.bsrnn.utils import (
+from modules.bandit.core.model.bsrnn.utils import (
     band_widths_from_specs,
     check_no_gap,
     check_no_overlap,

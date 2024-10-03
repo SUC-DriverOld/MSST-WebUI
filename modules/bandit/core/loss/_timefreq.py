@@ -4,9 +4,9 @@ import torch
 from torch import nn
 from torch.nn.modules.loss import _Loss
 
-from models.bandit.core.loss._multistem import MultiStemWrapper
-from models.bandit.core.loss._complex import ReImL1Loss, ReImL2Loss, ReImLossWrapper
-from models.bandit.core.loss.snr import SignalNoisePNormRatio
+from modules.bandit.core.loss._multistem import MultiStemWrapper
+from modules.bandit.core.loss._complex import ReImL1Loss, ReImL2Loss, ReImLossWrapper
+from modules.bandit.core.loss.snr import SignalNoisePNormRatio
 
 class TimeFreqWrapper(_Loss):
     def __init__(

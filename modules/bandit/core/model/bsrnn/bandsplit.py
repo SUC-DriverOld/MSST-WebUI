@@ -3,7 +3,7 @@ from typing import List, Tuple
 import torch
 from torch import nn
 
-from models.bandit.core.model.bsrnn.utils import (
+from modules.bandit.core.model.bsrnn.utils import (
     band_widths_from_specs,
     check_no_gap,
     check_no_overlap,
