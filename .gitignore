@@ -28,3 +28,4 @@ pretrain/hub
 *.pth
 *.th
 *.chpt
+*.pyd
