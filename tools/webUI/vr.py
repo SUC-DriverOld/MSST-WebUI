@@ -3,7 +3,7 @@ import shutil
 import threading
 import time
 
-from tools.webUI.constant import *
+from utils.constant import *
 from tools.webUI.utils import i18n, get_vr_model, run_command, load_configs, save_configs
 
 def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_multiple_audio_input, vr_store_dir, vr_batch_size, vr_normalization, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process, vr_debug_mode):

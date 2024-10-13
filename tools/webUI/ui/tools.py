@@ -1,6 +1,6 @@
 import gradio as gr
 
-from tools.webUI.constant import *
+from utils.constant import *
 from tools.webUI.utils import i18n, select_folder, open_folder
 from tools.webUI.tools import *
 

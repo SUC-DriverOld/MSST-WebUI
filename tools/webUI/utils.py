@@ -10,11 +10,12 @@ import psutil
 import subprocess
 import threading
 from tkinter import filedialog
-from torch import cuda, backends
 from ml_collections import ConfigDict
 
-from tools.webUI.constant import *
+from utils.constant import *
+from utils.logger import get_logger
 
+logger = get_logger()
 stop_all_threads = False
 stop_infer_flow = False
 
@@ -47,27 +48,6 @@ def i18n(key):
         language_list = json.load(f)
 
     return language_list.get(key, key)
-
-def get_device():
-    try:
-        if cuda.is_available():
-            gpus = []
-            n_gpu = cuda.device_count()
-            for i in range(n_gpu):
-                gpus.append(f"{i}: {cuda.get_device_name(i)}")
-            return gpus
-        elif backends.mps.is_available():
-            return [i18n("使用MPS")]
-        else:
-            return [i18n("无可用的加速设备, 使用CPU")]
-    except Exception:
-        return [i18n("设备检查失败")]
-
-def get_platform():
-    os_name = platform.system()
-    os_version = platform.version()
-    machine = platform.machine()
-    return f"System: {os_name}, Version: {os_version}, Machine: {machine}"
 
 def load_configs(config_path):
     if config_path.endswith('.json'):

@@ -4,7 +4,7 @@ import gradio as gr
 import requests
 import webbrowser
 
-from tools.webUI.constant import *
+from utils.constant import *
 from tools.webUI.utils import i18n, load_configs, save_configs, load_msst_model, load_vr_model, load_selected_model
 
 def reset_settings():

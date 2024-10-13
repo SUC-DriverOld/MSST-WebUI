@@ -5,21 +5,23 @@ import platform
 import subprocess
 import time
 import logging
-import warnings
 import json
 import torch
+import librosa
+import numpy as np
+import soundfile as sf
+from pydub import AudioSegment
 from tqdm import tqdm
 from modules.vocal_remover.vr_separator import VRSeparator
-
-VR_MODEL_MAP = "data/vr_model_map.json"
-UNOFFICIAL_MODEL_MAP = "config_unofficial/unofficial_vr_model.json"
+from utils.logger import get_logger, set_log_level
+from utils.constant import TEMP_PATH, VR_MODEL, UNOFFICIAL_MODEL
 
 class Separator:
     def __init__(
         self,
-        log_level=logging.INFO,
-        log_formatter=None,
-        model_file_dir="pretrain/VR_Models",
+        logger=get_logger(),
+        debug=False,
+        model_file="pretrain/VR_Models/1_HP-UVR.pth",
         output_dir=None,
         extra_output_dir=None,
         output_format="wav",
@@ -29,29 +31,15 @@ class Separator:
         sample_rate=44100,
         use_cpu=False,
         save_another_stem=False,
-        vr_params={"batch_size": 16, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
+        vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
     ):
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(log_level)
-        self.log_level = log_level
-        self.log_formatter = log_formatter
+        if debug:
+            set_log_level(logger, logging.DEBUG)
 
-        self.log_handler = logging.StreamHandler()
+        self.logger = logger
+        self.debug = debug
+        self.model_file = model_file
 
-        if self.log_formatter is None:
-            self.log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(module)s - %(message)s")
-
-        self.log_handler.setFormatter(self.log_formatter)
-
-        if not self.logger.hasHandlers():
-            self.logger.addHandler(self.log_handler)
-
-        # Filter out noisy warnings from PyTorch for users who don't care about them
-        if log_level > logging.DEBUG:
-            warnings.filterwarnings("ignore")
-
-        self.model_file_dir = model_file_dir
-        
         self.save_another_stem = save_another_stem
         if output_single_stem is None and save_another_stem:
             self.logger.warning("The save_another_stem option is only applicable when output_single_stem is set. Ignoring save_another_stem.")
@@ -63,19 +51,6 @@ class Separator:
 
         self.output_dir = output_dir
         self.logger.debug(f"Separator instantiating with output_dir: {output_dir}, output_format: {output_format}")
-
-        if extra_output_dir is None:
-            extra_output_dir = output_dir
-            if self.save_another_stem:
-                self.logger.info(f"Extra output directory not specified. Using output directory: {extra_output_dir} as extra output directory.")
-        
-        self.extra_output_dir = extra_output_dir
-        if self.save_another_stem:
-            self.logger.debug(f"Separator instantiating with extra_output_dir: {extra_output_dir}")
-
-        # Create the model directory if it does not exist
-        os.makedirs(self.model_file_dir, exist_ok=True)
-        os.makedirs(self.output_dir, exist_ok=True)
 
         self.output_format = output_format
 
@@ -105,6 +80,8 @@ class Separator:
         self.model_instance = None
 
         self.setup_accelerated_inferencing_device()
+
+        self.load_model(self.model_file)
 
     def setup_accelerated_inferencing_device(self):
         """
@@ -179,28 +156,28 @@ class Separator:
         self.torch_device = self.torch_device_mps
 
     def load_model_data(self, model_name):
-        vr_model_data_object = json.load(open(VR_MODEL_MAP, encoding="utf-8"))
+        vr_model_data_object = json.load(open(VR_MODEL, encoding="utf-8"))
         if model_name in vr_model_data_object.keys():
             model_data = vr_model_data_object[model_name]
             self.logger.debug(f"Model data loaded from UVR JSON: {model_data}")
             return model_data
         else:
-            unofficial_model_data = json.load(open(UNOFFICIAL_MODEL_MAP, encoding="utf-8"))
+            unofficial_model_data = json.load(open(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"), encoding="utf-8"))
             model_data = unofficial_model_data[model_name]
             self.logger.debug(f"Model data loaded from unofficial UVR JSON: {model_data}")
             return model_data
 
-    def load_model(self, model_filename="1_HP-UVR.pth"):
+    def load_model(self, model_path):
+        model_filename = os.path.basename(model_path)
         self.logger.info(f"Loading model {model_filename}...")
 
         load_model_start_time = time.perf_counter()
-        model_path = os.path.join(self.model_file_dir, f"{model_filename}")
         model_name = model_filename.split(".")[0]
         model_data = self.load_model_data(model_filename)
 
         common_params = {
             "logger": self.logger,
-            "log_level": self.log_level,
+            "debug": self.debug,
             "torch_device": self.torch_device,
             "torch_device_cpu": self.torch_device_cpu,
             "torch_device_mps": self.torch_device_mps,
@@ -209,7 +186,6 @@ class Separator:
             "model_data": model_data,
             "output_format": self.output_format,
             "output_dir": self.output_dir,
-            "extra_output_dir": self.extra_output_dir,
             "normalization_threshold": self.normalization_threshold,
             "output_single_stem": self.output_single_stem,
             "invert_using_spec": self.invert_using_spec,
@@ -222,48 +198,84 @@ class Separator:
         self.logger.debug("Loading model completed.")
         self.logger.debug(f'Load model duration: {time.strftime("%H:%M:%S", time.gmtime(int(time.perf_counter() - load_model_start_time)))}')
 
-    def separate_onefile(self, file_path):
-        self.logger.debug(f"Starting separation process for audio_file: {file_path}")
+    def process_folder(self, input_folder):
+        if not os.path.isdir(input_folder):
+            raise ValueError(f"Input folder '{input_folder}' does not exist.")
+
+        all_audio_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder)]
+        self.logger.info(f'Total files found: {len(all_audio_files)}')
+
+        if not self.debug:
+            all_audio_files = tqdm(os.listdir(input_folder), desc="Total progress")
+
+        for file_path in all_audio_files:
+            base_name = os.path.splitext(os.path.basename(file_path))[0]
+
+            if not self.debug:
+                all_audio_files.set_postfix({"track": file_path})
+
+            try:
+                mix, sr = librosa.load(file_path, sr=44100, mono=False)
+            except Exception as e:
+                self.logger.warning(f'Cannot process track: {file_path}, error: {str(e)}')
+                continue
+
+            if len(mix.shape) == 1:
+                mix = np.stack([mix, mix], axis=0)
+            if len(mix.shape) > 2:
+                self.logger.warning(f'Cannot process none stereo track: {file_path}, shape: {mix.shape}')
+                continue
+
+            self.logger.debug(f"Starting separation process for audio_file: {file_path}")
+            results = self.separate(file_path)
+            self.logger.debug(f"Separation audio_file: {file_path} completed.")
+
+            for stem in results.keys():
+                store_dir = self.output_dir.get(stem, "")
+                if store_dir:
+                    os.makedirs(store_dir, exist_ok=True)
+                    self.save_audio(results[stem], sr, f"{base_name}_{stem}", store_dir)
+
+    def separate(self, mix):
         self.logger.debug(f"Normalization threshold set to {self.normalization_threshold}, waveform will be lowered to this max amplitude to avoid clipping.")
 
-        file_output_files = self.model_instance.separate(file_path)
+        is_numpy = type(mix) == np.ndarray
+        if is_numpy:
+            data = mix
+            tempdir = os.path.join(TEMP_PATH, "tmp_audio")
+            os.makedirs(tempdir, exist_ok=True)
+            mix = os.path.join(tempdir, "tmp_audio.wav")
+            sf.write(mix, data, 44100, subtype='FLOAT')
+
+        results = self.model_instance.separate(mix)
         self.model_instance.clear_gpu_cache()
         self.model_instance.clear_file_specific_paths()
 
-        self.logger.debug(f"Separation audio_file: {file_path} completed.")
+        if is_numpy and os.path.exists(mix):
+            os.remove(mix)
 
-        return file_output_files
+        return results
 
-    def separate(self, folder_path):
-        output_files = []
-        if os.path.isfile(folder_path):
-            if self.log_level == logging.DEBUG:
-                return self.separate_onefile(folder_path)
-            else:
-                process = tqdm(total=1, desc="Total progress")
-                process.set_postfix({"track": os.path.basename(folder_path)})
-                output_files = self.separate_onefile(folder_path)
-                process.update(1)
-                return output_files
+    def save_audio(self, audio, sr, file_name, store_dir):
+        if self.output_format.lower() == 'flac':
+            file = os.path.join(store_dir, file_name + '.flac')
+            sf.write(file, audio, sr, subtype='PCM_24')
 
-        if not os.path.isdir(folder_path):
-            self.logger.error(f"The provided folder path does not exist: {folder_path}")
-            return output_files
+        elif self.output_format.lower() == 'mp3':
+            file = os.path.join(store_dir, file_name + '.mp3')
 
-        if self.log_level == logging.DEBUG:
-            all_audio_files = os.listdir(folder_path)
+            if audio.dtype != np.int16:
+                audio = (audio * 32767).astype(np.int16)
+
+            audio_segment = AudioSegment(
+                audio.tobytes(),
+                frame_rate=sr,
+                sample_width=audio.dtype.itemsize,
+                channels=2
+                )
+
+            audio_segment.export(file, format='mp3', bitrate='320k')
+
         else:
-            all_audio_files = tqdm(os.listdir(folder_path), desc="Total progress")
-        for filename in all_audio_files:
-            file_path = os.path.join(folder_path, filename)
-            if self.log_level != logging.DEBUG:
-                all_audio_files.set_postfix({"track": filename})
-
-            if not filename.lower().endswith(('.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg', '.wma')): 
-                self.logger.warning(f"Skipping not supported audio file: {filename}")
-                continue
-
-            file_output_files = self.separate_onefile(file_path)
-            output_files.extend(file_output_files)
-
-        return output_files
+            file = os.path.join(store_dir, file_name + '.wav')
+            sf.write(file, audio, sr, subtype='FLOAT')

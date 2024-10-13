@@ -4,7 +4,7 @@ import numpy as np
 import librosa
 from pydub import AudioSegment
 
-from tools.webUI.constant import *
+from utils.constant import *
 from tools.webUI.utils import i18n, load_configs, save_configs, print_command
 
 def convert_audio(uploaded_files, ffmpeg_output_format, ffmpeg_output_folder):

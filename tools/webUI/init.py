@@ -1,4 +1,4 @@
-from tools.webUI.constant import *
+from utils.constant import *
 from tools.webUI.utils import i18n, load_configs, get_msst_model, get_vr_model
 
 

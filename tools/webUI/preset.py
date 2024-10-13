@@ -5,7 +5,7 @@ import time
 import rich
 from datetime import datetime
 
-from tools.webUI.constant import *
+from utils.constant import *
 from tools.webUI.utils import (
     i18n, 
     load_configs, 

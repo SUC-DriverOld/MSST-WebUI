@@ -4,7 +4,7 @@ import threading
 import time
 import gradio as gr
 
-from tools.webUI.constant import *
+from utils.constant import *
 from tools.webUI.utils import i18n, load_configs, save_configs, run_command, load_selected_model
 from tools.webUI.init import get_msst_model
 

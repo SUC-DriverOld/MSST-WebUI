@@ -1,6 +1,6 @@
 import gradio as gr
 
-from tools.webUI.constant import WEBUI_CONFIG, PRESETS, LANGUAGE, PACKAGE_VERSION
+from utils.constant import WEBUI_CONFIG, PRESETS, LANGUAGE, PACKAGE_VERSION
 from tools.webUI.utils import i18n, load_configs
 from tools.webUI import ui
 
@@ -8,7 +8,7 @@ webui_config = load_configs(WEBUI_CONFIG)
 presets = load_configs(PRESETS)
 language_dict = load_configs(LANGUAGE)
 
-def app():
+def app(platform, device):
     with gr.Blocks(
             theme=gr.Theme.load('tools/themes/theme_schema@1.2.2.json')
     ) as app:
@@ -17,7 +17,7 @@ def app():
 
         with gr.Tabs():
             with gr.TabItem(label=i18n("MSST分离")):
-                ui.msst(webui_config)
+                ui.msst(webui_config, device)
             with gr.TabItem(label=i18n("UVR分离")):
                 ui.vr(webui_config)
             with gr.TabItem(label=i18n("预设流程")):
@@ -27,7 +27,7 @@ def app():
             with gr.TabItem(label=i18n("安装模型")):
                 ui.models(webui_config)
             with gr.TabItem(label=i18n("MSST训练")):
-                ui.train(webui_config)
+                ui.train(webui_config, device)
             with gr.TabItem(label=i18n("设置")):
-                ui.settings(webui_config, language_dict)
+                ui.settings(webui_config, language_dict, platform, device)
     return app

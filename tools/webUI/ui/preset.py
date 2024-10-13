@@ -1,7 +1,7 @@
 import gradio as gr
 import pandas as pd
 
-from tools.webUI.constant import *
+from utils.constant import *
 from tools.webUI.utils import i18n, select_folder, open_folder, stop_all_thread
 from tools.webUI.preset import *
 

@@ -1,7 +1,7 @@
 import gradio as gr
 
-from tools.webUI.constant import *
-from tools.webUI.utils import i18n, get_device, load_selected_model, select_folder, open_folder, stop_all_thread
+from utils.constant import *
+from tools.webUI.utils import i18n, load_selected_model, select_folder, open_folder, stop_all_thread
 from tools.webUI.init import init_selected_model, init_selected_msst_model
 from tools.webUI.msst import (
     run_inference_single, 
@@ -11,13 +11,13 @@ from tools.webUI.msst import (
     save_config, reset_config
 )
 
-def msst(webui_config):
+def msst(webui_config, device):
     gr.Markdown(value=i18n("MSST音频分离原项目地址: [https://github.com/ZFTurbo/Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)"))
     with gr.Row():
         select_model_type = gr.Dropdown(label=i18n("选择模型类型"), choices=["vocal_models", "multi_stem_models", "single_stem_models"], value=webui_config['inference']['model_type'] if webui_config['inference']['model_type'] else None, interactive=True, scale=1)
         selected_model = gr.Dropdown(label=i18n("选择模型"),choices=load_selected_model(),value=webui_config['inference']['selected_model'] if webui_config['inference']['selected_model'] else None,interactive=True,scale=4)
     with gr.Row():
-        gpu_id = gr.CheckboxGroup(label=i18n("选择使用的GPU"),choices=get_device(),value=webui_config['inference']['device'] if webui_config['inference']['device'] else get_device()[0],interactive=True)
+        gpu_id = gr.CheckboxGroup(label=i18n("选择使用的GPU"),choices=device,value=webui_config['inference']['device'] if webui_config['inference']['device'] else device[0],interactive=True)
         output_format = gr.Radio(label=i18n("输出格式"),choices=["wav", "mp3", "flac"],value=webui_config['inference']['output_format'] if webui_config['inference']['output_format'] else "wav", interactive=True)
     with gr.Row():
         with gr.Column():

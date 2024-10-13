@@ -1,12 +1,12 @@
 import gradio as gr
 import pandas as pd
 
-from tools.webUI.constant import *
-from tools.webUI.utils import i18n, get_device, open_folder, select_file, select_folder, select_yaml_file, stop_all_thread
+from utils.constant import *
+from tools.webUI.utils import i18n, open_folder, select_file, select_folder, select_yaml_file, stop_all_thread
 from tools.webUI.train import *
 from multiprocessing import cpu_count
 
-def train(webui_config):
+def train(webui_config, device):
     gr.Markdown(value=i18n("此页面提供数据集制作教程, 训练参数选择, 以及一键训练。有关配置文件的修改和数据集文件夹的详细说明请参考MSST原项目: [https://github.com/ZFTurbo/Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)<br>在开始下方的模型训练之前, 请先进行训练数据的制作。<br>说明: 数据集类型即训练集制作Step 1中你选择的类型, 1: Type1; 2: Type2; 3: Type3; 4: Type4, 必须与你的数据集类型相匹配。"))
     with gr.Tabs():
         with gr.TabItem(label=i18n("训练")):
@@ -22,7 +22,7 @@ def train(webui_config):
                 train_valid_path = gr.Textbox(label=i18n("验证集路径"),value=webui_config['training']['valid_path'] if webui_config['training']['valid_path'] else i18n("请输入或选择验证集文件夹"),interactive=True,scale=4)
                 select_train_valid_path = gr.Button(i18n("选择验证集文件夹"), scale=1)
             with gr.Row():
-                train_device_ids = gr.CheckboxGroup(label=i18n("选择使用的GPU"),choices=get_device(),value=webui_config['training']['device'] if webui_config['training']['device'] else get_device()[0],interactive=True)
+                train_device_ids = gr.CheckboxGroup(label=i18n("选择使用的GPU"),choices=device,value=webui_config['training']['device'] if webui_config['training']['device'] else device[0],interactive=True)
                 train_num_workers = gr.Number(label=i18n("num_workers: 数据集读取线程数, 0为自动"),value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,interactive=True,minimum=0,maximum=cpu_count(),step=1)
                 train_seed = gr.Number(label=i18n("随机数种子, 0为随机"), value="0")
             with gr.Row():
@@ -74,7 +74,7 @@ def train(webui_config):
                 select_valid_results_path = gr.Button(i18n("选择文件夹"), scale=1)
                 open_valid_results_path = gr.Button(i18n("打开文件夹"), scale=1)
             with gr.Row():
-                valid_device_ids = gr.CheckboxGroup(label=i18n("选择使用的GPU"),choices=get_device(),value=webui_config['training']['device'] if webui_config['training']['device'] else get_device()[0],interactive=True)
+                valid_device_ids = gr.CheckboxGroup(label=i18n("选择使用的GPU"),choices=device,value=webui_config['training']['device'] if webui_config['training']['device'] else device[0],interactive=True)
                 valid_extension = gr.Radio(label=i18n("选择验证集音频格式"),choices=["wav", "flac", "mp3"],value="wav",interactive=True)
                 valid_num_workers = gr.Number(label=i18n("验证集读取线程数, 0为自动"),value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,interactive=True,minimum=0,maximum=cpu_count(),step=1)
             with gr.Row():

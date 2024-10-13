@@ -47,9 +47,9 @@ def inference(parser, args):
         },
     )
     separator.load_model(model_filename=args.model_filename)
-    output_files = separator.separate(args.audio_file)
+    separator.separate(args.audio_file)
     logger.info(f"Separator finished in {time.time() - start_time:.2f} seconds.")
-    logger.info(f"Results are saved to: {output_files}")
+    logger.info(f"Results are saved to: {args.output_dir}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Separate audio file into different stems.", formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=60))

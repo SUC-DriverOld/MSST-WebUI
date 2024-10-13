@@ -1,6 +1,6 @@
 import gradio as gr
 
-from tools.webUI.constant import *
+from utils.constant import *
 from tools.webUI.utils import i18n, load_vr_model, load_vr_model_stem, stop_all_thread, select_folder, open_folder
 from tools.webUI.init import init_selected_vr_model
 from tools.webUI.vr import vr_inference_single, vr_inference_multi

@@ -18,14 +18,11 @@ import torch.nn as nn
 
 from tqdm import tqdm
 from utils.utils import demix, get_model_from_config
+from utils.logger import get_logger
 
 warnings.filterwarnings("ignore", category = UserWarning)
-log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"
-date_format = "%H:%M:%S"
-logging.basicConfig(level = logging.INFO, format = log_format, datefmt = date_format)
-logger = logging.getLogger(__name__)
 
-def run_folder(model, args, config, device):
+def run_folder(logger, model, args, config, device):
     start_time = time.time()
     model.eval()
     all_mixtures_path = glob.glob(args.input_folder + '/*.*')
@@ -142,11 +139,14 @@ def proc_folder(args):
     parser.add_argument("--extra_store_dir", default = "", type = str, help = "path to store extracted instrumental. If not provided, store_dir will be used")
     parser.add_argument("--force_cpu", action = 'store_true', help = "Force the use of CPU even if CUDA is available")
     parser.add_argument("--use_tta", action='store_true', help="Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality.")
+    parser.add_argument("--debug", action = 'store_true', help = "Enable debug logging, equivalent to --log_level=debug")
 
     if args is None:
         args = parser.parse_args()
     else:
         args = parser.parse_args(args)
+
+    logger = get_logger(level = logging.DEBUG if args.debug else logging.INFO)
 
     device = "cpu"
     if args.force_cpu:
@@ -178,7 +178,7 @@ def proc_folder(args):
         model = nn.DataParallel(model, device_ids = args.device_ids)
     model = model.to(device)
 
-    run_folder(model, args, config, device)
+    run_folder(logger, model, args, config, device)
 
 if __name__ == "__main__":
     proc_folder(None)

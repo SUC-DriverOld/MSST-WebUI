@@ -1,17 +1,17 @@
 import gradio as gr
 
-from tools.webUI.constant import *
-from tools.webUI.utils import i18n, get_device, get_platform, webui_restart, select_folder
+from utils.constant import *
+from tools.webUI.utils import i18n, webui_restart, select_folder
 from tools.webUI.settings import *
 
-def settings(webui_config, language_dict):
+def settings(webui_config, language_dict, platform, device):
     with gr.Tabs():
         with gr.TabItem(label=i18n("WebUI设置")):
             with gr.Row():
                 with gr.Column(scale=3):
                     with gr.Row():
-                        gpu_list = gr.Textbox(label=i18n("GPU信息"), value=get_device() if len(get_device()) > 1 else get_device()[0], interactive=False)
-                        plantform_info = gr.Textbox(label=i18n("系统信息"), value=get_platform(), interactive=False)
+                        gpu_list = gr.Textbox(label=i18n("GPU信息"), value=device if len(device) > 1 else device[0], interactive=False)
+                        plantform_info = gr.Textbox(label=i18n("系统信息"), value=platform, interactive=False)
                     with gr.Row():
                         set_webui_port = gr.Number(label=i18n("设置WebUI端口, 0为自动"), value=webui_config["settings"].get("port", 0), interactive=True)
                         set_language = gr.Dropdown(label=i18n("选择语言"), choices=language_dict.keys(), value=get_language(), interactive=True)

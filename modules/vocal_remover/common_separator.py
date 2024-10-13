@@ -51,7 +51,7 @@ class CommonSeparator:
     def __init__(self, config):
 
         self.logger: Logger = config.get("logger")
-        self.log_level: int = config.get("log_level")
+        self.debug = config.get("debug")
 
         # Inferencing device / acceleration config
         self.torch_device = config.get("torch_device")
@@ -66,7 +66,6 @@ class CommonSeparator:
         # Output directory and format
         self.output_dir = config.get("output_dir")
         self.output_format = config.get("output_format")
-        self.extra_output_dir = config.get("extra_output_dir")
 
         # Functional options which are applicable to all architectures and the user may tweak to affect the output
         self.normalization_threshold = config.get("normalization_threshold")
@@ -199,7 +198,7 @@ class CommonSeparator:
         self.logger.debug("Mix preparation completed.")
         return mix
 
-    def write_audio(self, stem_path: str, stem_source, extra=False):
+    def write_audio(self, stem_path: str, stem_source):
         """
         Writes the separated audio source to a file.
         """
@@ -213,14 +212,9 @@ class CommonSeparator:
             return
 
         # If output_dir is specified, create it and join it with stem_path
-        if extra:
-            if self.extra_output_dir:
-                os.makedirs(self.extra_output_dir, exist_ok=True)
-                stem_path = os.path.join(self.extra_output_dir, stem_path)
-        else:
-            if self.output_dir:
-                os.makedirs(self.output_dir, exist_ok=True)
-                stem_path = os.path.join(self.output_dir, stem_path)
+        if self.output_dir:
+            os.makedirs(self.output_dir, exist_ok=True)
+            stem_path = os.path.join(self.output_dir, stem_path)
 
         self.logger.debug(f"Audio data shape before processing: {stem_source.shape}")
         self.logger.debug(f"Data type before conversion: {stem_source.dtype}")
@@ -279,9 +273,6 @@ class CommonSeparator:
         Clears the file-specific variables which need to be cleared between processing different audio inputs.
         """
         self.logger.debug("Clearing input audio file paths, sources and stems...")
-
-        self.audio_file_path = None
-        self.audio_file_base = None
 
         self.primary_source = None
         self.secondary_source = None

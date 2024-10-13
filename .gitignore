@@ -19,9 +19,12 @@ config_unofficial/
 cache/
 tmpdir/
 pretrain/hub
+build/
+logs/
 
 !pretrain/*.json
 !.gitkeep
+setup.py
 
 *.ckpt
 *.pt
