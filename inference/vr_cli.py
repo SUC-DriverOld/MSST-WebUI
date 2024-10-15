@@ -3,101 +3,64 @@ import os
 parrent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parrent_dir)
 import argparse
+import warnings
 import logging
-import time
+from time import time
 from modules.vocal_remover.separator import Separator
+from utils.logger import get_logger
 
-def inference(parser, args):
-    logger = logging.getLogger(__name__)
-    log_handler = logging.StreamHandler()
-    log_formatter = logging.Formatter(fmt="%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s", datefmt="%H:%M:%S")
-    log_handler.setFormatter(log_formatter)
-    logger.addHandler(log_handler)
+def vr_inference(args):
+    logger = get_logger(console_level=logging.INFO)
 
-    log_level = logging.DEBUG if args.debug else logging.INFO
-    logger.setLevel(log_level)
+    if not args.debug:
+        warnings.filterwarnings("ignore", category=UserWarning)
 
-    if not hasattr(args, "audio_file"):
-        parser.print_help()
-        sys.exit(1)
-
-    start_time = time.time()
-    logger.info(f"Separator beginning with input file or folder: {args.audio_file}")
+    start_time = time()
 
     separator = Separator(
-        log_formatter=log_formatter,
-        log_level=log_level,
-        model_file_dir=args.model_file_dir,
-        output_dir=args.output_dir,
-        extra_output_dir=args.extra_output_dir,
+        logger=logger,
+        debug=args.debug,
+        model_file=args.model_path,
+        output_dir=args.output_folder,
         output_format=args.output_format,
-        normalization_threshold=args.normalization,
-        output_single_stem=args.single_stem,
         invert_using_spec=args.invert_spect,
         use_cpu=args.use_cpu,
-        save_another_stem=args.save_another_stem,
         vr_params={
-            "batch_size": args.vr_batch_size,
-            "window_size": args.vr_window_size,
-            "aggression": args.vr_aggression,
-            "enable_tta": args.vr_enable_tta,
-            "enable_post_process": args.vr_enable_post_process,
-            "post_process_threshold": args.vr_post_process_threshold,
-            "high_end_process": args.vr_high_end_process,
+            "batch_size": args.batch_size,
+            "window_size": args.window_size,
+            "aggression": args.aggression,
+            "enable_tta": args.enable_tta,
+            "enable_post_process": args.enable_post_process,
+            "post_process_threshold": args.post_process_threshold,
+            "high_end_process": args.high_end_process,
         },
     )
-    separator.load_model(model_filename=args.model_filename)
-    separator.separate(args.audio_file)
-    logger.info(f"Separator finished in {time.time() - start_time:.2f} seconds.")
-    logger.info(f"Results are saved to: {args.output_dir}")
+    success_files = separator.process_folder(args.input_folder)
+    logger.info(f"Successfully separated files: {success_files}, total time: {time() - start_time:.2f} seconds.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Separate audio file into different stems.", formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=60))
+    parser = argparse.ArgumentParser(description="Vocal Remover Command Line Interface", formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=60))
 
-    parser.add_argument("audio_file", nargs="?", help="The audio file path to separate, in any common format. You can input file path or file folder path", default=argparse.SUPPRESS)
-    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging, equivalent to --log_level=debug.")
-
-    model_filename_help = "model to use for separation (default: %(default)s). Example: -m 2_HP-UVR.pth"
-    output_format_help = "output format for separated files, any common format (default: %(default)s). Example: --output_format=MP3"
-    output_dir_help = "directory to write output files (default: <current dir>). Example: --output_dir=/app/separated"
-    model_file_dir_help = "model files directory (default: %(default)s). Example: --model_file_dir=/app/models"
-    extra_output_dir_help = "extra output directory for saving another stem. If not provided, output_dir will be used. Example: --extra_output_dir=/app/extra_output"
+    parser.add_argument("-d", "--debug", action='store_true', help="Enable debug logging (default: %(default)s). Example: --debug")
+    parser.add_argument("--use_cpu", action="store_true", help="Use CPU instead of GPU for inference (default: %(default)s). Example: --use_cpu")
 
     io_params = parser.add_argument_group("Separation I/O Params")
-    io_params.add_argument("-m", "--model_filename", default="1_HP-UVR.pth", help=model_filename_help)
-    io_params.add_argument("--output_format", default="FLAC", help=output_format_help)
-    io_params.add_argument("--output_dir", default=None, help=output_dir_help)
-    io_params.add_argument("--model_file_dir", default="pretrain/VR_Models", help=model_file_dir_help)
-    io_params.add_argument("--extra_output_dir", default=None, help=extra_output_dir_help)
-
-    invert_spect_help = "invert secondary stem using spectogram (default: %(default)s). Example: --invert_spect"
-    normalization_help = "max peak amplitude to normalize input and output audio to (default: %(default)s). Example: --normalization=0.7"
-    single_stem_help = "output only single stem, e.g. Instrumental, Vocals, Drums, Bass, Guitar, Piano, Other. Example: --single_stem=Instrumental"
-    save_another_stem_help = "save another stem when using flow inference (default: %(default)s). Example: --save_another_stem"
+    io_params.add_argument("-i", "--input_folder", type=str, help="Folder with mixtures to process. [required]")
+    io_params.add_argument("-o", "--output_folder", default="results", help="Folder to store separated files. str for single folder, dict with instrument keys for multiple folders. Example: --output_folder=results or --output_folder=\"{'vocals': 'results/vocals', 'instrumental': 'results/instrumental'}\"")
+    io_params.add_argument("--output_format", choices=['wav', 'flac', 'mp3'], default="wav", help="Output format for separated files (default: %(default)s). Example: --output_format=wav")
 
     common_params = parser.add_argument_group("Common Separation Parameters")
-    common_params.add_argument("--invert_spect", action="store_true", help=invert_spect_help)
-    common_params.add_argument("--normalization", type=float, default=0.9, help=normalization_help)
-    common_params.add_argument("--single_stem", default=None, help=single_stem_help)
-    common_params.add_argument("--use_cpu", action="store_true", help="use CPU instead of GPU for inference")
-    common_params.add_argument("--save_another_stem", action="store_true", help=save_another_stem_help)
-
-    vr_batch_size_help = "number of batches to process at a time. higher = more RAM, slightly faster processing (default: %(default)s). Example: --vr_batch_size=16"
-    vr_window_size_help = "balance quality and speed. 1024 = fast but lower, 320 = slower but better quality. (default: %(default)s). Example: --vr_window_size=320"
-    vr_aggression_help = "intensity of primary stem extraction, -100 - 100. typically 5 for vocals & instrumentals (default: %(default)s). Example: --vr_aggression=2"
-    vr_enable_tta_help = "enable Test-Time-Augmentation; slow but improves quality (default: %(default)s). Example: --vr_enable_tta"
-    vr_high_end_process_help = "mirror the missing frequency range of the output (default: %(default)s). Example: --vr_high_end_process"
-    vr_enable_post_process_help = "identify leftover artifacts within vocal output; may improve separation for some songs (default: %(default)s). Example: --vr_enable_post_process"
-    vr_post_process_threshold_help = "threshold for post_process feature: 0.1-0.3 (default: %(default)s). Example: --vr_post_process_threshold=0.1"
+    common_params.add_argument("-m", "--model_path", type=str, help="Path to model checkpoint. [required]")
+    common_params.add_argument("--invert_spect", action="store_true", help="Invert secondary stem using spectogram (default: %(default)s). Example: --invert_spect")
 
     vr_params = parser.add_argument_group("VR Architecture Parameters")
-    vr_params.add_argument("--vr_batch_size", type=int, default=4, help=vr_batch_size_help)
-    vr_params.add_argument("--vr_window_size", type=int, default=512, help=vr_window_size_help)
-    vr_params.add_argument("--vr_aggression", type=int, default=5, help=vr_aggression_help)
-    vr_params.add_argument("--vr_enable_tta", action="store_true", help=vr_enable_tta_help)
-    vr_params.add_argument("--vr_high_end_process", action="store_true", help=vr_high_end_process_help)
-    vr_params.add_argument("--vr_enable_post_process", action="store_true", help=vr_enable_post_process_help)
-    vr_params.add_argument("--vr_post_process_threshold", type=float, default=0.2, help=vr_post_process_threshold_help)
+    vr_params.add_argument("--batch_size", type=int, default=2, help="Number of batches to process at a time. higher = more RAM, slightly faster processing (default: %(default)s). Example: --batch_size=16")
+    vr_params.add_argument("--window_size", type=int, default=512, help="Balance quality and speed. 1024 = fast but lower, 320 = slower but better quality. (default: %(default)s). Example: --window_size=320")
+    vr_params.add_argument("--aggression", type=int, default=5, help="Intensity of primary stem extraction, -100 - 100. typically 5 for vocals & instrumentals (default: %(default)s). Example: --aggression=2")
+    vr_params.add_argument("--enable_tta", action="store_true", help="Enable Test-Time-Augmentation; slow but improves quality (default: %(default)s). Example: --enable_tta")
+    vr_params.add_argument("--high_end_process", action="store_true", help="Mirror the missing frequency range of the output (default: %(default)s). Example: --high_end_process")
+    vr_params.add_argument("--enable_post_process", action="store_true", help="Identify leftover artifacts within vocal output; may improve separation for some songs (default: %(default)s). Example: --enable_post_process")
+    vr_params.add_argument("--post_process_threshold", type=float, default=0.2, help="Threshold for post_process feature: 0.1-0.3 (default: %(default)s). Example: --post_process_threshold=0.1")
 
     args = parser.parse_args()
-    inference(parser, args)
+    vr_inference(args)

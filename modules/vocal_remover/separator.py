@@ -22,15 +22,10 @@ class Separator:
         logger=get_logger(),
         debug=False,
         model_file="pretrain/VR_Models/1_HP-UVR.pth",
-        output_dir=None,
-        extra_output_dir=None,
+        output_dir="results",
         output_format="wav",
-        normalization_threshold=0.9,
-        output_single_stem=None,
         invert_using_spec=False,
-        sample_rate=44100,
         use_cpu=False,
-        save_another_stem=False,
         vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
     ):
         if debug:
@@ -39,40 +34,17 @@ class Separator:
         self.logger = logger
         self.debug = debug
         self.model_file = model_file
-
-        self.save_another_stem = save_another_stem
-        if output_single_stem is None and save_another_stem:
-            self.logger.warning("The save_another_stem option is only applicable when output_single_stem is set. Ignoring save_another_stem.")
-            self.save_another_stem = False
-
-        if output_dir is None:
-            output_dir = os.getcwd()
-            self.logger.info("Output directory not specified. Using current working directory.")
-
         self.output_dir = output_dir
-        self.logger.debug(f"Separator instantiating with output_dir: {output_dir}, output_format: {output_format}")
-
         self.output_format = output_format
-
-        if self.output_format is None:
-            self.output_format = "wav"
-
-        self.normalization_threshold = normalization_threshold
-        if normalization_threshold <= 0 or normalization_threshold > 1:
-            raise ValueError("The normalization_threshold must be greater than 0 and less than or equal to 1.")
-
-        self.output_single_stem = output_single_stem
-        if output_single_stem is not None:
-            self.logger.debug(f"Single stem output requested, so only one output file ({output_single_stem}) will be written")
-
         self.invert_using_spec = invert_using_spec
+
         if self.invert_using_spec:
             self.logger.debug(f"Secondary step will be inverted using spectogram rather than waveform. This may improve quality but is slightly slower.")
 
         # These are parameters which users may want to configure so we expose them to the top-level Separator class,
         # even though they are specific to a single model architecture
         self.vr_params_params = vr_params
-        self.sample_rate = sample_rate
+        self.sample_rate = 44100
         self.use_cpu = use_cpu
         self.torch_device = None
         self.torch_device_cpu = None
@@ -80,12 +52,24 @@ class Separator:
         self.model_instance = None
 
         self.setup_accelerated_inferencing_device()
-
         self.load_model(self.model_file)
+
+        if type(self.output_dir) == str:
+            self.output_dir = {
+                self.model_instance.primary_stem_name: self.output_dir,
+                self.model_instance.secondary_stem_name: self.output_dir,
+                }
+
+        for key in list(self.output_dir.keys()):
+            stem_name = [self.model_instance.primary_stem_name, self.model_instance.secondary_stem_name]
+            if key not in stem_name and key.lower() not in stem_name:
+                self.output_dir.pop(key)
+                self.logger.warning(f"Invalid instrument key: {key}, removing from output_dir")
+                self.logger.warning(f"Valid instrument keys: {stem_name}")
 
     def setup_accelerated_inferencing_device(self):
         """
-        This method sets up the PyTorch and/or ONNX Runtime inferencing device, using GPU hardware acceleration if available.
+        This method sets up the PyTorch inferencing device, using GPU hardware acceleration if available.
         """
         self.log_system_info()
         self.check_ffmpeg_installed()
@@ -130,7 +114,7 @@ class Separator:
 
     def setup_torch_device(self):
         """
-        This method sets up the PyTorch and/or ONNX Runtime inferencing device, using GPU hardware acceleration if available.
+        This method sets up the PyTorch inferencing device, using GPU hardware acceleration if available.
         """
         hardware_acceleration_enabled = False
         self.torch_device_cpu = torch.device("cpu")
@@ -186,11 +170,8 @@ class Separator:
             "model_data": model_data,
             "output_format": self.output_format,
             "output_dir": self.output_dir,
-            "normalization_threshold": self.normalization_threshold,
-            "output_single_stem": self.output_single_stem,
             "invert_using_spec": self.invert_using_spec,
             "sample_rate": self.sample_rate,
-            "save_another_stem": self.save_another_stem,
         }
 
         self.logger.debug(f"Instantiating vr_separator class")
@@ -203,14 +184,12 @@ class Separator:
             raise ValueError(f"Input folder '{input_folder}' does not exist.")
 
         all_audio_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder)]
-        self.logger.info(f'Total files found: {len(all_audio_files)}')
+        self.logger.info(f"Input_folder: {input_folder}, Total files found: {len(all_audio_files)}")
 
         if not self.debug:
-            all_audio_files = tqdm(os.listdir(input_folder), desc="Total progress")
+            all_audio_files = tqdm(all_audio_files, desc="Total progress")
 
         for file_path in all_audio_files:
-            base_name = os.path.splitext(os.path.basename(file_path))[0]
-
             if not self.debug:
                 all_audio_files.set_postfix({"track": file_path})
 
@@ -230,6 +209,7 @@ class Separator:
             results = self.separate(file_path)
             self.logger.debug(f"Separation audio_file: {file_path} completed.")
 
+            base_name = os.path.splitext(os.path.basename(file_path))[0]
             for stem in results.keys():
                 store_dir = self.output_dir.get(stem, "")
                 if store_dir:
@@ -237,15 +217,14 @@ class Separator:
                     self.save_audio(results[stem], sr, f"{base_name}_{stem}", store_dir)
 
     def separate(self, mix):
-        self.logger.debug(f"Normalization threshold set to {self.normalization_threshold}, waveform will be lowered to this max amplitude to avoid clipping.")
-
-        is_numpy = type(mix) == np.ndarray
+        is_numpy = isinstance(mix, np.ndarray)
         if is_numpy:
-            data = mix
             tempdir = os.path.join(TEMP_PATH, "tmp_audio")
             os.makedirs(tempdir, exist_ok=True)
+            sf.write(os.path.join(tempdir, "tmp_audio.wav"), mix.T, 44100, subtype="FLOAT")
+
             mix = os.path.join(tempdir, "tmp_audio.wav")
-            sf.write(mix, data, 44100, subtype='FLOAT')
+            self.logger.debug(f"Temporary audio file created: {mix}")
 
         results = self.model_instance.separate(mix)
         self.model_instance.clear_gpu_cache()

@@ -64,9 +64,12 @@ MODEL_FOLDER = "pretrain"
 TEMP_PATH = "tmpdir"
 
 # path to unoffical model config
+# path to unofficial msst model config: UNOFFICIAL_MODEL/unofficial_msst_model.json
+# path to unofficial vr model config: UNOFFICIAL_MODEL/unofficial_vr_model.json
 UNOFFICIAL_MODEL = "config_unofficial"
 
 # path to vr model params
+# path to unofficial vr model params: UNOFFICIAL_MODEL/vr_modelparams
 VR_MODELPARAMS = "configs/vr_modelparams"
 
 # msst model types, type=list
