@@ -56,7 +56,7 @@ class VRSeparator(CommonSeparator):
             vr_params_json_filepath = os.path.join(unofficial_vr_params_dir, vr_params_json_filename)
             self.model_params = ModelParameters(vr_params_json_filepath)
 
-        self.logger.debug(f"Model params: {self.model_params.param}")
+        # self.logger.debug(f"Model params: {self.model_params.param}")
 
         # Arch Config is the VR architecture specific user configuration options, which should all be configurable by the user
         # either by their Separator class instantiation or by passing in a CLI parameter.
@@ -114,7 +114,7 @@ class VRSeparator(CommonSeparator):
         # This should go away once we refactor to remove soundfile.write and replace with pydub like we did for the MDX rewrite
         self.wav_subtype = "PCM_16"
 
-        self.logger.debug("VR Separator initialisation complete")
+        # self.logger.debug("VR Separator initialisation complete")
 
     def separate(self, mix):
         """
@@ -160,11 +160,11 @@ class VRSeparator(CommonSeparator):
 
         # After inference_vr call
         self.logger.debug(f"Inference VR completed. y_spec shape: {y_spec.shape}, v_spec shape: {v_spec.shape}")
-        self.logger.debug(f"y_spec stats - min: {np.min(y_spec)}, max: {np.max(y_spec)}, isnan: {np.isnan(y_spec).any()}, isinf: {np.isinf(y_spec).any()}")
-        self.logger.debug(f"v_spec stats - min: {np.min(v_spec)}, max: {np.max(v_spec)}, isnan: {np.isnan(v_spec).any()}, isinf: {np.isinf(v_spec).any()}")
+        # self.logger.debug(f"y_spec stats - min: {np.min(y_spec)}, max: {np.max(y_spec)}, isnan: {np.isnan(y_spec).any()}, isinf: {np.isinf(y_spec).any()}")
+        # self.logger.debug(f"v_spec stats - min: {np.min(v_spec)}, max: {np.max(v_spec)}, isnan: {np.isnan(v_spec).any()}, isinf: {np.isinf(v_spec).any()}")
 
         results = {}
-        self.logger.debug("Processing output files...")
+        # self.logger.debug("Processing output files...")
 
         results[self.primary_stem_name] = self.process_stem(self.primary_stem_name, self.primary_source, y_spec)
         results[self.secondary_stem_name] = self.process_stem(self.secondary_stem_name, self.secondary_source, v_spec)
@@ -174,9 +174,8 @@ class VRSeparator(CommonSeparator):
     def process_stem(self, stem_name, stem_source, spec):
         self.logger.debug(f"Processing {stem_name} stem")
         if not isinstance(stem_source, np.ndarray):
-            self.logger.debug(f"Preparing to convert spectrogram to waveform. Spec shape: {spec.shape}")
+            # self.logger.debug(f"Preparing to convert spectrogram to waveform. Spec shape: {spec.shape}")
             stem_source = self.spec_to_wav(spec).T
-            self.logger.debug(f"Converting {stem_name} spectrogram to waveform.")
             if self.model_samplerate != 44100:
                 stem_source = librosa.resample(stem_source.T, orig_sr=self.model_samplerate, target_sr=44100).T
                 self.logger.debug(f"Resampling {stem_name} to 44100Hz.")

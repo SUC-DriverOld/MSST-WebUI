@@ -88,9 +88,6 @@ class Separator:
         os_version = platform.version()
         self.logger.debug(f"Operating System: {os_name} {os_version}")
 
-        system_info = platform.uname()
-        self.logger.debug(f"System: {system_info.system} Node: {system_info.node} Release: {system_info.release} Machine: {system_info.machine} Proc: {system_info.processor}")
-
         python_version = platform.python_version()
         self.logger.debug(f"Python Version: {python_version}")
 
@@ -107,10 +104,6 @@ class Separator:
             self.logger.debug(f"FFmpeg installed: {first_line}")
         except FileNotFoundError:
             self.logger.error("FFmpeg is not installed. Please install FFmpeg to use this package.")
-            # Raise an exception if this is being run by a user, as ffmpeg is required for pydub to write audio
-            # but if we're just running unit tests in CI, no reason to throw
-            if "PYTEST_CURRENT_TEST" not in os.environ:
-                raise
 
     def setup_torch_device(self):
         """
@@ -153,9 +146,9 @@ class Separator:
 
     def load_model(self, model_path):
         model_filename = os.path.basename(model_path)
-        self.logger.info(f"Loading model {model_filename}...")
+        self.logger.debug(f"Loading model {model_filename}...")
 
-        load_model_start_time = time.perf_counter()
+        load_model_start_time = time.time()
         model_name = model_filename.split(".")[0]
         model_data = self.load_model_data(model_filename)
 
@@ -174,10 +167,8 @@ class Separator:
             "sample_rate": self.sample_rate,
         }
 
-        self.logger.debug(f"Instantiating vr_separator class")
         self.model_instance = VRSeparator(common_config=common_params, arch_config=self.vr_params_params)
-        self.logger.debug("Loading model completed.")
-        self.logger.debug(f'Load model duration: {time.strftime("%H:%M:%S", time.gmtime(int(time.perf_counter() - load_model_start_time)))}')
+        self.logger.debug(f'Loading model completed, duration: {time.time() - load_model_start_time:.2f} seconds')
 
     def process_folder(self, input_folder):
         if not os.path.isdir(input_folder):
@@ -189,6 +180,7 @@ class Separator:
         if not self.debug:
             all_audio_files = tqdm(all_audio_files, desc="Total progress")
 
+        success_files = []
         for file_path in all_audio_files:
             if not self.debug:
                 all_audio_files.set_postfix({"track": file_path})
@@ -207,7 +199,7 @@ class Separator:
 
             self.logger.debug(f"Starting separation process for audio_file: {file_path}")
             results = self.separate(file_path)
-            self.logger.debug(f"Separation audio_file: {file_path} completed.")
+            self.logger.debug(f"Separation audio_file: {file_path} completed. Starting to save results.")
 
             base_name = os.path.splitext(os.path.basename(file_path))[0]
             for stem in results.keys():
@@ -215,6 +207,10 @@ class Separator:
                 if store_dir:
                     os.makedirs(store_dir, exist_ok=True)
                     self.save_audio(results[stem], sr, f"{base_name}_{stem}", store_dir)
+                    self.logger.debug(f"Saved {stem} for {base_name}_{stem}.{self.output_format} in {store_dir}")
+
+            success_files.append(os.path.basename(file_path))
+        return success_files
 
     def separate(self, mix):
         is_numpy = isinstance(mix, np.ndarray)
@@ -232,6 +228,8 @@ class Separator:
 
         if is_numpy and os.path.exists(mix):
             os.remove(mix)
+
+        self.logger.debug("Separation process completed.")
 
         return results
 

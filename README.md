@@ -7,12 +7,12 @@
 [![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers)<br>
 WebUI of Music-Source-Separation-Training-Inference , and we packed UVR together!<br>
-Support Languages: **English, 简体中文, 繁體中文, 日本語**
+Support Languages: English, 简体中文, 繁體中文, 日本語
 </div>
 
 ## Introduction
 
-This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training), which is a music source separation training framework. You can use this webUI to infer the MSST model and UVR VR.Models (The inference code comes from [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator), and we do some changes on it), and the preset process page allows you to customize the processing flow yourself. You can install models in the "Install Models" interface. If you have downloaded [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui) before, you do not need to download VR.Models again. You can go to the "Settings" page and directly select your UVR5 model folder. Finally, we also provide some convenient tools such as [SOME: Vocals to MIDI](https://github.com/openvpi/SOME/) in the webUI.
+This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training), which is a music source separation training framework. You can use this webUI to infer the MSST model and VR Models (Inference code comes from [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator), and we do some changes on it), and the preset process page allows you to customize the processing flow yourself. You can install models in the "Install Models" interface. If you have downloaded [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui) before, you do not need to download VR Models again. You can go to the "Settings" page and directly select your UVR5 model folder. Finally, we also provide some convenient tools such as [SOME](https://github.com/openvpi/SOME/): Vocals to MIDI in the webUI.
 
 ## Usage
 
@@ -25,9 +25,9 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 |:---:|-----|:---:|-----|
 |Github Releases|https://github.com/SUC-DriverOld/MSST-WebUI/releases|-|Only installer, no models|
 |Huggingface|https://huggingface.co/Sucial/MSST-WebUI/tree/main|-|Installer and all available models|
-|【中国区】hf-mirror|https://hf-mirror.com/Sucial/MSST-WebUI/tree/main|-|huggingface的国内镜像，不限速，包含安装程序和所有可用模型|
-|【中国区】百度网盘|https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q|1145|非会员限速，建议开启p2p下载加速|
-|【中国区】123盘(即将弃用)|https://www.123pan.cn/s/1bmETd-AefWh.html|1145|非会员用户每天免费下载1G文件|
+|【中国区】hf-mirror|https://hf-mirror.com/Sucial/MSST-WebUI/tree/main|-|包含安装程序和所有可用模型|
+|【中国区】百度网盘|https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q|1145|包含安装程序和所有可用模型|
+|【中国区】123盘(即将弃用)|https://www.123pan.cn/s/1bmETd-AefWh.html|1145|包含安装程序和所有可用模型|
 
 ## Run from source
 
@@ -68,18 +68,18 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 
 Please refer to [this document](docs/inference.md) for more details.
 
-### Training
+## Training
 
 Please refer to [this document](docs/training.md) for more details.
 
-### Reference
+## Reference
 
 - [ZFTurbo's code] [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)<br>
-- [Vocal Remover] [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator)<br>
+- [python-audio-separator] [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator)<br>
 - [Ultimate Vocal Remover] [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui)<br>
 - [Vocals to MIDI] [SOME](https://github.com/openvpi/SOME/)<br>
-- [@KitsuneX07] [Github](https://github.com/KitsuneX07) | [bilibili](https://space.bilibili.com/403335715)<br>
-- [@SUC-DriverOld] [Github](https://github.com/SUC-DriverOld) | - [Bilibili](https://space.bilibili.com/445022409)
+- [@KitsuneX07] [Github](https://github.com/KitsuneX07) | [Bilibili](https://space.bilibili.com/403335715)<br>
+- [@SUC-DriverOld] [Github](https://github.com/SUC-DriverOld) | [Bilibili](https://space.bilibili.com/445022409)
 
 ### Thanks to all contributors for their efforts
 

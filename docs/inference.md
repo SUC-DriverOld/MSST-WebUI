@@ -52,16 +52,12 @@ separator = MSSeparator(
         debug=True
 )
 
-'''
-Separate a folder of mixtures.
-Returns a list of successful separated files. Examples: ["input/test01.wav", "input/test02.wav"]
-'''
+# Separate a folder of mixtures.
+# Returns a list of successful separated files. Examples: ["input/test01.wav", "input/test02.wav"]
 results_list = separator.process_folder("input")
 
-'''
-Separate from a single numpy array
-Returns a dict with separated audio arrays. Examples: {"vocals": NDArray, "instrumental": NDArray}
-'''
+# Separate from a single numpy array
+# Returns a dict with separated audio arrays. Examples: {"vocals": NDArray, "instrumental": NDArray}
 import numpy as np
 mix = np.load("input/test02.npy") # load numpy array for example
 audio_array = separator.separate(mix)
@@ -139,16 +135,12 @@ separater = Separator(
     vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
 )
 
-'''
-Separate a folder of mixtures.
-Returns a list of successful separated files. Examples: ["input/test01.wav", "input/test02.wav"]
-'''
+# Separate a folder of mixtures.
+# Returns a list of successful separated files. Examples: ["input/test01.wav", "input/test02.wav"]
 results_list = separator.process_folder("input")
 
-'''
-Separate from a single numpy array
-Returns a dict with separated audio arrays. Examples: {"vocals": NDArray, "instrumental": NDArray}
-'''
+# Separate from a single numpy array
+# Returns a dict with separated audio arrays. Examples: {"vocals": NDArray, "instrumental": NDArray}
 import numpy as np
 mix = np.load("input/test02.npy") # load numpy array for example
 audio_array = separator.separate(mix)

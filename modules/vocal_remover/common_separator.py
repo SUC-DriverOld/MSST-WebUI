@@ -1,13 +1,10 @@
 """ This file contains the CommonSeparator class, common to all architecture-specific Separator classes. """
 
 from logging import Logger
-import os
 import gc
 import numpy as np
 import librosa
 import torch
-from pydub import AudioSegment
-from modules.vocal_remover.uvr_lib_v5 import spec_utils
 
 class CommonSeparator:
     """
@@ -74,16 +71,15 @@ class CommonSeparator:
         # Model specific properties
         self.primary_stem_name = self.model_data.get("primary_stem", "primary_stem")
         self.secondary_stem_name = self.model_data.get("secondary_stem", "secondary_stem")
-        self.logger.info(f"primary_stem: {self.primary_stem_name}, secondary_stem: {self.secondary_stem_name}")
 
         self.is_karaoke = self.model_data.get("is_karaoke", False)
         self.is_bv_model = self.model_data.get("is_bv_model", False)
         self.bv_model_rebalance = self.model_data.get("is_bv_model_rebalanced", 0)
 
-        self.logger.debug(f"Common params: model_name={self.model_name}, model_path={self.model_path}")
-        self.logger.debug(f"Common params: output_dir={self.output_dir}, output_format={self.output_format}")
+        self.logger.info(f"Common params: model_name={self.model_name}, model_path={self.model_path}")
+        self.logger.info(f"Common params: output_dir={self.output_dir}, output_format={self.output_format}")
+        self.logger.info(f"Common params: primary_stem_name={self.primary_stem_name}, secondary_stem_name={self.secondary_stem_name}")
         self.logger.debug(f"Common params: invert_using_spec={self.invert_using_spec}, sample_rate={self.sample_rate}")
-        self.logger.debug(f"Common params: primary_stem_name={self.primary_stem_name}, secondary_stem_name={self.secondary_stem_name}")
         self.logger.debug(f"Common params: is_karaoke={self.is_karaoke}, is_bv_model={self.is_bv_model}, bv_model_rebalance={self.bv_model_rebalance}")
 
         # File-specific variables which need to be cleared between processing different audio inputs
