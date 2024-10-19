@@ -1,3 +1,4 @@
+import gc
 import os
 import librosa
 import logging
@@ -46,6 +47,8 @@ class MSSeparator:
 
         if self.debug:
             set_log_level(logger, logging.DEBUG)
+        else:
+            set_log_level(logger, logging.INFO)
 
         self.log_system_info()
         self.check_ffmpeg_installed()
@@ -147,8 +150,9 @@ class MSSeparator:
             if len(mix.shape) == 1:
                 mix = np.stack([mix, mix], axis=0)
             if len(mix.shape) > 2:
-                self.logger.warning(f'Cannot process none stereo track: {path}, shape: {mix.shape}')
-                continue
+                mix = np.mean(mix, axis=0) # if more than 2 channels, take mean
+                mix = np.stack([mix, mix], axis=0)
+                self.logger.warning(f"Track {path} has more than 2 channels, taking mean of all channels. As a result, the output instruments will be mono but in stereo format.")
 
             self.logger.debug(f"Starting separation process for audio_file: {path}")
             results = self.separate(mix)
@@ -260,3 +264,13 @@ class MSSeparator:
         else:
             file = os.path.join(store_dir, file_name + '.wav')
             sf.write(file, audio, sr, subtype='FLOAT')
+
+    def del_cache(self):
+        self.logger.debug("Running garbage collection...")
+        gc.collect()
+        if "mps" in self.device:
+            self.logger.debug("Clearing MPS cache...")
+            torch.mps.empty_cache()
+        if "cuda" in self.device:
+            self.logger.debug("Clearing CUDA cache...")
+            torch.cuda.empty_cache()

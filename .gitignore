@@ -1,10 +1,11 @@
 .vscode/
+.idea/
 __pycache__/
 *.pyc
 configs/
 configs/viperx/*.yaml
 configs_template/
-data/
+data/*.json
 ffmpeg/bin/*.exe
 workenv/
 temp/

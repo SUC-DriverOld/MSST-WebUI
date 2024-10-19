@@ -1,7 +1,3 @@
-import os
-import sys
-parrent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(parrent_dir)
 import argparse
 import warnings
 import logging
@@ -34,6 +30,7 @@ def msst_inference(args):
         debug=args.debug
     )
     success_files = separator.process_folder(args.input_folder)
+    separator.del_cache()
     logger.info(f"Successfully separated files: {success_files}, total time: {time() - start_time:.2f} seconds.")
 
 if __name__ == '__main__':

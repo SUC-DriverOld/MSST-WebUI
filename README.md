@@ -1,4 +1,4 @@
-<div align="center">
+<div style="text-align: center;">
   <img src="docs/logo.png" alt="logo" width="128" height="128">
 
 # MSST-WebUI
@@ -17,17 +17,17 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 ## Usage
 
 **Windows**: Download the installer from [Releases](https://github.com/SUC-DriverOld/MSST-WebUI/releases) and run it. Or you can clone this repository and run from source.<br>
-**Linux/MacOS**: Clone this repository and run from source.<br>
+**Linux/macOS**: Clone this repository and run from source.<br>
 **Google Colab**: [Click here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) to run the webUI on Google Colab.
 
 ### Available Download links
-|Websites|Download Links|Extract Code|Notes|
-|:---:|-----|:---:|-----|
-|Github Releases|https://github.com/SUC-DriverOld/MSST-WebUI/releases|-|Only installer, no models|
-|Huggingface|https://huggingface.co/Sucial/MSST-WebUI/tree/main|-|Installer and all available models|
-|【中国区】hf-mirror|https://hf-mirror.com/Sucial/MSST-WebUI/tree/main|-|包含安装程序和所有可用模型|
-|【中国区】百度网盘|https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q|1145|包含安装程序和所有可用模型|
-|【中国区】123盘(即将弃用)|https://www.123pan.cn/s/1bmETd-AefWh.html|1145|包含安装程序和所有可用模型|
+|    Websites     | Download Links                                       | Extract Code | Notes                              |
+|:---------------:|------------------------------------------------------|:------------:|------------------------------------|
+| Github Releases | https://github.com/SUC-DriverOld/MSST-WebUI/releases |      -       | Only installer, no models          |
+|   Huggingface   | https://huggingface.co/Sucial/MSST-WebUI/tree/main   |      -       | Installer and all available models |
+| 【中国区】hf-mirror  | https://hf-mirror.com/Sucial/MSST-WebUI/tree/main    |      -       | 包含安装程序和所有可用模型                      |
+|    【中国区】百度网盘    | https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q      |     1145     | 包含安装程序和所有可用模型                      |
+| 【中国区】123盘(即将弃用) | https://www.123pan.cn/s/1bmETd-AefWh.html            |     1145     | 包含安装程序和所有可用模型                      |
 
 ## Run from source
 
@@ -84,5 +84,5 @@ Please refer to [this document](docs/training.md) for more details.
 ### Thanks to all contributors for their efforts
 
 <a href="https://github.com/SUC-DriverOld/MSST-WebUI/graphs/contributors" target="_blank">
-  <img src="https://contrib.rocks/image?repo=SUC-DriverOld/MSST-WebUI"/>
+  <img src="https://contrib.rocks/image?repo=SUC-DriverOld/MSST-WebUI" alt=""/>
 </a>

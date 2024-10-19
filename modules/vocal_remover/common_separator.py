@@ -89,7 +89,7 @@ class CommonSeparator:
         self.secondary_source = None
         self.cached_sources_map = {}
 
-    def separate(self):
+    def separate(self, audio_file):
         """
         Placeholder method for separating audio sources. Should be overridden by subclasses.
         """
@@ -176,19 +176,6 @@ class CommonSeparator:
         self.logger.debug("Mix preparation completed.")
         return mix
 
-    def clear_gpu_cache(self):
-        """
-        This method clears the GPU cache to free up memory.
-        """
-        self.logger.debug("Running garbage collection...")
-        gc.collect()
-        if self.torch_device == torch.device("mps"):
-            self.logger.debug("Clearing MPS cache...")
-            torch.mps.empty_cache()
-        if self.torch_device == torch.device("cuda"):
-            self.logger.debug("Clearing CUDA cache...")
-            torch.cuda.empty_cache()
-
     def clear_file_specific_paths(self):
         """
         Clears the file-specific variables which need to be cleared between processing different audio inputs.
@@ -197,6 +184,3 @@ class CommonSeparator:
 
         self.primary_source = None
         self.secondary_source = None
-
-        self.primary_stem_output_path = None
-        self.secondary_stem_output_path = None

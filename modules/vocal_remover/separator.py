@@ -1,5 +1,5 @@
 """ This file contains the Separator class, to facilitate the separation of stems from audio. """
-
+import gc
 import os
 import platform
 import subprocess
@@ -30,6 +30,8 @@ class Separator:
     ):
         if debug:
             set_log_level(logger, logging.DEBUG)
+        else:
+            set_log_level(logger, logging.INFO)
 
         self.logger = logger
         self.debug = debug
@@ -168,6 +170,7 @@ class Separator:
         }
 
         self.model_instance = VRSeparator(common_config=common_params, arch_config=self.vr_params_params)
+        self.model_instance.load_model()
         self.logger.debug(f'Loading model completed, duration: {time.time() - load_model_start_time:.2f} seconds')
 
     def process_folder(self, input_folder):
@@ -189,12 +192,6 @@ class Separator:
                 mix, sr = librosa.load(file_path, sr=44100, mono=False)
             except Exception as e:
                 self.logger.warning(f'Cannot process track: {file_path}, error: {str(e)}')
-                continue
-
-            if len(mix.shape) == 1:
-                mix = np.stack([mix, mix], axis=0)
-            if len(mix.shape) > 2:
-                self.logger.warning(f'Cannot process none stereo track: {file_path}, shape: {mix.shape}')
                 continue
 
             self.logger.debug(f"Starting separation process for audio_file: {file_path}")
@@ -223,7 +220,6 @@ class Separator:
             self.logger.debug(f"Temporary audio file created: {mix}")
 
         results = self.model_instance.separate(mix)
-        self.model_instance.clear_gpu_cache()
         self.model_instance.clear_file_specific_paths()
 
         if is_numpy and os.path.exists(mix):
@@ -256,3 +252,13 @@ class Separator:
         else:
             file = os.path.join(store_dir, file_name + '.wav')
             sf.write(file, audio, sr, subtype='FLOAT')
+
+    def del_cache(self):
+        self.logger.debug("Running garbage collection...")
+        gc.collect()
+        if self.torch_device == torch.device("mps"):
+            self.logger.debug("Clearing MPS cache...")
+            torch.mps.empty_cache()
+        if self.torch_device == torch.device("cuda"):
+            self.logger.debug("Clearing CUDA cache...")
+            torch.cuda.empty_cache()
