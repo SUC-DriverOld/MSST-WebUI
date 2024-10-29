@@ -8,8 +8,8 @@ import torch
 import torchaudio as ta
 from torch.utils import data
 
-from models.bandit.core.data._types import AudioDict, DataDict
-from models.bandit.core.data.base import BaseSourceSeparationDataset
+from modules.bandit.core.data._types import AudioDict, DataDict
+from modules.bandit.core.data.base import BaseSourceSeparationDataset
 
 
 class DivideAndRemasterBaseDataset(BaseSourceSeparationDataset, ABC):

@@ -1,4 +1,4 @@
-<div style="text-align: center;">
+<div align="center">
   <img src="docs/logo.png" alt="logo" width="128" height="128">
 
 # MSST-WebUI
