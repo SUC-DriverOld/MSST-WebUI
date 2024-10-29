@@ -1,4 +1,3 @@
-import os
 import shutil
 import requests
 import webbrowser
@@ -7,7 +6,17 @@ from tqdm import tqdm
 import gradio as gr
 
 from utils.constant import *
-from tools.webUI.utils import i18n, load_configs, save_configs, load_vr_model, get_vr_model, load_msst_model, get_msst_model
+from tools.webUI.utils import i18n, load_configs, save_configs, load_vr_model, get_vr_model, load_msst_model, get_msst_model, open_folder
+
+def open_model_folder(model_type):
+    if not model_type:
+        return
+    if model_type == "UVR_VR_Models":
+        config = load_configs(WEBUI_CONFIG)
+        uvr_model_folder = config['settings']['uvr_model_dir']
+        open_folder(uvr_model_folder)
+    else:
+        open_folder(os.path.join(MODEL_FOLDER, model_type))
 
 def upgrade_download_model_name(model_type_dropdown):
     if model_type_dropdown == "UVR_VR_Models":
@@ -23,28 +32,21 @@ def download_model(model_type, model_name):
 
     if model_type == "UVR_VR_Models":
         downloaded_model = load_vr_model()
-
         if model_name in downloaded_model:
             return i18n("模型") + model_name + i18n("已安装")
-
         _, _, model_url, model_path = get_vr_model(model_name)
         os.makedirs(model_path, exist_ok=True)
-
         return download_file(model_url, os.path.join(model_path, model_name), model_name)
     else:
         presets = load_configs(MSST_MODEL)
         model_mapping = load_msst_model()
-
         if model_name in model_mapping:
             return i18n("模型") + model_name + i18n("已安装")
-
         if model_type not in presets:
             return i18n("模型类型") + model_type + i18n("不存在")
-
         _, _, _, model_url = get_msst_model(model_name)
         model_path = f"pretrain/{model_type}/{model_name}"
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
-
         return download_file(model_url, model_path, model_name)
 
 def download_file(url, path, model_name):
@@ -60,17 +62,14 @@ def download_file(url, path, model_name):
             ) as progress_bar:
                 last_update_time = time.time()
                 bytes_written = 0
-    
                 for data in r.iter_content(1024):
                     f.write(data)
                     bytes_written += len(data)
                     current_time = time.time()
-
-                    if current_time - last_update_time >= 1:
+                    if current_time - last_update_time >= 1.0:
                         progress_bar.update(bytes_written)
                         bytes_written = 0
                         last_update_time = current_time
-
                 progress_bar.update(bytes_written)
 
         print("[INFO] " + i18n("模型") + model_name + i18n("下载成功"))
@@ -86,20 +85,16 @@ def manual_download_model(model_type, model_name):
 
     if model_type == "UVR_VR_Models":
         downloaded_model = load_vr_model()
-
         if model_name in downloaded_model:
             return i18n("模型") + model_name + i18n("已安装")
         _, _, model_url, _ = get_vr_model(model_name)
     else:
         presets = load_configs(MSST_MODEL)
         model_mapping = load_msst_model()
-
         if model_name in model_mapping:
             return i18n("模型") + model_name + i18n("已安装")
-
         if model_type not in presets:
             return i18n("模型类型") + model_type + i18n("不存在")
-
         _, _, _, model_url = get_msst_model(model_name)
 
     webbrowser.open(model_url)
@@ -125,12 +120,10 @@ def install_unmsst_model(unmsst_model, unmsst_config, unmodel_class, unmodel_typ
 
         if model_name in load_msst_model():
             return i18n("模型") + model_name + i18n("已安装")
-
         if unmsst_model.endswith((".ckpt", ".chpt", ".th")):
             shutil.copy(unmsst_model, os.path.join(MODEL_FOLDER, unmodel_class))
         else: 
             return i18n("请上传'ckpt', 'chpt', 'th'格式的模型文件")
-
         if unmsst_config.endswith(".yaml"):
             shutil.copy(unmsst_config, os.path.join(UNOFFICIAL_MODEL, "msst_config"))
         else: 
@@ -160,10 +153,8 @@ def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model
 
     try:
         model_name = os.path.basename(unvr_model)
-
         if model_name in load_vr_model():
             return i18n("模型") + model_name + i18n("已安装")
-
         if unvr_model.endswith(".pth"):
             shutil.copy(unvr_model, "pretrain/VR_Models")
         else: 

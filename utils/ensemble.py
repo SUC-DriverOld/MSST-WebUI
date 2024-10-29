@@ -7,11 +7,8 @@ import soundfile as sf
 import numpy as np
 import argparse
 
-import logging
-log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"
-date_format = "%H:%M:%S"
-logging.basicConfig(level = logging.INFO, format = log_format, datefmt = date_format)
-logger = logging.getLogger(__name__)
+from utils.logger import get_logger
+logger = get_logger()
 
 def stft(wave, nfft, hl):
     wave_left = np.asfortranarray(wave[0])
@@ -128,40 +125,35 @@ def average_waveforms(pred_track, weights, algorithm):
     return pred_track
 
 
-def ensemble_files(args):
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--files", type=str, required=True, nargs='+', help="Path to all audio-files to ensemble")
-    parser.add_argument("--type", type=str, default='avg_wave', help="One of avg_wave, median_wave, min_wave, max_wave, avg_fft, median_fft, min_fft, max_fft")
-    parser.add_argument("--weights", type=float, nargs='+', help="Weights to create ensemble. Number of weights must be equal to number of files")
-    parser.add_argument("--output", default="res.wav", type=str, help="Path to wav file where ensemble result will be stored")
-    if args is None:
-        args = parser.parse_args()
-    else:
-        args = parser.parse_args(args)
-
-    logger.info('Ensemble type: {}'.format(args.type))
-    logger.info('Number of input files: {}'.format(len(args.files)))
-    if args.weights is not None:
-        weights = args.weights
-    else:
-        weights = np.ones(len(args.files))
-    logger.info('Weights: {}'.format(weights))
-    logger.info('Output file: {}'.format(args.output))
+def ensemble_files(files, type, weights, output):
+    logger.info(f'Ensemble type: {type}, Number of input files: {len(files)}, Weights: {weights}, Output file: {output}')
+    if weights is None:
+        weights = np.ones(len(files))
     data = []
-    for f in args.files:
+    sr = 44100
+    for f in files:
         if not os.path.isfile(f):
-            logger.info('Error. Can\'t find file: {}. Check paths.'.format(f))
-            exit()
-        logger.info('Reading file: {}'.format(f))
+            logger.info(f'Error. Can\'t find file: {f}. Check paths.')
+            return None
         wav, sr = librosa.load(f, sr=None, mono=False)
-        # wav, sr = sf.read(f)
-        logger.info("Waveform shape: {} sample rate: {}".format(wav.shape, sr))
+        logger.info(f"Reading file: {f}, waveform shape: {wav.shape} sample rate: {sr}")
         data.append(wav)
     data = np.array(data)
-    res = average_waveforms(data, weights, args.type)
+    res = average_waveforms(data, weights, type)
     logger.info('Result shape: {}'.format(res.shape))
-    sf.write(args.output, res.T, sr, 'FLOAT')
+    sf.write(output, res.T, sr, 'FLOAT')
+    logger.info(f'Ensemble result saved to: {output}')
 
 
 if __name__ == "__main__":
-    ensemble_files(None)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--files", type=str, required=True, nargs='+', help="Path to all audio-files to ensemble")
+    parser.add_argument("--type", type=str, default='avg_wave',
+                        help="One of avg_wave, median_wave, min_wave, max_wave, avg_fft, median_fft, min_fft, max_fft")
+    parser.add_argument("--weights", type=float, nargs='+',
+                        help="Weights to create ensemble. Number of weights must be equal to number of files")
+    parser.add_argument("--output", default="res.wav", type=str,
+                        help="Path to wav file where ensemble result will be stored")
+    args = parser.parse_args()
+
+    ensemble_files(args.files, args.type, args.weights, args.output)

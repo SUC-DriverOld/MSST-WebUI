@@ -19,7 +19,7 @@ from tools.webUI.utils import (
     get_msst_model
 )
 from tools.webUI.msst import run_inference
-from tools.webUI.vr import vr_inference
+from tools.webUI.vr import run_inference as vr_inference
 
 def preset_backup_list():
     backup_dir = BACKUP

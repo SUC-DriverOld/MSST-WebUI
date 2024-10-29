@@ -1,23 +1,40 @@
 import gradio as gr
 
 from utils.constant import *
-from tools.webUI.utils import i18n, open_folder, webui_restart
-from tools.webUI.models import *
+from tools.webUI.utils import i18n, webui_restart
+from tools.webUI.models import (
+    upgrade_download_model_name,
+    download_model,
+    manual_download_model,
+    install_unmsst_model,
+    install_unvr_model,
+    update_vr_param,
+    get_all_model_param,
+    open_model_folder
+)
 
 def models(webui_config):
+    uvr_model_folder = webui_config['settings']['uvr_model_dir']
+
     with gr.Tabs():
         with gr.TabItem(label=i18n("下载官方模型")):
-            uvr_model_folder = webui_config['settings']['uvr_model_dir']
+
             with gr.Row():
                 with gr.Column(scale=3):
                     gr.Markdown(value=i18n("若自动下载出现报错或下载过慢, 请点击手动下载, 跳转至下载链接。手动下载完成后, 请根据你选择的模型类型放置到对应文件夹内。"))
                     gr.Markdown(value=i18n("### 当前UVR模型目录: ") + f"`{uvr_model_folder}`" + i18n(", 如需更改, 请前往设置页面。"))
                     with gr.Row():
-                        model_type_dropdown = gr.Dropdown(label=i18n("选择模型类型"), choices=MODEL_CHOICES, scale=1)
-                        download_model_name_dropdown = gr.Dropdown(label=i18n("选择模型"), choices=[i18n("请先选择模型类型")], scale=3)
-                    with gr.Row():
-                        open_model_dir = gr.Button(i18n("打开MSST模型目录"))
-                        open_uvr_model_dir = gr.Button(i18n("打开UVR模型目录"))
+                        model_type_dropdown = gr.Dropdown(
+                            label=i18n("选择模型类型"),
+                            choices=MODEL_CHOICES,
+                            scale=1
+                        )
+                        download_model_name_dropdown = gr.Dropdown(
+                            label=i18n("选择模型"),
+                            choices=[i18n("请先选择模型类型")],
+                            scale=3
+                        )
+                    open_model_dir = gr.Button(i18n("打开模型目录"))
                     with gr.Row():
                         download_button = gr.Button(i18n("自动下载"), variant="primary")
                         manual_download_button = gr.Button(i18n("手动下载"), variant="primary")
@@ -34,9 +51,22 @@ def models(webui_config):
                 unmsst_model = gr.File(label=i18n("上传非官方MSST模型"), type="filepath")
                 unmsst_config = gr.File(label=i18n("上传非官方MSST模型配置文件"), type="filepath")
             with gr.Row():
-                unmodel_class = gr.Dropdown(label=i18n("选择模型类型"), choices=["vocal_models", "multi_stem_models", "single_stem_models"], interactive=True)
-                unmodel_type = gr.Dropdown(label=i18n("选择模型类别"), choices=MODEL_TYPE, interactive=True)
-                unmsst_model_link = gr.Textbox(label=i18n("模型下载链接 (非必须，若无，可跳过)"), value="", interactive=True, scale=2)
+                unmodel_class = gr.Dropdown(
+                    label=i18n("选择模型类型"),
+                    choices=["vocal_models", "multi_stem_models", "single_stem_models"],
+                    interactive=True
+                )
+                unmodel_type = gr.Dropdown(
+                    label=i18n("选择模型类别"),
+                    choices=MODEL_TYPE,
+                    interactive=True
+                )
+                unmsst_model_link = gr.Textbox(
+                    label=i18n("模型下载链接 (非必须，若无，可跳过)"),
+                    value="",
+                    interactive=True,
+                    scale=2
+                )
             unmsst_model_install = gr.Button(i18n("安装非官方MSST模型"), variant="primary")
             output_message_unmsst = gr.Textbox(label="Output Message")
         with gr.TabItem(label=i18n("安装非官方VR模型")):
@@ -45,31 +75,168 @@ def models(webui_config):
                 unvr_model = gr.File(label=i18n("上传非官方VR模型"), type="filepath")
                 with gr.Column():
                     with gr.Row():
-                        unvr_primary_stem = gr.Textbox(label=i18n("主要音轨名称"), value="", interactive=True)
-                        unvr_secondary_stem = gr.Textbox(label=i18n("次要音轨名称"), value="", interactive=True)
-                    model_param = gr.Dropdown(label=i18n("选择模型参数"), choices=get_all_model_param(), interactive=True)
+                        unvr_primary_stem = gr.Textbox(
+                            label=i18n("主要音轨名称"),
+                            value="",
+                            interactive=True
+                        )
+                        unvr_secondary_stem = gr.Textbox(
+                            label=i18n("次要音轨名称"),
+                            value="",
+                            interactive=True
+                        )
+                    model_param = gr.Dropdown(
+                        label=i18n("选择模型参数"),
+                        choices=get_all_model_param(),
+                        interactive=True
+                    )
                     with gr.Row():
-                        is_karaoke_model = gr.Checkbox(label=i18n("是否为Karaoke模型"), value=False, interactive=True)
-                        is_BV_model = gr.Checkbox(label=i18n("是否为BV模型"), value=False, interactive=True)
-                        is_VR51_model = gr.Checkbox(label=i18n("是否为VR 5.1模型"), value=False, interactive=True)
-            balance_value = gr.Number(label="balance_value", value=0.0, minimum=0.0, maximum=0.9, step=0.1, interactive=True, visible=False)
+                        is_karaoke_model = gr.Checkbox(
+                            label=i18n("是否为Karaoke模型"),
+                            value=False,
+                            interactive=True
+                        )
+                        is_BV_model = gr.Checkbox(
+                            label=i18n("是否为BV模型"),
+                            value=False,
+                            interactive=True
+                        )
+                        is_VR51_model = gr.Checkbox(
+                            label=i18n("是否为VR 5.1模型"),
+                            value=False,
+                            interactive=True
+                        )
+            balance_value = gr.Number(
+                label="balance_value",
+                value=0.0, minimum=0.0,
+                maximum=0.9,
+                step=0.1,
+                interactive=True,
+                visible=False
+            )
             with gr.Row():
-                out_channels = gr.Number(label="Out Channels", value=32, minimum=1, step=1, interactive=True, visible=False)
-                out_channels_lstm = gr.Number(label="Out Channels (LSTM layer)", value=128, minimum=1, step=1, interactive=True, visible=False)
-            upload_param = gr.File(label=i18n("上传参数文件"), type="filepath", interactive=True, visible=False)
-            unvr_model_link = gr.Textbox(label=i18n("模型下载链接 (非必须，若无，可跳过)"), value="", interactive=True)
+                out_channels = gr.Number(
+                    label="Out Channels",
+                    value=32,
+                    minimum=1,
+                    step=1,
+                    interactive=True,
+                    visible=False
+                )
+                out_channels_lstm = gr.Number(
+                    label="Out Channels (LSTM layer)",
+                    value=128,
+                    minimum=1,
+                    step=1,
+                    interactive=True,
+                    visible=False
+                )
+            upload_param = gr.File(
+                label=i18n("上传参数文件"),
+                type="filepath",
+                interactive=True,
+                visible=False
+            )
+            unvr_model_link = gr.Textbox(
+                label=i18n("模型下载链接 (非必须，若无，可跳过)"),
+                value="",
+                interactive=True
+            )
             unvr_model_install = gr.Button(i18n("安装非官方VR模型"), variant="primary")
             output_message_unvr = gr.Textbox(label="Output Message")
     restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
 
-    model_type_dropdown.change(fn=upgrade_download_model_name,inputs=[model_type_dropdown],outputs=[download_model_name_dropdown])
-    download_button.click(fn=download_model,inputs=[model_type_dropdown, download_model_name_dropdown],outputs=output_message_download)
-    manual_download_button.click(fn=manual_download_model,inputs=[model_type_dropdown, download_model_name_dropdown],outputs=output_message_download)
-    open_model_dir.click(open_folder, inputs=gr.Textbox(MODEL_FOLDER, visible=False))
-    open_uvr_model_dir.click(open_folder, inputs=gr.Textbox(uvr_model_folder, visible=False))
+    model_type_dropdown.change(
+        fn=upgrade_download_model_name,
+        inputs=model_type_dropdown,
+        outputs=download_model_name_dropdown
+    )
+    download_button.click(
+        fn=download_model,
+        inputs=[
+            model_type_dropdown,
+            download_model_name_dropdown
+        ],
+        outputs=output_message_download
+    )
+    manual_download_button.click(
+        fn=manual_download_model,
+        inputs=[
+            model_type_dropdown,
+            download_model_name_dropdown
+        ],
+        outputs=output_message_download
+    )
+    is_BV_model.change(
+        fn=update_vr_param,
+        inputs=[
+            is_BV_model,
+            is_VR51_model,
+            model_param
+        ],
+        outputs=[
+            balance_value,
+            out_channels,
+            out_channels_lstm,
+            upload_param
+        ]
+    )
+    is_VR51_model.change(
+        fn=update_vr_param,
+        inputs=[
+            is_BV_model,
+            is_VR51_model,
+            model_param
+        ],
+        outputs=[
+            balance_value,
+            out_channels,
+            out_channels_lstm,
+            upload_param
+        ]
+    )
+    model_param.change(
+        fn=update_vr_param,
+        inputs=[
+            is_BV_model,
+            is_VR51_model,
+            model_param
+        ],
+        outputs=[
+            balance_value,
+            out_channels,
+            out_channels_lstm,
+            upload_param
+        ]
+    )
+    unmsst_model_install.click(
+        fn=install_unmsst_model,
+        inputs=[
+            unmsst_model,
+            unmsst_config,
+            unmodel_class,
+            unmodel_type,
+            unmsst_model_link
+        ],
+        outputs=output_message_unmsst
+    )
+    unvr_model_install.click(
+        fn=install_unvr_model,
+        inputs=[
+            unvr_model,
+            unvr_primary_stem,
+            unvr_secondary_stem,
+            model_param,
+            is_karaoke_model,
+            is_BV_model,
+            is_VR51_model,
+            balance_value,
+            out_channels,
+            out_channels_lstm,
+            upload_param,
+            unvr_model_link
+        ],
+        outputs=output_message_unvr
+    )
+    open_model_dir.click(open_model_folder, inputs=model_type_dropdown)
     restart_webui.click(webui_restart)
-    is_BV_model.change(fn=update_vr_param, inputs=[is_BV_model, is_VR51_model, model_param], outputs=[balance_value, out_channels, out_channels_lstm, upload_param])
-    is_VR51_model.change(fn=update_vr_param, inputs=[is_BV_model, is_VR51_model, model_param], outputs=[balance_value, out_channels, out_channels_lstm, upload_param])
-    model_param.change(fn=update_vr_param, inputs=[is_BV_model, is_VR51_model, model_param], outputs=[balance_value, out_channels, out_channels_lstm, upload_param])
-    unmsst_model_install.click(fn=install_unmsst_model, inputs=[unmsst_model, unmsst_config, unmodel_class, unmodel_type, unmsst_model_link], outputs=output_message_unmsst)
-    unvr_model_install.click(fn=install_unvr_model, inputs=[unvr_model, unvr_primary_stem, unvr_secondary_stem, model_param, is_karaoke_model, is_BV_model, is_VR51_model, balance_value, out_channels, out_channels_lstm, upload_param, unvr_model_link], outputs=output_message_unvr)

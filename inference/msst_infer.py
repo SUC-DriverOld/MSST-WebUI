@@ -160,12 +160,17 @@ class MSSeparator:
 
             file_name, _ = os.path.splitext(os.path.basename(path))
 
-            for instr in self.config.training.instruments:
+            for instr in results.keys():
                 save_dir = self.store_dirs.get(instr, "")
-                if save_dir:
+                if save_dir and type(save_dir) == str:
                     os.makedirs(save_dir, exist_ok=True)
                     self.save_audio(results[instr], sr, f"{file_name}_{instr}", save_dir)
                     self.logger.debug(f"Saved {instr} for {file_name}_{instr}.{self.output_format} in {save_dir}")
+                elif save_dir and type(save_dir) == list:
+                    for dir in save_dir:
+                        os.makedirs(dir, exist_ok=True)
+                        self.save_audio(results[instr], sr, f"{file_name}_{instr}", dir)
+                        self.logger.debug(f"Saved {instr} for {file_name}_{instr}.{self.output_format} in {dir}")
 
             success_files.append(os.path.basename(path))
         return success_files

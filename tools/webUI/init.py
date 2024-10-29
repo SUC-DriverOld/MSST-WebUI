@@ -4,43 +4,44 @@ from tools.webUI.utils import i18n, load_configs, get_msst_model, get_vr_model
 
 def init_selected_model():
     try:
-        batch_size, dim_t, num_overlap = i18n("该模型不支持修改此值"), i18n("该模型不支持修改此值"), i18n("该模型不支持修改此值")
+        batch_size, dim_t, num_overlap, is_normalize = (
+            i18n("该模型不支持修改此值"),
+            i18n("该模型不支持修改此值"),
+            i18n("该模型不支持修改此值"),
+            False
+        )
         config = load_configs(WEBUI_CONFIG)
         selected_model = config['inference']['selected_model']
         _, config_path, _, _ = get_msst_model(selected_model)
         config = load_configs(config_path)
 
         if config.inference.get('batch_size'):
-            batch_size = config.inference.get('batch_size')
+            batch_size = int(config.inference.get('batch_size'))
         if config.inference.get('dim_t'):
-            dim_t = config.inference.get('dim_t')
+            dim_t = int(config.inference.get('dim_t'))
         if config.inference.get('num_overlap'):
-            num_overlap = config.inference.get('num_overlap')
-        return batch_size, dim_t, num_overlap
+            num_overlap = int(config.inference.get('num_overlap'))
+        if config.inference.get('normalize'):
+            is_normalize = True
+        return batch_size, dim_t, num_overlap, is_normalize
     except: 
-        return i18n("请先选择模型"), i18n("请先选择模型"), i18n("请先选择模型")
+        return i18n("请先选择模型"), i18n("请先选择模型"), i18n("请先选择模型"), False
 
 def init_selected_msst_model():
     webui_config = load_configs(WEBUI_CONFIG)
     selected_model = webui_config['inference']['selected_model']
-    extract_instrumental_label = i18n("同时输出次级音轨")
-    instrumental_only_label = i18n("仅输出次级音轨")
+    insts = [i18n("请先选择模型")]
 
     if not selected_model:
-        return extract_instrumental_label, instrumental_only_label
+        return insts
 
     try:
         _, config_path, _, _ = get_msst_model(selected_model)
         config = load_configs(config_path)
-        target_inst = config.training.get('target_instrument', None)
-
-        if target_inst is None:
-            extract_instrumental_label = i18n("此模型默认输出所有音轨")
-            instrumental_only_label = i18n("此模型默认输出所有音轨")
-
-        return extract_instrumental_label, instrumental_only_label
+        insts = config.training.instruments
+        return insts
     except: 
-        return extract_instrumental_label, instrumental_only_label
+        return insts
 
 def init_selected_vr_model():
     webui_config = load_configs(WEBUI_CONFIG)

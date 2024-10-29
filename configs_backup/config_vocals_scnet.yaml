@@ -9,7 +9,6 @@ model:
     - vocals
     - other
   audio_channels: 2
-  # dims: [4, 32, 64, 128] # small version
   dims:
     - 4
     - 32
@@ -52,7 +51,7 @@ training:
   reduce_factor: 0.95
   target_instrument: null
   num_epochs: 1000
-  num_steps: 1000
+  num_steps: 10
   q: 0.95
   coarse_loss_clip: true
   ema_momentum: 0.999

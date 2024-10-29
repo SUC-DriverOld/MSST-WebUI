@@ -17,6 +17,10 @@ Key Configurations:
 - TEMP_PATH: Temporary directory for processing.
 - UNOFFICIAL_MODEL: Path for unofficial model configurations.
 - VR_MODELPARAMS: Directory for VR model parameters.
+- UPDATE_URL: URL for checking updates.
+- SOME_WEIGHT: Path to SOME weight file.
+- THEME_FOLDER: Path to the theme folder.
+- METRICS: List of available metrics for model evaluation.
 
 Model Types and Choices:
 - MODEL_TYPE: List of available MSST model types.
@@ -72,6 +76,15 @@ UNOFFICIAL_MODEL = "config_unofficial"
 # path to unofficial vr model params: UNOFFICIAL_MODEL/vr_modelparams
 VR_MODELPARAMS = "configs/vr_modelparams"
 
+# url for check for updates
+UPDATE_URL = "https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest"
+
+# pretrained SOME weight
+SOME_WEIGHT = "tools/SOME_weights/model_steps_64000_simplified.ckpt"
+
+# path to the theme folder
+THEME_FOLDER = "tools/themes"
+
 # msst model types, type=list
 MODEL_TYPE = [
     'bs_roformer', 
@@ -97,14 +110,11 @@ MODEL_CHOICES = [
     "UVR_VR_Models"
     ]
 
+# metrics for model evaluation and training
+METRICS = ['sdr', 'l1_freq', 'si_sdr', 'log_wmse', 'aura_stft', 'aura_mrstft']
+
 # ffmpeg executable path, if not found, use system ffmpeg
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"
 
 # python executable path, if not found, use current python
 PYTHON = ".\\workenv\\python.exe" if os.path.isfile(".\\workenv\\python.exe") else sys.executable
-
-# url for check for updates
-UPDATE_URL = "https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest"
-
-# pretrained SOME weight
-SOME_WEIGHT = "tools/SOME_weights/model_steps_64000_simplified.ckpt"

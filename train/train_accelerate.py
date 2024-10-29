@@ -10,7 +10,7 @@ import soundfile as sf
 import numpy as np
 import time
 import glob
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import os
 import sys
 parrent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -107,12 +107,13 @@ def train_model(args):
     parser.add_argument("--dataset_type", type=int, default=1, help="Dataset type. Must be one of: 1, 2, 3 or 4. Details here: https://github.com/ZFTurbo/Music-Source-Separation-Training/blob/main/docs/dataset_types.md")
     parser.add_argument("--valid_path", nargs="+", type=str, help="validation data paths. You can provide several folders.")
     parser.add_argument("--num_workers", type=int, default=0, help="dataloader num_workers")
-    parser.add_argument("--pin_memory", action='store_true', help="dataloader pin_memory")
+    parser.add_argument("--pin_memory", type=bool, default=False, help="dataloader pin_memory")
     parser.add_argument("--seed", type=int, default=0, help="random seed")
     parser.add_argument("--device_ids", nargs='+', type=int, default=[0], help='list of gpu ids')
     parser.add_argument("--use_multistft_loss", action='store_true', help="Use MultiSTFT Loss (from auraloss package)")
     parser.add_argument("--use_mse_loss", action='store_true', help="Use default MSE loss")
     parser.add_argument("--use_l1_loss", action='store_true', help="Use L1 loss")
+    parser.add_argument("--wandb_key", type=str, default='', help='wandb API Key')
     parser.add_argument("--pre_valid", action='store_true', help='Run validation before training')
     if args is None:
         args = parser.parse_args()
@@ -127,8 +128,7 @@ def train_model(args):
     model, config = get_model_from_config(args.model_type, args.config_path)
     accelerator.logger.info("Instruments: {}".format(config.training.instruments))
 
-    if not os.path.isdir(args.results_path):
-        os.mkdir(args.results_path)
+    os.makedirs(args.results_path, exist_ok=True)
 
     device_ids = args.device_ids
     batch_size = config.training.batch_size

@@ -3,7 +3,7 @@ __author__ = 'Roman Solovyev (ZFTurbo): https://github.com/ZFTurbo/'
 
 import argparse
 import time
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import sys
 import os
 parrent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,7 +15,7 @@ import numpy as np
 import logging
 import warnings
 
-from utils.utils import demix, sdr, get_model_from_config
+from utils.utils import demix, get_metrics, get_model_from_config
 
 warnings.filterwarnings("ignore")
 log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"
@@ -36,13 +36,25 @@ def proc_list_of_files(
     if config.training.target_instrument is not None:
         instruments = [config.training.target_instrument]
 
-    if args.store_dir != "":
-        if not os.path.isdir(args.store_dir):
-            os.mkdir(args.store_dir)
+    store_dir = ''
+    if hasattr(args, 'store_dir'):
+        store_dir = args.store_dir
+    use_tta = False
+    if hasattr(args, 'use_tta'):
+        use_tta = args.use_tta
+    extension = 'wav'
+    if hasattr(args, 'extension'):
+        extension = args.extension
 
-    all_sdr = dict()
-    for instr in config.training.instruments:
-        all_sdr[instr] = []
+    if store_dir != '':
+        os.makedirs(store_dir, exist_ok=True)
+
+    # Initialize metrics dictionary
+    all_metrics = dict()
+    for metric in args.metrics:
+        all_metrics[metric] = dict()
+        for instr in config.training.instruments:
+            all_metrics[metric][instr] = []
 
     if is_tqdm:
         mixture_paths = tqdm(mixture_paths)
@@ -60,7 +72,7 @@ def proc_list_of_files(
         folder = os.path.dirname(path)
         folder_name = os.path.abspath(folder)
         if verbose:
-            logger.info('Song: {}'.format(folder_name))
+            logger.info('Song: {} Shape: {}'.format(folder_name, mix.shape))
 
         if 'normalize' in config.inference:
             if config.inference['normalize'] is True:
@@ -69,7 +81,7 @@ def proc_list_of_files(
                 std = mono.std()
                 mix = (mix - mean) / std
 
-        if args.use_tta:
+        if use_tta:
             # orig, channel inverse, polarity inverse
             track_proc_list = [mix.copy(), mix[::-1].copy(), -1. * mix.copy()]
         else:
@@ -96,9 +108,11 @@ def proc_list_of_files(
 
         pbar_dict = {}
         for instr in instruments:
+            if verbose:
+                logger.info("Instr: {}".format(instr))
             if instr != 'other' or config.training.other_fix is False:
                 try:
-                    track, sr1 = sf.read(folder + '/{}.{}'.format(instr, args.extension))
+                    track, sr1 = sf.read(folder + '/{}.{}'.format(instr, extension))
 
                     # Fix for mono
                     if len(track.shape) == 1:
@@ -109,7 +123,7 @@ def proc_list_of_files(
                     continue
             else:
                 # other is actually instrumental
-                track, sr1 = sf.read(folder + '/{}.{}'.format('vocals', args.extension))
+                track, sr1 = sf.read(folder + '/{}.{}'.format('vocals', extension))
                 track = mix_orig - track
 
             estimates = waveforms[instr].T
@@ -118,95 +132,156 @@ def proc_list_of_files(
                 if config.inference['normalize'] is True:
                     estimates = estimates * std + mean
 
-            if args.store_dir != "":
-                sf.write("{}/{}_{}.wav".format(args.store_dir, os.path.basename(folder), instr), estimates, sr, subtype='FLOAT')
-            references = np.expand_dims(track, axis=0)
-            estimates = np.expand_dims(estimates, axis=0)
-            sdr_val = sdr(references, estimates)[0]
-            if verbose:
-                logger.info(instr, waveforms[instr].shape, sdr_val, "Time: {:.2f} sec".format(time.time() - start_time))
-            all_sdr[instr].append(sdr_val)
-            pbar_dict['sdr_{}'.format(instr)] = sdr_val
+            if store_dir != "":
+                out_wav_name = "{}/{}_{}.wav".format(store_dir, os.path.basename(folder), instr)
+                sf.write(out_wav_name, estimates, sr, subtype='FLOAT')
+
+            track_metrics = get_metrics(
+                args.metrics,
+                track.T,
+                estimates.T,
+                mix_orig.T,
+                device=device,
+            )
+
+            for metric_name in track_metrics:
+                metric_value = track_metrics[metric_name]
+                if verbose:
+                    logger.info("Metric {:11s} value: {:.4f}".format(metric_name, metric_value))
+                all_metrics[metric_name][instr].append(metric_value)
+                pbar_dict['{}_{}'.format(metric_name, instr)] = metric_value
 
             try:
                 mixture_paths.set_postfix(pbar_dict)
             except Exception as e:
                 pass
+        if verbose:
+            logger.info("Time for song: {:.2f} sec".format(time.time() - start_time))
 
-    return all_sdr
+    return all_metrics
 
 
 def valid(model, args, config, device, verbose=False):
     start_time = time.time()
     model.eval().to(device)
-    all_mixtures_path = glob.glob(args.valid_path + '/*/mixture.' + args.extension)
-    logger.info('Total mixtures: {}'.format(len(all_mixtures_path)))
-    logger.info('Overlap: {} Batch size: {}'.format(config.inference.num_overlap, config.inference.batch_size))
 
-    all_sdr = proc_list_of_files(all_mixtures_path, model, args, config, device, verbose, not verbose)
+    store_dir = ''
+    if hasattr(args, 'store_dir'):
+        store_dir = args.store_dir
+    extension = 'wav'
+    if hasattr(args, 'extension'):
+        extension = args.extension
+
+    all_mixtures_path = []
+    for valid_path in args.valid_path:
+        part = sorted(glob.glob(valid_path + '/*/mixture.{}'.format(extension)))
+        if len(part) == 0:
+            if verbose:
+                logger.info('No validation data found in: {}'.format(valid_path))
+        all_mixtures_path += part
+    if verbose:
+        logger.info('Total mixtures: {}'.format(len(all_mixtures_path)))
+        logger.info('Overlap: {} Batch size: {}'.format(config.inference.num_overlap, config.inference.batch_size))
+
+    all_metrics = proc_list_of_files(all_mixtures_path, model, args, config, device, verbose, not verbose)
 
     instruments = config.training.instruments
     if config.training.target_instrument is not None:
         instruments = [config.training.target_instrument]
 
-    if args.store_dir != "":
-        out = open(args.store_dir + '/results.txt', 'w')
+    if store_dir != "":
+        out = open(store_dir + '/results.txt', 'w')
         out.write(str(args) + "\n")
     logger.info("Num overlap: {}".format(config.inference.num_overlap))
-    sdr_avg = 0.0
+
+    metric_avg = {}
     for instr in instruments:
-        npsdr = np.array(all_sdr[instr])
-        sdr_val = npsdr.mean()
-        sdr_std = npsdr.std()
-        logger.info("Instr SDR {}: {:.4f} (Std: {:.4f})".format(instr, sdr_val, sdr_std))
-        if args.store_dir != "":
-            out.write("Instr SDR {}: {:.4f}".format(instr, sdr_val) + "\n")
-        sdr_avg += sdr_val
-    sdr_avg /= len(instruments)
+        for metric_name in all_metrics:
+            metric_values = np.array(all_metrics[metric_name][instr])
+            mean_val = metric_values.mean()
+            std_val = metric_values.std()
+            logger.info("Instr {} {}: {:.4f} (Std: {:.4f})".format(instr, metric_name, mean_val, std_val))
+            if store_dir != "":
+                out.write("Instr {} {}: {:.4f} (Std: {:.4f})".format(instr, metric_name, mean_val, std_val) + "\n")
+            if metric_name not in metric_avg:
+                metric_avg[metric_name] = 0.0
+            metric_avg[metric_name] += mean_val
+    for metric_name in all_metrics:
+        metric_avg[metric_name] /= len(instruments)
+
     if len(instruments) > 1:
-        logger.info('SDR Avg: {:.4f}'.format(sdr_avg))
-    if args.store_dir != "":
-        out.write('SDR Avg: {:.4f}'.format(sdr_avg) + "\n")
+        for metric_name in metric_avg:
+            logger.info('Metric avg {:11s}: {:.4f}'.format(metric_name, metric_avg[metric_name]))
+            if store_dir != "":
+                out.write('Metric avg {:11s}: {:.4f}'.format(metric_name, metric_avg[metric_name]) + "\n")
     logger.info("Elapsed time: {:.2f} sec".format(time.time() - start_time))
-    if args.store_dir != "":
+    if store_dir != "":
         out.write("Elapsed time: {:.2f} sec".format(time.time() - start_time) + "\n")
         out.close()
 
-    return sdr_avg
+    return metric_avg
 
 
 def valid_mp(proc_id, queue, all_mixtures_path, model, args, config, device, return_dict):
     m1 = model.eval().to(device)
     if proc_id == 0:
         progress_bar = tqdm(total=len(all_mixtures_path))
-    all_sdr = dict()
-    for instr in config.training.instruments:
-        all_sdr[instr] = []
+
+    # Initialize metrics dictionary
+    all_metrics = dict()
+    for metric in args.metrics:
+        all_metrics[metric] = dict()
+        for instr in config.training.instruments:
+            all_metrics[metric][instr] = []
+
     while True:
         current_step, path = queue.get()
         if path is None:  # check for sentinel value
             break
-        sdr_single = proc_list_of_files([path], m1, args, config, device, False, False)
+        single_metrics = proc_list_of_files([path], m1, args, config, device, False, False)
         pbar_dict = {}
         for instr in config.training.instruments:
-            all_sdr[instr] += sdr_single[instr]
-            if len(sdr_single[instr]) > 0:
-                pbar_dict['sdr_{}'.format(instr)] = "{:.4f}".format(sdr_single[instr][0])
+            for metric_name in all_metrics:
+                all_metrics[metric_name][instr] += single_metrics[metric_name][instr]
+                if len(single_metrics[metric_name][instr]) > 0:
+                    pbar_dict['{}_{}'.format(metric_name, instr)] = "{:.4f}".format(single_metrics[metric_name][instr][0])
         if proc_id == 0:
             progress_bar.update(current_step - progress_bar.n)
             progress_bar.set_postfix(pbar_dict)
         # logger.info(f"Inference on process {proc_id}", all_sdr)
-    return_dict[proc_id] = all_sdr
+    return_dict[proc_id] = all_metrics
     return
 
 
 def valid_multi_gpu(model, args, config, device_ids, verbose=False):
     start_time = time.time()
-    all_mixtures_path = glob.glob(args.valid_path + '/*/mixture.' + args.extension)
-    logger.info('Total mixtures: {}'.format(len(all_mixtures_path)))
-    logger.info('Overlap: {} Batch size: {}'.format(config.inference.num_overlap, config.inference.batch_size))
+
+    store_dir = ''
+    if hasattr(args, 'store_dir'):
+        store_dir = args.store_dir
+    extension = 'wav'
+    if hasattr(args, 'extension'):
+        extension = args.extension
+
+    all_mixtures_path = []
+    for valid_path in args.valid_path:
+        part = sorted(glob.glob(valid_path + '/*/mixture.{}'.format(extension)))
+        if len(part) == 0:
+            if verbose:
+                logger.info('No validation data found in: {}'.format(valid_path))
+        all_mixtures_path += part
+    if verbose:
+        logger.info('Total mixtures: {}'.format(len(all_mixtures_path)))
+        logger.info('Overlap: {} Batch size: {}'.format(config.inference.num_overlap, config.inference.batch_size))
 
     model = model.to('cpu')
+    try:
+        # For multiGPU training extract single model
+        if len(device_ids) > 1:
+            model = model.module
+    except Exception as e:
+        pass
+
     queue = torch.multiprocessing.Queue()
     processes = []
     return_dict = torch.multiprocessing.Manager().dict()
@@ -225,40 +300,49 @@ def valid_multi_gpu(model, args, config, device_ids, verbose=False):
     for p in processes:
         p.join()  # wait for all subprocesses to finish
 
-    all_sdr = dict()
-    for instr in config.training.instruments:
-        all_sdr[instr] = []
-        for i in range(len(device_ids)):
-            all_sdr[instr] += return_dict[i][instr]
+    all_metrics = dict()
+    for metric in args.metrics:
+        all_metrics[metric] = dict()
+        for instr in config.training.instruments:
+            all_metrics[metric][instr] = []
+            for i in range(len(device_ids)):
+                all_metrics[metric][instr] += return_dict[i][metric][instr]
 
     instruments = config.training.instruments
     if config.training.target_instrument is not None:
         instruments = [config.training.target_instrument]
 
-    if args.store_dir != "":
-        out = open(args.store_dir + '/results.txt', 'w')
+    if store_dir != "":
+        out = open(store_dir + '/results.txt', 'w')
         out.write(str(args) + "\n")
     logger.info("Num overlap: {}".format(config.inference.num_overlap))
-    sdr_avg = 0.0
+
+    metric_avg = {}
     for instr in instruments:
-        npsdr = np.array(all_sdr[instr])
-        sdr_val = npsdr.mean()
-        sdr_std = npsdr.std()
-        logger.info("Instr SDR {}: {:.4f} (Std: {:.4f})".format(instr, sdr_val, sdr_std))
-        if args.store_dir != "":
-            out.write("Instr SDR {}: {:.4f}".format(instr, sdr_val) + "\n")
-        sdr_avg += sdr_val
-    sdr_avg /= len(instruments)
+        for metric_name in all_metrics:
+            metric_values = np.array(all_metrics[metric_name][instr])
+            mean_val = metric_values.mean()
+            std_val = metric_values.std()
+            logger.info("Instr {} {}: {:.4f} (Std: {:.4f})".format(instr, metric_name, mean_val, std_val))
+            if store_dir != "":
+                out.write("Instr {} {}: {:.4f} (Std: {:.4f})".format(instr, metric_name, mean_val, std_val) + "\n")
+            if metric_name not in metric_avg:
+                metric_avg[metric_name] = 0.0
+            metric_avg[metric_name] += mean_val
+    for metric_name in all_metrics:
+        metric_avg[metric_name] /= len(instruments)
+
     if len(instruments) > 1:
-        logger.info('SDR Avg: {:.4f}'.format(sdr_avg))
-    if args.store_dir != "":
-        out.write('SDR Avg: {:.4f}'.format(sdr_avg) + "\n")
+        for metric_name in metric_avg:
+            logger.info('Metric avg {:11s}: {:.4f}'.format(metric_name, metric_avg[metric_name]))
+            if store_dir != "":
+                out.write('Metric avg {:11s}: {:.4f}'.format(metric_name, metric_avg[metric_name]) + "\n")
     logger.info("Elapsed time: {:.2f} sec".format(time.time() - start_time))
-    if args.store_dir != "":
+    if store_dir != "":
         out.write("Elapsed time: {:.2f} sec".format(time.time() - start_time) + "\n")
         out.close()
 
-    return sdr_avg
+    return metric_avg
 
 
 def check_validation(args):
@@ -266,13 +350,14 @@ def check_validation(args):
     parser.add_argument("--model_type", type=str, default='mdx23c', help="One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit")
     parser.add_argument("--config_path", type=str, help="path to config file")
     parser.add_argument("--start_check_point", type=str, default='', help="Initial checkpoint to valid weights")
-    parser.add_argument("--valid_path", type=str, help="validate path")
+    parser.add_argument("--valid_path", nargs="+", type=str, help="validate path")
     parser.add_argument("--store_dir", default="", type=str, help="path to store results as wav file")
     parser.add_argument("--device_ids", nargs='+', type=int, default=0, help='list of gpu ids')
     parser.add_argument("--num_workers", type=int, default=0, help="dataloader num_workers")
-    parser.add_argument("--pin_memory", action='store_true', help="dataloader pin_memory")
+    parser.add_argument("--pin_memory", type=bool, default=False, help="dataloader pin_memory")
     parser.add_argument("--extension", type=str, default='wav', help="Choose extension for validation")
     parser.add_argument("--use_tta", action='store_true', help="Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality.")
+    parser.add_argument("--metrics", nargs='+', type=str, default=["sdr"], choices=['sdr', 'l1_freq', 'si_sdr', 'log_wmse', 'aura_stft', 'aura_mrstft'], help='List of metrics to use.')
     if args is None:
         args = parser.parse_args()
     else:

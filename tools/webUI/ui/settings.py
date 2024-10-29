@@ -1,30 +1,104 @@
 import gradio as gr
 
 from utils.constant import *
-from tools.webUI.utils import i18n, webui_restart, select_folder
-from tools.webUI.settings import *
+from tools.webUI.utils import i18n, webui_restart, select_folder, log_level_debug
+from tools.webUI.settings import (
+    reset_settings,
+    reset_webui_config,
+    save_uvr_modeldir,
+    check_webui_update,
+    webui_goto_github,
+    change_language,
+    change_download_link,
+    change_share_link,
+    change_local_link,
+    save_port_to_config,
+    save_auto_clean_cache,
+    rename_name,
+    update_rename_model_name,
+    change_theme
+)
 
 def settings(webui_config, language_dict, platform, device):
+    device = [value for _, value in device.items()]
+
+    theme_choices = []
+    for i in os.listdir(THEME_FOLDER):
+        if i.endswith('.json'):
+            theme_choices.append(i)
+
+    language = "Auto"
+    for lg in language_dict.keys():
+        current_language = webui_config['settings']['language']
+        if language_dict[lg] == current_language:
+            language = lg
+
     with gr.Tabs():
         with gr.TabItem(label=i18n("WebUI设置")):
             with gr.Row():
                 with gr.Column(scale=3):
                     with gr.Row():
-                        gpu_list = gr.Textbox(label=i18n("GPU信息"), value=device if len(device) > 1 else device[0], interactive=False)
-                        plantform_info = gr.Textbox(label=i18n("系统信息"), value=platform, interactive=False)
+                        gr.Textbox(label=i18n("GPU信息"), value=device if len(device) > 1 else device[0], interactive=False)
+                        gr.Textbox(label=i18n("系统信息"), value=platform, interactive=False)
                     with gr.Row():
-                        set_webui_port = gr.Number(label=i18n("设置WebUI端口, 0为自动"), value=webui_config["settings"].get("port", 0), interactive=True)
-                        set_language = gr.Dropdown(label=i18n("选择语言"), choices=language_dict.keys(), value=get_language(), interactive=True)
-                        set_download_link = gr.Dropdown(label=i18n("选择MSST模型下载链接"), choices=["Auto", i18n("huggingface.co (需要魔法)"), i18n("hf-mirror.com (镜像站可直连)")], value=webui_config['settings']['download_link'] if webui_config['settings']['download_link'] else "Auto", interactive=True)
+                        set_webui_port = gr.Number(
+                            label=i18n("设置WebUI端口, 0为自动"),
+                            value=webui_config["settings"].get("port", 0),
+                            interactive=True
+                        )
+                        set_language = gr.Dropdown(
+                            label=i18n("选择语言"),
+                            choices=language_dict.keys(),
+                            value=language,
+                            interactive=True
+                        )
+                        set_download_link = gr.Dropdown(
+                            label=i18n("选择MSST模型下载链接"),
+                            choices=["Auto", i18n("huggingface.co (需要魔法)"), i18n("hf-mirror.com (镜像站可直连)")],
+                            value=webui_config['settings']['download_link'] if webui_config['settings']['download_link'] else "Auto",
+                            interactive=True
+                        )
+                        set_theme = gr.Dropdown(
+                            label=i18n("选择WebUI主题"),
+                            choices=theme_choices,
+                            value=webui_config['settings']['theme'] if webui_config['settings']['theme'] else "theme_blue.json",
+                            interactive=True
+                        )
                     with gr.Row():
-                        open_local_link = gr.Checkbox(label=i18n("对本地局域网开放WebUI: 开启后, 同一局域网内的设备可通过'本机IP:端口'的方式访问WebUI。"), value=webui_config['settings']['local_link'], interactive=True)
-                        open_share_link = gr.Checkbox(label=i18n("开启公共链接: 开启后, 他人可通过公共链接访问WebUI。链接有效时长为72小时。"), value=webui_config['settings']['share_link'], interactive=True)
-                        auto_clean_cache = gr.Checkbox(label=i18n("自动清理缓存: 开启后, 每次启动WebUI时会自动清理缓存。"), value=webui_config['settings']['auto_clean_cache'], interactive=True)
+                        open_local_link = gr.Checkbox(
+                            label=i18n("对本地局域网开放WebUI: 开启后, 同一局域网内的设备可通过'本机IP:端口'的方式访问WebUI。"),
+                            value=webui_config['settings']['local_link'],
+                            interactive=True
+                        )
+                        open_share_link = gr.Checkbox(
+                            label=i18n("开启公共链接: 开启后, 他人可通过公共链接访问WebUI。链接有效时长为72小时。"),
+                            value=webui_config['settings']['share_link'],
+                            interactive=True
+                        )
+                        auto_clean_cache = gr.Checkbox(
+                            label=i18n("自动清理缓存: 开启后, 每次启动WebUI时会自动清理缓存。"),
+                            value=webui_config['settings']['auto_clean_cache'],
+                            interactive=True
+                        )
+                        debug_mode = gr.Checkbox(
+                            label=i18n("全局调试模式: 向开发者反馈问题时请开启。(该选项支持热切换)"),
+                            value=webui_config['settings']['debug'],
+                            interactive=True
+                        )
                     with gr.Row():
-                        select_uvr_model_dir = gr.Textbox(label=i18n("选择UVR模型目录"),value=webui_config['settings']['uvr_model_dir'] if webui_config['settings']['uvr_model_dir'] else "pretrain/VR_Models",interactive=True,scale=4)
+                        select_uvr_model_dir = gr.Textbox(
+                            label=i18n("选择UVR模型目录"),
+                            value=webui_config['settings']['uvr_model_dir'] if webui_config['settings']['uvr_model_dir'] else "pretrain/VR_Models",
+                            interactive=True,
+                            scale=4
+                        )
                         select_uvr_model_dir_button = gr.Button(i18n("选择文件夹"), scale=1)
                     with gr.Row():
-                        update_message = gr.Textbox(label=i18n("检查更新"), value=i18n("当前版本: ") + PACKAGE_VERSION + i18n(", 请点击检查更新按钮"), interactive=False,scale=3)
+                        update_message = gr.Textbox(
+                            label=i18n("检查更新"), value=i18n("当前版本: ") + PACKAGE_VERSION + i18n(", 请点击检查更新按钮"),
+                            interactive=False,
+                            scale=3
+                        )
                         check_update = gr.Button(i18n("检查更新"), scale=1)
                         goto_github = gr.Button(i18n("前往Github瞅一眼"))
                     with gr.Row():
@@ -46,9 +120,25 @@ def settings(webui_config, language_dict, platform, device):
         with gr.TabItem(label=i18n("模型改名")):
             gr.Markdown(i18n("此页面支持用户自定义修改模型名字, 以便记忆和使用。修改完成后, 需要重启WebUI以刷新模型列表。<br>【注意】此操作不可逆 (无法恢复至默认命名), 请谨慎命名。输入新模型名字时, 需保留后缀!"))
             with gr.Row():
-                rename_model_type = gr.Dropdown(label=i18n("选择模型类型"), choices=MODEL_CHOICES, value=None, interactive=True, scale=1)
-                rename_model_name = gr.Dropdown(label=i18n("选择模型"), choices=[i18n("请先选择模型类型")], value=i18n("请先选择模型类型"), interactive=True, scale=4)
-            rename_new_name = gr.Textbox(label=i18n("新模型名"), placeholder=i18n("请输入新模型名字, 需保留后缀!"), interactive=True)
+                rename_model_type = gr.Dropdown(
+                    label=i18n("选择模型类型"),
+                    choices=MODEL_CHOICES,
+                    value=None,
+                    interactive=True,
+                    scale=1
+                )
+                rename_model_name = gr.Dropdown(
+                    label=i18n("选择模型"),
+                    choices=[i18n("请先选择模型类型")],
+                    value=i18n("请先选择模型类型"),
+                    interactive=True,
+                    scale=4
+                )
+            rename_new_name = gr.Textbox(
+                label=i18n("新模型名"),
+                placeholder=i18n("请输入新模型名字, 需保留后缀!"),
+                interactive=True
+            )
             rename_model = gr.Button(i18n("确认修改"), variant="primary")
             rename_output_message = gr.Textbox(label="Output Message")
     restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
@@ -57,14 +147,67 @@ def settings(webui_config, language_dict, platform, device):
     check_update.click(fn=check_webui_update, outputs=update_message)
     goto_github.click(fn=webui_goto_github)
     select_uvr_model_dir_button.click(fn=select_folder, outputs=select_uvr_model_dir)
-    reset_seetings.click(fn=reset_settings,inputs=[],outputs=setting_output_message)
+    reset_seetings.click(fn=reset_settings,outputs=setting_output_message)
     reset_all_webui_config.click(fn=reset_webui_config,outputs=setting_output_message)
-    set_webui_port.change(fn=save_port_to_config,inputs=[set_webui_port],outputs=setting_output_message)
-    auto_clean_cache.change(fn=save_auto_clean_cache,inputs=[auto_clean_cache],outputs=setting_output_message)
-    select_uvr_model_dir.change(fn=save_uvr_modeldir,inputs=[select_uvr_model_dir],outputs=setting_output_message)
-    set_language.change(fn=change_language,inputs=[set_language],outputs=setting_output_message)
-    set_download_link.change(fn=change_download_link,inputs=[set_download_link],outputs=setting_output_message)
-    open_share_link.change(fn=change_share_link,inputs=[open_share_link],outputs=setting_output_message)
-    open_local_link.change(fn=change_local_link,inputs=[open_local_link],outputs=setting_output_message)
-    rename_model_type.change(fn=update_rename_model_name, inputs=[rename_model_type], outputs=[rename_model_name])
-    rename_model.click(fn=rename_name, inputs=[rename_model_type, rename_model_name, rename_new_name], outputs=[rename_output_message, rename_model_type, rename_model_name])
+    set_webui_port.change(
+        fn=save_port_to_config,
+        inputs=set_webui_port,
+        outputs=setting_output_message
+    )
+    auto_clean_cache.change(
+        fn=save_auto_clean_cache,
+        inputs=auto_clean_cache,
+        outputs=setting_output_message
+    )
+    select_uvr_model_dir.change(
+        fn=save_uvr_modeldir,
+        inputs=select_uvr_model_dir,
+        outputs=setting_output_message
+    )
+    set_language.change(
+        fn=change_language,
+        inputs=set_language,
+        outputs=setting_output_message
+    )
+    set_download_link.change(
+        fn=change_download_link,
+        inputs=set_download_link,
+        outputs=setting_output_message
+    )
+    open_share_link.change(
+        fn=change_share_link,
+        inputs=open_share_link,
+        outputs=setting_output_message
+    )
+    open_local_link.change(
+        fn=change_local_link,
+        inputs=open_local_link,
+        outputs=setting_output_message
+    )
+    rename_model_type.change(
+        fn=update_rename_model_name,
+        inputs=rename_model_type,
+        outputs=rename_model_name
+    )
+    debug_mode.change(
+        fn=log_level_debug,
+        inputs=debug_mode,
+        outputs=setting_output_message
+    )
+    set_theme.change(
+        fn=change_theme,
+        inputs=set_theme,
+        outputs=setting_output_message
+    )
+    rename_model.click(
+        fn=rename_name,
+        inputs=[
+            rename_model_type,
+            rename_model_name,
+            rename_new_name
+        ], outputs=[
+            rename_output_message,
+            rename_model_type,
+            rename_model_name
+        ]
+    )

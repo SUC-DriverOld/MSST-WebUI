@@ -1,14 +1,23 @@
-import os
 import shutil
-import threading
 import time
 import gradio as gr
+import multiprocessing
+import traceback
 
 from utils.constant import *
-from tools.webUI.utils import i18n, load_configs, save_configs, run_command, load_selected_model
+from tools.webUI.utils import i18n, load_configs, save_configs, load_selected_model, logger
 from tools.webUI.init import get_msst_model
+from inference.msst_infer import MSSeparator
 
-def save_config(selected_model, batch_size, dim_t, num_overlap, normalize):
+def change_to_audio_infer():
+    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=True),
+            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False))
+
+def change_to_folder_infer():
+    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=False),
+            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=True))
+
+def save_model_config(selected_model, batch_size, dim_t, num_overlap, normalize):
     _, config_path, _, _ = get_msst_model(selected_model)
     config = load_configs(config_path)
 
@@ -24,7 +33,7 @@ def save_config(selected_model, batch_size, dim_t, num_overlap, normalize):
 
     return i18n("配置保存成功!")
 
-def reset_config(selected_model):
+def reset_model_config(selected_model):
     _, original_config_path, _, _ = get_msst_model(selected_model)
 
     if original_config_path.startswith(UNOFFICIAL_MODEL):
@@ -39,35 +48,30 @@ def reset_config(selected_model):
         update_inference_settings(selected_model)
         return i18n("配置重置成功!")
     else:
-        return i18n("备份配置文件不存在!")
+        return i18n("备份文件不存在!")
 
 def update_inference_settings(selected_model):
-    batch_size = gr.Number(label="batch_size", value=i18n("该模型不支持修改此值"), interactive=False)
-    dim_t = gr.Number(label="dim_t", value=i18n("该模型不支持修改此值"), interactive=False)
-    num_overlap = gr.Number(label="num_overlap", value=i18n("该模型不支持修改此值"), interactive=False)
+    batch_size = gr.Number(label=i18n("batch_size: 批次大小, 一般不需要改"), interactive=False)
+    dim_t = gr.Number(label=i18n("dim_t: 时序维度大小, 一般不需要改"), interactive=False)
+    num_overlap = gr.Number(label=i18n("num_overlap: 数值越小速度越快, 但会牺牲效果"), interactive=False)
     normalize = gr.Checkbox(label=i18n("normalize (该模型不支持修改此值) "), value=False, interactive=False)
-    extract_instrumental = gr.Checkbox(label=i18n("同时输出次级音轨"), interactive=True)
-    instrumental_only = gr.Checkbox(label=i18n("仅输出次级音轨"), interactive=True)
+    extract_instrumental = gr.CheckboxGroup(label=i18n("选择输出音轨"), interactive=False)
 
-    if selected_model and selected_model !="":
+    if selected_model:
         _, config_path, _, _ = get_msst_model(selected_model)
         config = load_configs(config_path)
 
         if config.inference.get('batch_size'):
-            batch_size = gr.Number(label="batch_size", value=str(config.inference.get('batch_size')), interactive=True)
+            batch_size = gr.Number(label=i18n("batch_size: 批次大小, 一般不需要改"), value=int(config.inference.get('batch_size')), interactive=True)
         if config.inference.get('dim_t'):
-            dim_t = gr.Number(label="dim_t", value=str(config.inference.get('dim_t')), interactive=True)
+            dim_t = gr.Number(label=i18n("dim_t: 时序维度大小, 一般不需要改"), value=int(config.inference.get('dim_t')), interactive=True)
         if config.inference.get('num_overlap'):
-            num_overlap = gr.Number(label="num_overlap", value=str(config.inference.get('num_overlap')), interactive=True)
+            num_overlap = gr.Number(label=i18n("num_overlap: 数值越小速度越快, 但会牺牲效果"), value=int(config.inference.get('num_overlap')), interactive=True)
         if config.inference.get('normalize'):
-            normalize = gr.Checkbox(label="normalize", value=config.inference.get('normalize'), interactive=True)
-        target_inst = config.training.get('target_instrument', None)
+            normalize = gr.Checkbox(label=i18n("normalize: 是否对音频进行归一化处理"), value=config.inference.get('normalize'), interactive=True)
+        extract_instrumental = gr.CheckboxGroup(label=i18n("选择输出音轨"), choices=config.training.get('instruments'), interactive=True)
 
-        if target_inst is None:
-            extract_instrumental = gr.Checkbox(label=i18n("此模型默认输出所有音轨"), interactive=False)
-            instrumental_only = gr.Checkbox(label=i18n("此模型默认输出所有音轨"), interactive=False)
-
-    return batch_size, dim_t, num_overlap, normalize, extract_instrumental, instrumental_only
+    return batch_size, dim_t, num_overlap, normalize, extract_instrumental
 
 def update_selected_model(model_type):
     webui_config = load_configs(WEBUI_CONFIG)
@@ -75,20 +79,19 @@ def update_selected_model(model_type):
     save_configs(webui_config, WEBUI_CONFIG)
     return gr.Dropdown(label=i18n("选择模型"), choices=load_selected_model(), value=None, interactive=True, scale=4)
 
-def save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only):
+def save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
     config = load_configs(WEBUI_CONFIG)
     config['inference']['selected_model'] = selected_model
     config['inference']['device'] = gpu_id
     config['inference']['output_format'] = output_format
     config['inference']['force_cpu'] = force_cpu
-    config['inference']['extract_instrumental'] = extract_instrumental
-    config['inference']['instrumental_only'] = instrumental_only
+    config['inference']['instrumental'] = extract_instrumental
     config['inference']['use_tta'] = use_tta
     config['inference']['store_dir'] = store_dir
-    config['inference']['multiple_audio_input'] = input_folder
+    config['inference']['input_dir'] = input_folder
     save_configs(config, WEBUI_CONFIG)
 
-def run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only):
+def run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
     input_folder = None
 
     if not input_audio:
@@ -101,27 +104,25 @@ def run_inference_single(selected_model, input_audio, store_dir, extract_instrum
     for audio in input_audio:
         shutil.copy(audio, TEMP_PATH)
     input_path = TEMP_PATH
-    start_time = time.time()
 
-    save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only)
-
-    run_inference(selected_model, input_path, store_dir,extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only)
-
+    save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
+    message = start_inference(selected_model, input_path, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
     shutil.rmtree(TEMP_PATH)
-    return i18n("运行完成, 耗时: ") + str(round(time.time() - start_time, 2)) + "s"
+    return message
 
-def run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only):
-    start_time = time.time()
+def run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
+    save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
+    return start_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
 
-    save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only)
+def start_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
+    if selected_model == "":
+        return gr.Error(i18n("请选择模型"))
+    if input_folder == "":
+        return gr.Error(i18n("请选择输入目录"))
+    if store_dir == "":
+        return gr.Error(i18n("请选择输出目录"))
 
-    run_inference(selected_model, input_folder, store_dir,extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only)
-
-    return i18n("运行完成, 耗时: ") + str(round(time.time() - start_time, 2)) + "s"
-
-def run_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, instrumental_only, extra_store_dir=None):
     gpu_ids = []
-
     if not force_cpu:
         if len(gpu_id) == 0:
             raise gr.Error(i18n("请选择GPU"))
@@ -130,27 +131,80 @@ def run_inference(selected_model, input_folder, store_dir, extract_instrumental,
                 gpu_ids.append(gpu[:gpu.index(":")])
         except:
             gpu_ids = ["0"]
+    else:
+        gpu_ids = ["0"]
 
-    if selected_model == "":
-        raise gr.Error(i18n("请选择模型"))
-    if input_folder == "":
-        raise gr.Error(i18n("请选择输入目录"))
+    gpu_ids = list(set(gpu_ids))
+    device = "auto" if not force_cpu else "cpu"
+    model_path, config_path, model_type, _ = get_msst_model(selected_model)
+    webui_config = load_configs(WEBUI_CONFIG)
+    debug = webui_config["settings"].get("debug", False)
 
-    os.makedirs(store_dir, exist_ok=True)
+    if type(store_dir) == str:
+        store_dict = {}
+        model_config = load_configs(config_path)
+        for inst in extract_instrumental:
+            if inst in model_config.training.get("instruments"): # bug of gr.CheckboxGroup, we must check if the instrument is in the model
+                store_dict[inst] = store_dir
+        if store_dict == {}:
+            logger.warning(f"No selected instruments, extract all instruments to {store_dir}")
+            store_dict = {k : store_dir for k in model_config.training.get("instruments")}
+    else:
+        store_dict = store_dir
 
-    if extra_store_dir:
-        os.makedirs(extra_store_dir, exist_ok=True)
+    start_time = time.time()
+    logger.info("Starting MSST inference process...")
 
-    start_check_point, config_path, model_type, _ = get_msst_model(selected_model)
-    gpu_ids = " ".join(gpu_ids) if not force_cpu else "0"
-    extract_instrumental_option = "--extract_instrumental" if extract_instrumental else ""
-    force_cpu_option = "--force_cpu" if force_cpu else ""
-    use_tta_option = "--use_tta" if use_tta else ""
-    instrumental_only = "--instrumental_only" if instrumental_only else ""
-    extra_store_dir = f"--extra_store_dir \"{extra_store_dir}\"" if extra_store_dir else ""
+    result_queue = multiprocessing.Queue()
+    msst_inference = multiprocessing.Process(
+        target=run_inference,
+        args=(model_type, config_path, model_path, device, gpu_ids, output_format, use_tta, store_dict, debug, input_folder, result_queue),
+        name="msst_inference"
+    )
 
-    command = f"{PYTHON} inference/msst_cli.py --model_type {model_type} --config_path \"{config_path}\" --start_check_point \"{start_check_point}\" --input_folder \"{input_folder}\" --store_dir \"{store_dir}\" --device_ids {gpu_ids} --output_format {output_format} {extract_instrumental_option} {instrumental_only} {force_cpu_option} {use_tta_option} {extra_store_dir}"
-
-    msst_inference = threading.Thread(target=run_command, args=(command,), name="msst_inference")
     msst_inference.start()
+    logger.debug(f"Inference process started, PID: {msst_inference.pid}")
     msst_inference.join()
+
+    if not result_queue.empty():
+        result = result_queue.get()
+        if result[0] == "success":
+            return i18n("处理完成, 结果已保存至: ") + store_dir + i18n(", 耗时: ") + \
+                str(round(time.time() - start_time, 2)) + "s"
+        elif result[0] == "error":
+            return i18n("处理失败: ") + result[1]
+    else:
+        return i18n("用户强制终止")
+
+def run_inference(model_type, config_path, model_path, device, gpu_ids, output_format, use_tta, store_dict, debug, input_folder, result_queue):
+    logger.debug(f"Start MSST inference process with parameters: model_type={model_type}, config_path={config_path}, model_path={model_path}, device={device}, gpu_ids={gpu_ids}, output_format={output_format}, use_tta={use_tta}, store_dict={store_dict}, debug={debug}, input_folder={input_folder}")
+
+    try:
+        separator = MSSeparator(
+            model_type=model_type,
+            config_path=config_path,
+            model_path=model_path,
+            device=device,
+            device_ids=gpu_ids,
+            output_format=output_format,
+            use_tta=use_tta,
+            store_dirs=store_dict,
+            logger=logger,
+            debug=debug
+        )
+        success_files = separator.process_folder(input_folder)
+        separator.del_cache()
+
+        logger.info(f"Successfully separated files: {success_files}")
+        result_queue.put(("success", success_files))
+    except Exception as e:
+        logger.error(f"Separation failed: {str(e)}")
+        result_queue.put(("error", str(e)))
+        traceback.print_exc()
+
+def stop_msst_inference():
+    for process in multiprocessing.active_children():
+        if process.name == "msst_inference":
+            process.terminate()
+            process.join()
+            logger.info(f"Inference process stopped, PID: {process.pid}")

@@ -1,4 +1,3 @@
-import os
 import json
 import locale
 import platform
@@ -9,45 +8,14 @@ import gradio as gr
 import psutil
 import subprocess
 import threading
+import logging
 from tkinter import filedialog
 from ml_collections import ConfigDict
 
 from utils.constant import *
-from utils.logger import get_logger
+from utils.logger import get_logger, set_log_level
+from tools.i18n import i18n
 
-logger = get_logger()
-stop_all_threads = False
-stop_infer_flow = False
-
-def get_stop_infer_flow():
-    return stop_infer_flow
-
-def change_stop_infer_flow():
-    global stop_infer_flow
-    stop_infer_flow = False
-
-def webui_restart():
-    os.execl(PYTHON, PYTHON, *sys.argv)
-
-def i18n(key):
-    try:
-        config = load_configs(WEBUI_CONFIG)
-        if config["settings"]["language"]== "Auto":
-            language = locale.getdefaultlocale()[0]
-        else: 
-            language = config['settings']['language']
-    except Exception:
-        language = locale.getdefaultlocale()[0]
-
-    if language == "zh_CN":
-        return key
-    if not os.path.exists(path=f"tools/i18n/locale/{language}.json"):
-        language = "en_US"
-
-    with open(file=f"tools/i18n/locale/{language}.json", mode="r", encoding="utf-8") as f:
-        language_list = json.load(f)
-
-    return language_list.get(key, key)
 
 def load_configs(config_path):
     if config_path.endswith('.json'):
@@ -64,6 +32,44 @@ def save_configs(config, config_path):
     elif config_path.endswith('.yaml') or config_path.endswith('.yml'):
         with open(config_path, 'w') as f:
             yaml.dump(config.to_dict(), f)
+
+def get_language():
+    config = load_configs(WEBUI_CONFIG)
+    language = config['settings']['language']
+    if language == "Auto":
+        language = locale.getdefaultlocale()[0]
+    return language
+
+
+logger = get_logger()
+stop_all_threads = False
+stop_infer_flow = False
+i18n = i18n.I18nAuto(get_language())
+
+
+def get_stop_infer_flow():
+    return stop_infer_flow
+
+def change_stop_infer_flow():
+    global stop_infer_flow
+    stop_infer_flow = False
+
+def webui_restart():
+    os.execl(PYTHON, PYTHON, *sys.argv)
+
+def log_level_debug(isdug):
+    config = load_configs(WEBUI_CONFIG)
+    if isdug:
+        set_log_level(logger, logging.DEBUG)
+        config["settings"]["debug"] = True
+        save_configs(config, WEBUI_CONFIG)
+        return i18n("已开启调试日志")
+    else:
+        set_log_level(logger, logging.INFO)
+        config["settings"]["debug"] = False
+        save_configs(config, WEBUI_CONFIG)
+        return i18n("已关闭调试日志")
+
 
 def print_command(command, title="Use command"):
     console = rich.console.Console()
@@ -205,7 +211,8 @@ def get_vr_model(model):
 
 def load_vr_model_stem(model):
     primary_stem, secondary_stem, _, _= get_vr_model(model)
-    return gr.Checkbox(label=f"{primary_stem} Only", value=False, interactive=True), gr.Checkbox(label=f"{secondary_stem} Only", value=False, interactive=True)
+    return (gr.Checkbox(label=f"{primary_stem} Only", value=False, interactive=True),
+            gr.Checkbox(label=f"{secondary_stem} Only", value=False, interactive=True))
 
 def select_folder():
     root = tk.Tk()

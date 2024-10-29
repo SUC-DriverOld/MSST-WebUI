@@ -5,7 +5,7 @@ import requests
 import webbrowser
 
 from utils.constant import *
-from tools.webUI.utils import i18n, load_configs, save_configs, load_msst_model, load_vr_model, load_selected_model
+from tools.webUI.utils import i18n, load_configs, save_configs, load_msst_model, load_vr_model, load_selected_model, log_level_debug
 
 def reset_settings():
     config = load_configs(WEBUI_CONFIG)
@@ -133,6 +133,23 @@ def save_auto_clean_cache(flag):
         config['settings']['auto_clean_cache'] = False
         save_configs(config, WEBUI_CONFIG)
         return i18n("已关闭自动清理缓存")
+
+def change_debug_mode(flag):
+    config = load_configs(WEBUI_CONFIG)
+    if flag:
+        config['settings']['debug'] = True
+        save_configs(config, WEBUI_CONFIG)
+        return i18n("已开启调试模式")
+    else:
+        config['settings']['debug'] = False
+        save_configs(config, WEBUI_CONFIG)
+        return i18n("已关闭调试模式")
+
+def change_theme(theme):
+    config = load_configs(WEBUI_CONFIG)
+    config['settings']['theme'] = theme
+    save_configs(config, WEBUI_CONFIG)
+    return i18n("主题已更改, 重启WebUI生效")
 
 def update_rename_model_name(model_type):
     if model_type == "UVR_VR_Models":

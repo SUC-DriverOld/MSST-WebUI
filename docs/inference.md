@@ -55,12 +55,14 @@ separator = MSSeparator(
 # Separate a folder of mixtures.
 # Returns a list of successful separated files. Examples: ["input/test01.wav", "input/test02.wav"]
 results_list = separator.process_folder("input")
+separator.del_cache()
 
 # Separate from a single numpy array
 # Returns a dict with separated audio arrays. Examples: {"vocals": NDArray, "instrumental": NDArray}
 import numpy as np
 mix = np.load("input/test02.npy") # load numpy array for example
 audio_array = separator.separate(mix)
+separator.del_cache()
 ```
 
 > [!NOTE]
@@ -121,7 +123,7 @@ VR Architecture Parameters:
 from modules.vocal_remover.separator import Separator
 from utils.logger import get_logger
 
-separater = Separator(
+separator = Separator(
     logger=get_logger(),
     debug=True,
     model_file="pretrain/VR_Models/1_HP-UVR.pth",
@@ -138,10 +140,12 @@ separater = Separator(
 # Separate a folder of mixtures.
 # Returns a list of successful separated files. Examples: ["input/test01.wav", "input/test02.wav"]
 results_list = separator.process_folder("input")
+separator.del_cache()
 
 # Separate from a single numpy array
 # Returns a dict with separated audio arrays. Examples: {"vocals": NDArray, "instrumental": NDArray}
 import numpy as np
 mix = np.load("input/test02.npy") # load numpy array for example
 audio_array = separator.separate(mix)
+separator.del_cache()
 ```

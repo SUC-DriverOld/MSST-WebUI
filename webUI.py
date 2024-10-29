@@ -1,31 +1,10 @@
 import os
 import sys
-
+import shutil
+import warnings
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
-
-import shutil
-import locale
-import app
-from torch import cuda, backends
 from utils.constant import *
-from tools.webUI.utils import i18n, load_configs, save_configs, logger
-
-import warnings
-warnings.filterwarnings("ignore")
-
-import platform
-platform_info = f"System: {platform.system()}, Version: {platform.version()}, Machine: {platform.machine()}"
-
-gpus = []
-if cuda.is_available():
-    n_gpu = cuda.device_count()
-    for i in range(n_gpu):
-        gpus.append(f"{i}: {cuda.get_device_name(i)}")
-elif backends.mps.is_available():
-    gpus = [i18n("使用MPS")]
-else:
-    gpus = [i18n("无可用的加速设备, 使用CPU")]
 
 def copy_folders():
     if os.path.exists("configs"):
@@ -36,20 +15,16 @@ def copy_folders():
         shutil.rmtree("data")
     shutil.copytree("data_backup", "data")
 
-def setup_webui(logger):
-    logger.debug("Starting WebUI setup")
-    logger.info("WebUI Version: " + PACKAGE_VERSION)
-    logger.info(platform_info)
 
-    if not os.path.exists("data") or not os.path.exists("configs"):
-        copy_folders()
-        logger.debug("Copying backup folders")
+def setup_webui():
+    logger.debug("Starting WebUI setup")
 
     os.makedirs("input", exist_ok=True)
     os.makedirs("results", exist_ok=True)
     os.makedirs("cache", exist_ok=True)
 
     webui_config = load_configs(WEBUI_CONFIG)
+    logger.debug(f"Loading WebUI config: {webui_config}")
     version = webui_config.get("version", None)
 
     if not version:
@@ -85,7 +60,7 @@ def setup_webui(logger):
 
     main_link = webui_config['settings']['download_link']
     if main_link == "Auto":
-        language = locale.getdefaultlocale()[0]
+        language = get_language()
         if language in ["zh_CN", "zh_TW", "zh_HK", "zh_SG"]:
             main_link = "hf-mirror.com"
         else: 
@@ -96,40 +71,88 @@ def setup_webui(logger):
     os.environ["PATH"] += os.pathsep + os.path.abspath("ffmpeg/bin/")
     os.environ["GRADIO_TEMP_DIR"] = os.path.abspath("cache/")
 
-    logger.debug("Set HF_HOME to " + os.path.abspath(MODEL_FOLDER))
-    logger.debug("Set HF_ENDPOINT to " + "https://" + main_link)
-    logger.debug("Set ffmpeg PATH to " + os.path.abspath("ffmpeg/bin/"))
-    logger.debug("Set GRADIO_TEMP_DIR to " + os.path.abspath("cache/"))
-    logger.info(i18n("设备信息: " + (gpus if len(gpus) > 1 else gpus[0])))
+    logger.debug("Set HF_HOME to: " + os.path.abspath(MODEL_FOLDER))
+    logger.debug("Set HF_ENDPOINT to: " + "https://" + main_link)
+    logger.debug("Set ffmpeg PATH to: " + os.path.abspath("ffmpeg/bin/"))
+    logger.debug("Set GRADIO_TEMP_DIR to: " + os.path.abspath("cache/"))
+
+
+def set_debug(args):
+    debug = False
+    if os.path.isfile(WEBUI_CONFIG):
+        webui_config = load_configs(WEBUI_CONFIG)
+        debug = webui_config["settings"].get("debug", False)
+    if args.debug or debug:
+        log_level_debug(True)
+    else:
+        log_level_debug(False)
+        warnings.filterwarnings("ignore")
+
 
 if __name__ == "__main__":
+    if not os.path.exists("data") or not os.path.exists("configs"):
+        copy_folders()
+
     import argparse
+    from tools.webUI.utils import i18n, logger
 
     parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=60))
-    parser.add_argument("-sn", "--server_name", type=str, default=None)
-    parser.add_argument("-sp", "--server_port", type=int, default=None)
-    parser.add_argument("-share", action="store_true")
+    parser.add_argument("--server_name", type=str, default=None, help="Server IP address (Default: Auto).")
+    parser.add_argument("--server_port", type=int, default=None, help="Server port (Default: Auto).")
+    parser.add_argument("--share", action="store_true", help="Enable share link (Default: False).")
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode (Default: False).")
     args = parser.parse_args()
 
-    setup_webui(logger)
+    logger.info(i18n("正在启动WebUI, 请稍等..."))
+    logger.info(i18n("若启动失败, 请尝试以管理员身份运行此程序"))
+    logger.warning(i18n("WebUI运行过程中请勿关闭此窗口!"))
+
+    import app
+    import platform
+    from torch import cuda, backends
+    from tools.webUI.utils import load_configs, save_configs, get_language, log_level_debug
+
+    devices = {}
+    force_cpu = False
+
+    if cuda.is_available():
+        for i in range(cuda.device_count()):
+            devices[f"cuda{i}"] = f"{i}: {cuda.get_device_name(i)}"
+        logger.info(i18n("检测到CUDA, 设备信息: ") + str(devices))
+    elif backends.mps.is_available():
+        devices = {"mps": i18n("使用MPS")}
+        logger.info(i18n("检测到MPS, 使用MPS"))
+    else:
+        devices = {"cpu": i18n("无可用的加速设备, 使用CPU")}
+        logger.warning(i18n("未检测到可用的加速设备, 使用CPU"))
+        logger.warning(i18n("如果你使用的是NVIDIA显卡, 请更新显卡驱动至最新版后重试"))
+        force_cpu = True
+
+    platform_info = f"System: {platform.system()}, Machine: {platform.machine()}"
+    logger.info("WebUI Version: " + PACKAGE_VERSION + " " + platform_info)
+
+    set_debug(args)
+    setup_webui()
     webui_config = load_configs(WEBUI_CONFIG)
 
     if args.server_name:
         server_name = args.server_name
     else:
         server_name = "0.0.0.0" if webui_config["settings"].get("local_link", False) else None
-
     if args.server_port:
         server_port = args.server_port
     else:
         server_port = None if webui_config["settings"].get("port", 0) == 0 else webui_config["settings"].get("port", 0)
-
-    if args.share:
+    if args.share or webui_config["settings"].get("share_link", False):
         share = True
     else:
-        share = webui_config["settings"].get("share_link", False)
+        share = False
+    theme_path = os.path.join(THEME_FOLDER, webui_config["settings"]["theme"])
 
-    logger.debug("WebUI parameters: " + str(args))
-    logger.debug("Launching WebUI...")
+    logger.debug(f"Launching WebUI with parameters: server_name={server_name}, server_port={server_port}, share={share}")
 
-    app.app(platform=platform_info, device=gpus).launch(inbrowser=True, share=share, server_name=server_name, server_port=server_port)
+    app.app(
+        platform=platform_info, device=devices, force_cpu=force_cpu, theme=theme_path
+    ).launch(
+        inbrowser=True, share=share, server_name=server_name, server_port=server_port
+    )

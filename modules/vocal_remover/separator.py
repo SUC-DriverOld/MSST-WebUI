@@ -201,10 +201,15 @@ class Separator:
             base_name = os.path.splitext(os.path.basename(file_path))[0]
             for stem in results.keys():
                 store_dir = self.output_dir.get(stem, "")
-                if store_dir:
+                if store_dir and type(store_dir) == str:
                     os.makedirs(store_dir, exist_ok=True)
                     self.save_audio(results[stem], sr, f"{base_name}_{stem}", store_dir)
                     self.logger.debug(f"Saved {stem} for {base_name}_{stem}.{self.output_format} in {store_dir}")
+                elif store_dir and type(store_dir) == list:
+                    for dir in store_dir:
+                        os.makedirs(dir, exist_ok=True)
+                        self.save_audio(results[stem], sr, f"{base_name}_{stem}", dir)
+                        self.logger.debug(f"Saved {stem} for {base_name}_{stem}.{self.output_format} in {dir}")
 
             success_files.append(os.path.basename(file_path))
         return success_files
