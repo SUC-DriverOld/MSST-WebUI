@@ -1,8 +1,8 @@
 import gradio as gr
 
-from tools.webUI.utils import i18n, load_vr_model, load_vr_model_stem, select_folder, open_folder
-from tools.webUI.init import init_selected_vr_model
-from tools.webUI.vr import (
+from webui.utils import i18n, load_vr_model, load_vr_model_stem, select_folder, open_folder
+from webui.init import init_selected_vr_model
+from webui.vr import (
     vr_inference_single,
     vr_inference_multi,
     stop_vr_inference,
@@ -72,7 +72,7 @@ def vr(webui_config, force_cpu):
                     label=i18n("输入目录"),
                     value=webui_config['inference']['input_dir'] if webui_config['inference']['input_dir'] else "input/",
                     interactive=True,
-                    scale=3
+                    scale=4
                 )
                 vr_select_multi_input_dir = gr.Button(i18n("选择文件夹"), scale=1)
                 vr_open_multi_input_dir = gr.Button(i18n("打开文件夹"), scale=1)
@@ -81,7 +81,7 @@ def vr(webui_config, force_cpu):
             label=i18n("输出目录"),
             value=webui_config['inference']['store_dir'] if webui_config['inference']['store_dir'] else "results/",
             interactive=True,
-            scale=3
+            scale=4
         )
         vr_select_store_btn = gr.Button(i18n("选择文件夹"), scale=1)
         vr_open_store_btn = gr.Button(i18n("打开文件夹"), scale=1)
@@ -128,7 +128,7 @@ def vr(webui_config, force_cpu):
         vr_inference_audio = gr.Button(i18n("输入音频分离"), variant="primary", visible=True)
         vr_inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False)
     with gr.Row():
-        vr_output_message = gr.Textbox(label="Output Message", scale=4)
+        vr_output_message = gr.Textbox(label="Output Message", scale=5)
         stop_vr = gr.Button(i18n("强制停止"), scale=1)
 
     audio_tab.select(fn=change_to_audio_infer, outputs=[vr_inference_audio, vr_inference_folder])

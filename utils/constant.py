@@ -47,7 +47,7 @@ WEBUI_CONFIG = "data/webui_config.json"
 WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
 
 # presets data path
-PRESETS = "data/preset_data.json"
+PRESETS = "data/presets"
 
 # msst model map path
 MSST_MODEL = "data/msst_model_map.json"
@@ -58,8 +58,8 @@ VR_MODEL = "data/vr_model_map.json"
 # language data path
 LANGUAGE = "data/language.json"
 
-# path to backup folder
-BACKUP = "backup"
+# path to presets backup folder
+PRESETS_BACKUP = "data/presets_backup"
 
 # path to pretrain folder
 MODEL_FOLDER = "pretrain"

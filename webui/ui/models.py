@@ -1,8 +1,8 @@
 import gradio as gr
 
 from utils.constant import *
-from tools.webUI.utils import i18n, webui_restart
-from tools.webUI.models import (
+from webui.utils import i18n, webui_restart
+from webui.models import (
     upgrade_download_model_name,
     download_model,
     manual_download_model,

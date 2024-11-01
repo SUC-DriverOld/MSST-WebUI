@@ -1,8 +1,8 @@
 import gradio as gr
 
-from tools.webUI.utils import i18n, select_folder, open_folder
-from tools.webUI.init import init_selected_model, init_selected_msst_model
-from tools.webUI.msst import (
+from webui.utils import i18n, select_folder, open_folder
+from webui.init import init_selected_model, init_selected_msst_model
+from webui.msst import (
     run_inference_single,
     run_multi_inference,
     stop_msst_inference,
@@ -86,7 +86,7 @@ def msst(webui_config, device, force_cpu):
                     label=i18n("输入目录"),
                     value=webui_config['inference']['input_dir'] if webui_config['inference']['input_dir'] else "input/",
                     interactive=True,
-                    scale=3
+                    scale=4
                 )
                 select_multi_input_dir = gr.Button(i18n("选择文件夹"), scale=1)
                 open_multi_input_dir = gr.Button(i18n("打开文件夹"), scale=1)
@@ -95,7 +95,7 @@ def msst(webui_config, device, force_cpu):
             label=i18n("输出目录"),
             value=webui_config['inference']['store_dir'] if webui_config['inference']['store_dir'] else "results/",
             interactive=True,
-            scale=3
+            scale=4
         )
         select_store_btn = gr.Button(i18n("选择文件夹"), scale=1)
         open_store_btn = gr.Button(i18n("打开文件夹"), scale=1)
@@ -120,12 +120,12 @@ def msst(webui_config, device, force_cpu):
                 interactive=False
             )
         with gr.Row():
-            save_config_button = gr.Button(i18n("保存配置"), variant="primary")
-            reset_config_button = gr.Button(i18n("重置配置"), variant="primary")
+            save_config_button = gr.Button(i18n("保存配置"))
+            reset_config_button = gr.Button(i18n("重置配置"))
     inference_audio = gr.Button(i18n("输入音频分离"), variant="primary", visible=True)
     inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False)
     with gr.Row():
-        output_message = gr.Textbox(label="Output Message", scale=4)
+        output_message = gr.Textbox(label="Output Message", scale=5)
         stop_msst = gr.Button(i18n("强制停止"), scale=1)
 
     audio_tab.select(fn=change_to_audio_infer, outputs=[inference_audio, inference_folder])

@@ -6,7 +6,7 @@ from tqdm import tqdm
 import gradio as gr
 
 from utils.constant import *
-from tools.webUI.utils import i18n, load_configs, save_configs, load_vr_model, get_vr_model, load_msst_model, get_msst_model, open_folder
+from webui.utils import i18n, load_configs, save_configs, load_vr_model, get_vr_model, load_msst_model, get_msst_model, open_folder
 
 def open_model_folder(model_type):
     if not model_type:

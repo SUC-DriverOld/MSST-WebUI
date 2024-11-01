@@ -5,7 +5,7 @@ import multiprocessing
 import traceback
 
 from utils.constant import *
-from tools.webUI.utils import i18n, get_vr_model, load_configs, save_configs, logger
+from webui.utils import i18n, get_vr_model, load_configs, save_configs, logger
 from modules.vocal_remover.separator import Separator
 
 def change_to_audio_infer():

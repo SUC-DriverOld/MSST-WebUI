@@ -1,7 +1,7 @@
 import gradio as gr
 
-from tools.webUI.utils import i18n, select_folder, open_folder
-from tools.webUI.tools import convert_audio, merge_audios, caculate_sdr, ensemble, some_inference
+from webui.utils import i18n, select_folder, open_folder
+from webui.tools import convert_audio, merge_audios, caculate_sdr, ensemble, some_inference
 
 def tools(webui_config):
     channels = webui_config["tools"]["channels"]
@@ -77,7 +77,7 @@ def tools(webui_config):
                 merge_audio_input = gr.Textbox(
                     label=i18n("输入目录"),
                     value=webui_config['tools']['merge_audio_input'] if webui_config['tools']['merge_audio_input'] else "input/",interactive=True,
-                    scale=3
+                    scale=4
                 )
                 select_merge_input_dir = gr.Button(i18n("选择文件夹"), scale=1)
                 open_merge_input_dir = gr.Button(i18n("打开文件夹"), scale=1)
@@ -86,7 +86,7 @@ def tools(webui_config):
                     label=i18n("输出目录"),
                     value=webui_config['tools']['store_dir'] if webui_config['tools']['store_dir'] else "results/",
                     interactive=True,
-                    scale=3
+                    scale=4
                 )
                 select_merge_output_dir = gr.Button(i18n("选择文件夹"), scale=1)
                 open_merge_output_dir = gr.Button(i18n("打开文件夹"), scale=1)

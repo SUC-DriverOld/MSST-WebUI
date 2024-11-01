@@ -3,8 +3,8 @@ import pandas as pd
 
 from multiprocessing import cpu_count
 from utils.constant import *
-from tools.webUI.utils import i18n, open_folder, select_file, select_folder, select_yaml_file
-from tools.webUI.train import (
+from webui.utils import i18n, open_folder, select_file, select_folder, select_yaml_file
+from webui.train import (
     save_training_config,
     start_training,
     update_train_start_check_point,
@@ -203,83 +203,88 @@ def train(webui_config, device):
 
         with gr.TabItem(label=i18n("验证")):
             gr.Markdown(value=i18n("此页面用于手动验证模型效果, 测试验证集, 输出SDR测试信息。输出的信息会存放在输出文件夹的results.txt中。<br>下方参数将自动加载训练页面的参数, 在训练页面点击保存训练参数后, 重启WebUI即可自动加载。当然你也可以手动输入参数。<br>"))
-            with gr.Accordion(i18n("输入输出设置"), open=True):
-                with gr.Row():
-                    valid_model_type = gr.Dropdown(
-                        label=i18n("选择模型类型"),
-                        choices=MODEL_TYPE,
-                        value=webui_config['training']['model_type'] if webui_config['training']['model_type'] else None,
-                        interactive=True,
-                        scale=1
-                    )
-                    valid_config_path = gr.Textbox(
-                        label=i18n("配置文件路径"),
-                        value=webui_config['training']['config_path'] if webui_config['training']['config_path'] else i18n("请输入配置文件路径或选择配置文件"),
-                        interactive=True,
-                        scale=3
-                    )
-                    select_valid_config_path = gr.Button(i18n("选择配置文件"), scale=1)
-                with gr.Row():
-                    valid_model_path = gr.Textbox(
-                        label=i18n("模型路径"),
-                        value=i18n("请输入或选择模型文件"),
-                        interactive=True,
-                        scale=4
-                    )
-                    select_valid_model_path = gr.Button(i18n("选择模型文件"), scale=1)
-                with gr.Row():
-                    valid_path = gr.Textbox(
-                        label=i18n("验证集路径"),
-                        value=webui_config['training']['valid_path'] if webui_config['training']['valid_path'] else i18n("请输入或选择验证集文件夹"),
-                        interactive=True,
-                        scale=4
-                    )
-                    select_valid_path = gr.Button(i18n("选择验证集文件夹"), scale=1)
-                with gr.Row():
-                    valid_results_path = gr.Textbox(label=i18n("输出目录"),value="results/",interactive=True,scale=3)
-                    select_valid_results_path = gr.Button(i18n("选择文件夹"), scale=1)
-                    open_valid_results_path = gr.Button(i18n("打开文件夹"), scale=1)
             with gr.Row():
-                valid_device_ids = gr.CheckboxGroup(
-                    label=i18n("选择使用的GPU"),
-                    choices=device,
-                    value=webui_config['training']['device'] if webui_config['training']['device'] else device[0],
-                    interactive=True
+                valid_model_type = gr.Dropdown(
+                    label=i18n("选择模型类型"),
+                    choices=MODEL_TYPE,
+                    value=webui_config['training']['model_type'] if webui_config['training']['model_type'] else None,
+                    interactive=True,
+                    scale=1
                 )
-                vaild_metrics = gr.CheckboxGroup(
-                    label=i18n("选择输出的评估指标"),
-                    choices=METRICS,
-                    value=webui_config['training']['metrics'] if webui_config['training']['metrics'] else METRICS[0],
-                    interactive=True
+                valid_config_path = gr.Textbox(
+                    label=i18n("配置文件路径"),
+                    value=webui_config['training']['config_path'] if webui_config['training']['config_path'] else i18n("请输入配置文件路径或选择配置文件"),
+                    interactive=True,
+                    scale=3
                 )
+                select_valid_config_path = gr.Button(i18n("选择配置文件"), scale=1)
             with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        valid_extension = gr.Radio(
-                            label=i18n("选择验证集音频格式"),
-                            choices=["wav", "flac", "mp3"],
-                            value="wav",
+                valid_model_path = gr.Textbox(
+                    label=i18n("模型路径"),
+                    value=i18n("请输入或选择模型文件"),
+                    interactive=True,
+                    scale=4
+                )
+                select_valid_model_path = gr.Button(i18n("选择模型文件"), scale=1)
+            with gr.Row():
+                valid_path = gr.Textbox(
+                    label=i18n("验证集路径"),
+                    value=webui_config['training']['valid_path'] if webui_config['training']['valid_path'] else i18n("请输入或选择验证集文件夹"),
+                    interactive=True,
+                    scale=4
+                )
+                select_valid_path = gr.Button(i18n("选择验证集文件夹"), scale=1)
+            with gr.Row():
+                valid_results_path = gr.Textbox(
+                    label=i18n("输出目录"),
+                    value="results/",
+                    interactive=True,
+                    scale=3
+                )
+                select_valid_results_path = gr.Button(i18n("选择文件夹"), scale=1)
+                open_valid_results_path = gr.Button(i18n("打开文件夹"), scale=1)
+            with gr.Accordion(i18n("验证参数设置"), open=True):
+                with gr.Row():
+                    valid_device_ids = gr.CheckboxGroup(
+                        label=i18n("选择使用的GPU"),
+                        choices=device,
+                        value=webui_config['training']['device'] if webui_config['training']['device'] else device[0],
+                        interactive=True
+                    )
+                    vaild_metrics = gr.CheckboxGroup(
+                        label=i18n("选择输出的评估指标"),
+                        choices=METRICS,
+                        value=webui_config['training']['metrics'] if webui_config['training']['metrics'] else METRICS[0],
+                        interactive=True
+                    )
+                with gr.Row():
+                    with gr.Column():
+                        with gr.Row():
+                            valid_extension = gr.Radio(
+                                label=i18n("选择验证集音频格式"),
+                                choices=["wav", "flac", "mp3"],
+                                value="wav",
+                                interactive=True
+                            )
+                            valid_num_workers = gr.Number(
+                                label=i18n("验证集读取线程数, 0为自动"),
+                                value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
+                                interactive=True,
+                                minimum=0,
+                                maximum=cpu_count(),
+                                step=1
+                            )
+                    with gr.Column():
+                        valid_pin_memory = gr.Checkbox(
+                            label=i18n("是否将加载的数据放置在固定内存中, 默认为否"),
+                            value=webui_config['training']['pin_memory'],
                             interactive=True
                         )
-                        valid_num_workers = gr.Number(
-                            label=i18n("验证集读取线程数, 0为自动"),
-                            value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
-                            interactive=True,
-                            minimum=0,
-                            maximum=cpu_count(),
-                            step=1
+                        valid_use_tta = gr.Checkbox(
+                            label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),
+                            value=False,
+                            interactive=True
                         )
-                with gr.Column():
-                    valid_pin_memory = gr.Checkbox(
-                        label=i18n("是否将加载的数据放置在固定内存中, 默认为否"),
-                        value=webui_config['training']['pin_memory'],
-                        interactive=True
-                    )
-                    valid_use_tta = gr.Checkbox(
-                        label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),
-                        value=False,
-                        interactive=True
-                    )
             valid_button = gr.Button(i18n("开始验证"), variant="primary")
             with gr.Row():
                 valid_output_message = gr.Textbox(label="Output Message", scale=4)

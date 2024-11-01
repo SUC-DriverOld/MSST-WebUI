@@ -3,10 +3,9 @@ import pandas as pd
 import shutil
 import time
 import rich
-from datetime import datetime
 
 from utils.constant import *
-from tools.webUI.utils import (
+from webui.utils import (
     i18n, 
     load_configs, 
     save_configs, 
@@ -18,18 +17,28 @@ from tools.webUI.utils import (
     load_selected_model,
     get_msst_model
 )
-from tools.webUI.msst import run_inference
-from tools.webUI.vr import run_inference as vr_inference
+from webui.msst import run_inference as msst_inference
+from webui.vr import run_inference as vr_inference
+
+def change_to_audio_infer():
+    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=True),
+            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False))
+
+def change_to_folder_infer():
+    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=False),
+            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=True))
+
+def get_presets_list() -> list:
+    if os.path.exists(PRESETS):
+        presets = [file for file in os.listdir(PRESETS) if file.endswith(".json")]
+    else:
+        presets = []
+    return presets
 
 def preset_backup_list():
-    backup_dir = BACKUP
-    if not os.path.exists(backup_dir):
+    if not os.path.exists(PRESETS_BACKUP):
         return [i18n("暂无备份文件")]
-
-    backup_files = []
-    for file in os.listdir(backup_dir):
-        if file.startswith("preset_backup_") and file.endswith(".json"):
-            backup_files.append(file)
+    backup_files = [file for file in os.listdir(PRESETS_BACKUP) if file.endswith(".json")]
     return backup_files
 
 def update_model_name(model_type):
@@ -43,107 +52,132 @@ def update_model_name(model_type):
 def update_model_stem(model_type, model_name):
     if model_type == "UVR_VR_Models":
         primary_stem, secondary_stem, _, _ = get_vr_model(model_name)
-        return gr.Dropdown(label=i18n("输出音轨"), choices=[primary_stem, secondary_stem], interactive=True)
+        input_to_next = gr.Radio(
+            label=i18n("作为下一模型输入(或结果输出)的音轨"),
+            choices=[primary_stem, secondary_stem],
+            value=primary_stem,
+            interactive=True
+        )
+        output_to_storage = gr.CheckboxGroup(
+            label=i18n("直接保存至输出目录的音轨(可多选)"),
+            choices=[i18n("不输出"), primary_stem, secondary_stem],
+            interactive=True,
+        )
+        return input_to_next, output_to_storage
     else:
         _, config_path, _, _ = get_msst_model(model_name)
-        config = load_configs(config_path)
-        stem = ["All_stems"] if config.training.get("target_instrument", None) is None else [config.training.get("target_instrument")]
-        return gr.Dropdown(label=i18n("输出音轨"), choices=stem, value=stem[0], interactive=False)
+        stems = load_configs(config_path).training.get("instruments", None)
+        input_to_next = gr.Radio(
+            label=i18n("作为下一模型输入(或结果输出)的音轨"),
+            choices=stems,
+            value=stems[0],
+            interactive=True
+        )
+        output_to_storage = gr.CheckboxGroup(
+            label=i18n("直接保存至输出目录的音轨(可多选)"),
+            choices=[i18n("不输出")] + stems,
+            interactive=True,
+        )
+        return input_to_next, output_to_storage
 
-def add_to_flow_func(model_type, model_name, stem, secondary_output, df):
-    if not model_type or not model_name or (model_type == "UVR_VR_Models" and not stem):
+def add_to_flow_func(model_type, model_name, input_to_next, output_to_storage, df):
+    if not model_type or not model_name or not input_to_next:
         return df
-    if not secondary_output or secondary_output == "":
-        secondary_output = "False"
+    if not output_to_storage or i18n("不输出") in output_to_storage:
+        output_to_storage = []
+    else:
+        _, config_path, _, _ = get_msst_model(model_name)
+        stems = load_configs(config_path).training.get("instruments", None)
+        output_to_storage = [stem for stem in output_to_storage if stem in stems]
 
-    new_data = pd.DataFrame({"model_type": [model_type], "model_name": [model_name], "stem": [stem], "secondary_output": [secondary_output]})
+    new_data = pd.DataFrame({"model_type": [model_type], "model_name": [model_name], "input_to_next": [input_to_next], "output_to_storage": [output_to_storage]})
 
-    if df["model_type"].iloc[0] == "" or df["model_name"].iloc[0] == "":
+    if df["model_type"].iloc[0] == "" or df["model_name"].iloc[0] == "" or df["input_to_next"].iloc[0] == "":
         return new_data
 
     updated_df = pd.concat([df, new_data], ignore_index=True)
     return updated_df
 
 def save_flow_func(preset_name, df):
-    preset_data = load_configs(PRESETS)
-
-    if preset_name is None or preset_name == "":
+    if not preset_name:
         output_message = i18n("请填写预设名称")
-        preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
-        preset_name_select = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
-        return output_message, preset_name_delete, preset_name_select
+        return output_message, None, None
 
     preset_dict = {f"Step_{index + 1}": row.dropna().to_dict() for index, row in df.iterrows()}
-    preset_data[preset_name] = preset_dict
-    save_configs(preset_data, PRESETS)
+    os.makedirs(PRESETS, exist_ok=True)
+    save_configs(preset_dict, os.path.join(PRESETS, f"{preset_name}.json"))
 
     output_message = i18n("预设") + preset_name + i18n("保存成功")
-    preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
-    preset_name_select = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
+    preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=get_presets_list())
+    preset_name_select = gr.Dropdown(label=i18n("请选择预设"), choices=get_presets_list())
 
     return output_message, preset_name_delete, preset_name_select
 
 def reset_flow_func():
-    return gr.Dataframe(pd.DataFrame({"model_type": [""], "model_name": [""], "stem": [""]}), interactive=False, label=None)
+    return gr.Dataframe(
+        pd.DataFrame({"model_type": [""], "model_name": [""], "input_to_next": [""], "output_to_storage": [""]}),
+        interactive=False,
+        label=None
+    )
+
+def reset_last_func(df):
+    if df.shape[0] == 1:
+        return reset_flow_func()
+    return df.iloc[:-1]
 
 def load_preset(preset_name):
-    preset_data = load_configs(PRESETS)
-
-    if preset_name in preset_data.keys():
-        preset_flow = pd.DataFrame({"model_type": [""], "model_name": [""], "stem": [""], "secondary_output": [""]})
-        preset_dict = preset_data[preset_name]
+    if preset_name in os.listdir(PRESETS):
+        preset_data = load_configs(os.path.join(PRESETS, preset_name))
+        preset_flow = pd.DataFrame({"model_type": [""], "model_name": [""], "input_to_next": [""], "output_to_storage": [""]})
     
-        for key in preset_dict.keys():
-            try:
-                secondary_output = preset_dict[key]["secondary_output"]
-            except KeyError:
-                secondary_output = "False"
-
-            preset_flow = add_to_flow_func(preset_dict[key]["model_type"], preset_dict[key]["model_name"], preset_dict[key]["stem"], secondary_output, preset_flow)
+        for step in preset_data.keys():
+            preset_flow = add_to_flow_func(
+                preset_data[step]["model_type"],
+                preset_data[step]["model_name"],
+                preset_data[step]["input_to_next"],
+                preset_data[step]["output_to_storage"],
+                preset_flow
+            )
         return preset_flow
 
-    return gr.Dataframe(pd.DataFrame({"model_type": [i18n("预设不存在")], "model_name": [i18n("预设不存在")], "stem": [i18n("预设不存在")], "secondary_output": [i18n("预设不存在")]}), interactive=False, label=None)
+    return gr.Dataframe(
+        pd.DataFrame({"model_type": [i18n("预设不存在")], "model_name": [i18n("预设不存在")], "input_to_next": [i18n("预设不存在")], "output_to_storage": [i18n("预设不存在")]}),
+        interactive=False,
+        label=None
+    )
 
 def delete_func(preset_name):
-    preset_data = load_configs(PRESETS)
-
-    if preset_name in preset_data.keys():
-        _, select_preset_backup = backup_preset_func()
-        del preset_data[preset_name]
-        save_configs(preset_data, PRESETS)
-
+    if preset_name in os.listdir(PRESETS):
+        select_preset_backup = backup_preset_func(preset_name)
+        os.remove(os.path.join(PRESETS, preset_name))
         output_message = i18n("预设") + preset_name + i18n("删除成功")
-        preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
-        preset_name_select = gr.Dropdown(label=i18n("请选择预设"), choices=list(preset_data.keys()))
-        preset_flow_delete = gr.Dataframe(pd.DataFrame({"model_type": [i18n("预设已删除")], "model_name": [i18n("预设已删除")], "stem": [i18n("预设已删除")], "secondary_output": [i18n("预设已删除")]}), interactive=False, label=None)
+        preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=get_presets_list())
+        preset_name_select = gr.Dropdown(label=i18n("请选择预设"), choices=get_presets_list())
+        preset_flow_delete = gr.Dataframe(
+            pd.DataFrame({"model_type": [i18n("预设已删除")], "model_name": [i18n("预设已删除")], "input_to_next": [i18n("预设已删除")], "output_to_storage": [i18n("预设已删除")]}),
+            interactive=False,
+            label=None
+        )
         return output_message, preset_name_delete, preset_name_select, preset_flow_delete, select_preset_backup
     else:
-        return i18n("预设不存在")
+        return i18n("预设不存在"), None, None, None, None
+
+def backup_preset_func(preset_name):
+    os.makedirs(PRESETS_BACKUP, exist_ok=True)
+    backup_file = f"backup_{preset_name}"
+    shutil.copy(os.path.join(PRESETS, preset_name), os.path.join(PRESETS_BACKUP, backup_file))
+    return gr.Dropdown(label=i18n("选择需要恢复的预设流程备份"), choices=preset_backup_list(), interactive=True, scale=4)
 
 def restore_preset_func(backup_file):
-    backup_dir = BACKUP
-
-    if not backup_file or backup_file == i18n("暂无备份文件"):
-        return i18n("请选择备份文件")
-
-    backup_data = load_configs(os.path.join(backup_dir, backup_file))
-    save_configs(backup_data, PRESETS)
-
+    backup_file_rename = backup_file
+    if backup_file.startswith("backup_"):
+        backup_file_rename = backup_file[7:]
+    shutil.copy(os.path.join(PRESETS_BACKUP, backup_file), os.path.join(PRESETS, backup_file_rename))
     output_message_manage = i18n("已成功恢复备份") + backup_file
-    preset_dropdown = gr.Dropdown(label=i18n("请选择预设"), choices=list(backup_data.keys()))
-    preset_name_delet = gr.Dropdown(label=i18n("请选择预设"), choices=list(backup_data.keys()))
-    preset_flow_delete = pd.DataFrame({"model_type": [i18n("请先选择预设")], "model_name": [i18n("请先选择预设")], "stem": [i18n("请先选择预设")], "secondary_output": [i18n("请先选择预设")]})
+    preset_dropdown = gr.Dropdown(label=i18n("请选择预设"), choices=get_presets_list())
+    preset_name_delet = gr.Dropdown(label=i18n("请选择预设"), choices=get_presets_list())
+    preset_flow_delete = pd.DataFrame({"model_type": [i18n("请选择预设")], "model_name": [i18n("请选择预设")], "input_to_next": [i18n("请选择预设")], "output_to_storage": [i18n("请选择预设")]})
     return output_message_manage, preset_dropdown, preset_name_delet, preset_flow_delete
-
-def backup_preset_func():
-    backup_dir = BACKUP
-    os.makedirs(backup_dir, exist_ok=True)
-    backup_file = f"preset_backup_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
-    preset_data = load_configs(PRESETS)
-    save_configs(preset_data, os.path.join(backup_dir, backup_file))
-    msg = i18n("已成功备份至") + backup_file
-    select_preset_backup = gr.Dropdown(label=i18n("选择需要恢复的预设流程备份"), choices=preset_backup_list(), interactive=True, scale=4)
-    return msg, select_preset_backup
 
 def run_single_inference_flow(input_audio, store_dir, preset_name, force_cpu, output_format_flow):
     if not input_audio:
@@ -276,7 +310,7 @@ def run_inference_flow(input_folder, store_dir, preset_name, force_cpu, output_f
                 extract_instrumental = False
                 extra_store_dir = None
 
-            run_inference(model_name, input_to_use, tmp_store_dir, extract_instrumental, device, output_format_flow, force_cpu, use_tta, instrumental_only, extra_store_dir)
+            msst_inference(model_name, input_to_use, tmp_store_dir, extract_instrumental, device, output_format_flow, force_cpu, use_tta, instrumental_only, extra_store_dir)
 
         i += 1
 

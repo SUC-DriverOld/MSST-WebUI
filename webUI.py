@@ -94,7 +94,7 @@ if __name__ == "__main__":
         copy_folders()
 
     import argparse
-    from tools.webUI.utils import i18n, logger
+    from webui.utils import i18n, logger
 
     parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=60))
     parser.add_argument("--server_name", type=str, default=None, help="Server IP address (Default: Auto).")
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     import app
     import platform
     from torch import cuda, backends
-    from tools.webUI.utils import load_configs, save_configs, get_language, log_level_debug
+    from webui.utils import load_configs, save_configs, get_language, log_level_debug
 
     devices = {}
     force_cpu = False

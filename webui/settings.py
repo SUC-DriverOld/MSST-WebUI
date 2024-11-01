@@ -5,7 +5,7 @@ import requests
 import webbrowser
 
 from utils.constant import *
-from tools.webUI.utils import i18n, load_configs, save_configs, load_msst_model, load_vr_model, load_selected_model, log_level_debug
+from webui.utils import i18n, load_configs, save_configs, load_msst_model, load_vr_model, load_selected_model, log_level_debug
 
 def reset_settings():
     config = load_configs(WEBUI_CONFIG)

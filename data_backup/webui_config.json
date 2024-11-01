@@ -11,6 +11,7 @@
         "instrumental": null,
         "use_tta": false,
         "preset": null,
+        "preset_use_tta": false,
         "vr_select_model": null,
         "vr_window_size": "512",
         "vr_aggression": 5,

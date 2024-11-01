@@ -2,7 +2,6 @@ import json
 import locale
 import platform
 import yaml
-import rich
 import tkinter as tk
 import gradio as gr
 import psutil
@@ -70,24 +69,10 @@ def log_level_debug(isdug):
         save_configs(config, WEBUI_CONFIG)
         return i18n("已关闭调试日志")
 
-
-def print_command(command, title="Use command"):
-    console = rich.console.Console()
-    panel = rich.panel.Panel(command, title=title, style=rich.style.Style(color="green"), border_style="green")
-    console.print(panel)
-
-def load_augmentations_config():
-    try:
-        with open("configs/augmentations_template.yaml", 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return i18n("错误: 无法找到增强配置文件模板, 请检查文件configs/augmentations_template.yaml是否存在。")
-
 def load_selected_model(model_type=None):
     if not model_type:
         webui_config = load_configs(WEBUI_CONFIG)
         model_type = webui_config["inference"]["model_type"]
-
     if model_type:
         downloaded_model = []
         model_dir = os.path.join(MODEL_FOLDER, model_type)
@@ -106,12 +91,10 @@ def load_msst_model():
     config = load_configs(MSST_MODEL)
     model_list = []
     model_dir = [os.path.join(MODEL_FOLDER, keys) for keys in config.keys()]
-
     for dirs in model_dir:
         for files in os.listdir(dirs):
             if files.endswith(('.ckpt', '.th', '.chpt')):
                 model_list.append(files)
-
     return model_list
 
 def get_msst_model(model_name):
@@ -159,7 +142,6 @@ def load_vr_model():
     downloaded_model = []
     config = load_configs(WEBUI_CONFIG)
     vr_model_path = config['settings']['uvr_model_dir']
-
     for files in os.listdir(vr_model_path):
         if files.endswith('.pth'):
             try: 
@@ -167,7 +149,6 @@ def load_vr_model():
                 downloaded_model.append(files)
             except: 
                 continue
-
     return downloaded_model
 
 def get_vr_model(model):

@@ -5,8 +5,8 @@ import multiprocessing
 import traceback
 
 from utils.constant import *
-from tools.webUI.utils import i18n, load_configs, save_configs, load_selected_model, logger
-from tools.webUI.init import get_msst_model
+from webui.utils import i18n, load_configs, save_configs, load_selected_model, logger
+from webui.init import get_msst_model
 from inference.msst_infer import MSSeparator
 
 def change_to_audio_infer():

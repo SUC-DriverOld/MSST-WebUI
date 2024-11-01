@@ -1,5 +1,5 @@
 from utils.constant import *
-from tools.webUI.utils import i18n, load_configs, get_msst_model, get_vr_model
+from webui.utils import i18n, load_configs, get_msst_model, get_vr_model
 
 
 def init_selected_model():

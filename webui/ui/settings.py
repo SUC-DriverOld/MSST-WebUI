@@ -1,8 +1,8 @@
 import gradio as gr
 
 from utils.constant import *
-from tools.webUI.utils import i18n, webui_restart, select_folder, log_level_debug
-from tools.webUI.settings import (
+from webui.utils import i18n, webui_restart, select_folder, log_level_debug
+from webui.settings import (
     reset_settings,
     reset_webui_config,
     save_uvr_modeldir,

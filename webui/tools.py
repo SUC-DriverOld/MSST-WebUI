@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from utils.constant import *
 from utils.ensemble import ensemble_files
-from tools.webUI.utils import i18n, load_configs, save_configs, logger
+from webui.utils import i18n, load_configs, save_configs, logger
 
 def convert_audio(uploaded_files, output_format, output_folder, sample_rate, channels, wav_bit_depth, flac_bit_depth, mp3_bit_rate, ogg_bit_rate):
     if not uploaded_files:

@@ -22,6 +22,8 @@ tmpdir/
 pretrain/hub
 build/
 logs/
+data/presets
+data/presets_backup
 
 !pretrain/*.json
 !.gitkeep

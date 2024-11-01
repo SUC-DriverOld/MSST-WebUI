@@ -4,7 +4,7 @@ import multiprocessing
 import subprocess
 
 from utils.constant import *
-from tools.webUI.utils import i18n, load_configs, save_configs, logger
+from webui.utils import i18n, load_configs, save_configs, logger
 
 def run_command(command):
     subprocess.run(command, shell=True)
