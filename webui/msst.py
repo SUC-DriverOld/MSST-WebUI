@@ -130,9 +130,9 @@ def start_inference(selected_model, input_folder, store_dir, extract_instrumenta
             for gpu in gpu_id:
                 gpu_ids.append(gpu[:gpu.index(":")])
         except:
-            gpu_ids = ["0"]
+            gpu_ids = [0]
     else:
-        gpu_ids = ["0"]
+        gpu_ids = [0]
 
     gpu_ids = list(set(gpu_ids))
     device = "auto" if not force_cpu else "cpu"

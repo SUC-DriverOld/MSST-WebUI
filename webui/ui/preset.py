@@ -5,8 +5,6 @@ from utils.constant import *
 from webui.utils import i18n, select_folder, open_folder, stop_all_thread
 from webui.preset import (
     get_presets_list,
-    run_inference_flow,
-    run_single_inference_flow,
     update_model_name,
     update_model_stem,
     add_to_flow_func,
@@ -18,7 +16,10 @@ from webui.preset import (
     restore_preset_func,
     preset_backup_list,
     change_to_audio_infer,
-    change_to_folder_infer
+    change_to_folder_infer,
+    preset_inference,
+    preset_inference_audio,
+    stop_preset
 )
 
 def preset(webui_config, force_cpu):
@@ -60,10 +61,10 @@ def preset(webui_config, force_cpu):
                 )
             with gr.Tabs():
                 with gr.TabItem(label=i18n("输入音频")) as audio_tab:
-                    single_audio_flow = gr.Files(label=i18n("上传一个或多个音频文件"), type="filepath")
+                    input_audio = gr.Files(label=i18n("上传一个或多个音频文件"), type="filepath")
                 with gr.TabItem(label=i18n("输入文件夹")) as folder_tab:
                     with gr.Row():
-                        input_folder_flow = gr.Textbox(
+                        input_folder = gr.Textbox(
                             label=i18n("输入目录"),value=webui_config['inference']['input_dir'] if webui_config['inference']['input_dir'] else "input/",
                             interactive=True,
                             scale=3
@@ -84,7 +85,7 @@ def preset(webui_config, force_cpu):
                 inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False)
             with gr.Row():
                 output_message_flow = gr.Textbox(label="Output Message", scale=5)
-                stop_thread = gr.Button(i18n("强制停止"), scale=1)
+                stop_preset_inference = gr.Button(i18n("强制停止"), scale=1)
         with gr.TabItem(label=i18n("制作预设")):
             preset_name_input = gr.Textbox(
                 label=i18n("预设名称"),
@@ -155,22 +156,103 @@ def preset(webui_config, force_cpu):
     audio_tab.select(fn=change_to_audio_infer, outputs=[inference_audio, inference_folder])
     folder_tab.select(fn=change_to_folder_infer, outputs=[inference_audio, inference_folder])
 
-    add_to_flow.click(add_to_flow_func, inputs=[model_type, model_name, input_to_next, output_to_storage, preset_flow], outputs=preset_flow)
-
-    # inference_folder.click(fn=run_inference_flow,inputs=[input_folder_flow, store_dir_flow, preset_dropdown, force_cpu, output_format_flow],outputs=output_message_flow)
-    # inference_audio.click(fn=run_single_inference_flow,inputs=[single_audio_flow, store_dir_flow, preset_dropdown, force_cpu, output_format_flow],outputs=output_message_flow)
-    # stop_thread.click(fn=stop_all_thread)
-    select_input_dir.click(fn=select_folder, outputs=input_folder_flow)
-    open_input_dir.click(fn=open_folder, inputs=input_folder_flow)
+    add_to_flow.click(
+        fn=add_to_flow_func,
+        inputs=[
+            model_type,
+            model_name,
+            input_to_next,
+            output_to_storage,
+            preset_flow
+        ],
+        outputs=preset_flow
+    )
+    inference_folder.click(
+        fn=preset_inference,
+        inputs=[
+            input_folder,
+            store_dir_flow,
+            preset_dropdown,
+            force_cpu,
+            output_format_flow,
+            use_tta
+        ],
+        outputs=output_message_flow
+    )
+    inference_audio.click(
+        fn=preset_inference_audio,
+        inputs=[
+            input_audio,
+            store_dir_flow,
+            preset_dropdown,
+            force_cpu,
+            output_format_flow,
+            use_tta
+        ],
+        outputs=output_message_flow
+    )
+    model_name.change(
+        fn=update_model_stem,
+        inputs=[
+            model_type,
+            model_name
+        ],
+        outputs=[
+            input_to_next,
+            output_to_storage
+        ]
+    )
+    add_to_flow.click(
+        fn=add_to_flow_func,
+        inputs=[
+            model_type,
+            model_name,
+            input_to_next,
+            output_to_storage,
+            preset_flow
+        ],
+        outputs=preset_flow
+    )
+    save_flow.click(
+        fn=save_flow_func,
+        inputs=[
+            preset_name_input,
+            preset_flow
+        ],
+        outputs=[
+            output_message_make,
+            preset_name_delete,
+            preset_dropdown
+        ]
+    )
+    delete_button.click(
+        fn=delete_func,
+        inputs=preset_name_delete,
+        outputs=[
+            output_message_manage,
+            preset_name_delete,
+            preset_dropdown,
+            preset_flow_delete,
+            select_preset_backup
+        ]
+    )
+    restore_preset.click(
+        fn=restore_preset_func,
+        inputs=select_preset_backup,
+        outputs=[
+            output_message_manage,
+            preset_dropdown,
+            preset_name_delete,
+            preset_flow_delete
+        ]
+    )
+    model_type.change(update_model_name, inputs=model_type, outputs=model_name)
+    preset_name_delete.change(load_preset, inputs=preset_name_delete, outputs=preset_flow_delete)
+    reset_flow.click(reset_flow_func,outputs=preset_flow)
+    select_input_dir.click(fn=select_folder, outputs=input_folder)
+    open_input_dir.click(fn=open_folder, inputs=input_folder)
     select_output_dir.click(fn=select_folder, outputs=store_dir_flow)
     open_output_dir.click(fn=open_folder, inputs=store_dir_flow)
-    model_type.change(update_model_name, inputs=model_type, outputs=model_name)
-    model_name.change(update_model_stem, inputs=[model_type, model_name], outputs=[input_to_next, output_to_storage])
-    add_to_flow.click(add_to_flow_func, [model_type, model_name, input_to_next, output_to_storage, preset_flow], preset_flow)
-    save_flow.click(save_flow_func, [preset_name_input, preset_flow], [output_message_make, preset_name_delete, preset_dropdown])
-    reset_flow.click(reset_flow_func, [], preset_flow)
-    delete_button.click(delete_func, [preset_name_delete], [output_message_manage, preset_name_delete, preset_dropdown, preset_flow_delete, select_preset_backup])
-    preset_name_delete.change(load_preset, inputs=preset_name_delete, outputs=preset_flow_delete)
-    restore_preset.click(fn=restore_preset_func,inputs=[select_preset_backup],outputs=[output_message_manage, preset_dropdown, preset_name_delete, preset_flow_delete])
     open_preset_backup.click(open_folder, inputs=gr.Textbox(PRESETS_BACKUP, visible=False))
     reset_last.click(reset_last_func, inputs=preset_flow, outputs=preset_flow)
+    stop_preset_inference.click(stop_preset)

@@ -1,10 +1,51 @@
+
+"""
+Web UI Setup and Launch Script
+Author: Sucial: https://github.com/SUC-DriverOld
+
+This script is responsible for setting up and launching the Web User Interface (WebUI).
+It manages the configuration and data directories, ensuring that the latest settings are
+loaded, and initializes the necessary environment for the application.
+
+Key Configurations:
+- WEBUI_CONFIG: Path to the main WebUI configuration file.
+- WEBUI_CONFIG_BACKUP: Backup path for the WebUI configuration.
+- PRESETS: Path for storing preset configurations.
+- MODEL_FOLDER: Directory for pre-trained models.
+- THEME_FOLDER: Path for theme resources.
+- PACKAGE_VERSION: Current version of the WebUI package.
+- HF_HOME: Path for Hugging Face model cache.
+- GRADIO_TEMP_DIR: Temporary directory for Gradio caching.
+
+Environment Setup:
+- Automatically creates required directories (input, results, cache).
+- Copies backup configurations if the current ones are missing or outdated.
+- Sets up environment variables for model management and tool paths (e.g., FFmpeg).
+
+Device Management:
+- Detects available hardware accelerators (CUDA, MPS, CPU) for optimized performance.
+- Logs device information and issues warnings if no accelerators are found.
+
+Command Line Arguments:
+- --server_name: Specify the server IP address (default: Auto).
+- --server_port: Specify the server port (default: Auto).
+- --share: Enable sharing the WebUI (default: False).
+- --debug: Enable debug mode (default: False).
+
+Usage:
+Run this script to initialize the WebUI and launch it in the browser. Ensure that
+all necessary backups and dependencies are in place for successful execution.
+"""
+
 import os
 import sys
 import shutil
 import warnings
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
+
 from utils.constant import *
+
 
 def copy_folders():
     if os.path.exists("configs"):

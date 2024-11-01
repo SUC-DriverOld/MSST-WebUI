@@ -36,15 +36,18 @@ Import this configuration file to access defined paths and settings throughout t
 
 import os
 import sys
-
-# version
-PACKAGE_VERSION = "1.6.2"
-
-# webui config path, not the backup path
-WEBUI_CONFIG = "data/webui_config.json"
+import json
 
 # webui config backup path
 WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
+
+# package version
+with open(WEBUI_CONFIG_BACKUP, "r") as f:
+    config = json.load(f)
+    PACKAGE_VERSION = config.get("version", "Unknown version")
+
+# webui config path, not the backup path
+WEBUI_CONFIG = "data/webui_config.json"
 
 # presets data path
 PRESETS = "data/presets"

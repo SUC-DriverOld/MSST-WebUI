@@ -29,7 +29,7 @@ def vr(webui_config, force_cpu):
     with gr.Row():
         vr_window_size = gr.Dropdown(
             label=i18n("Window Size: 窗口大小, 用于平衡速度和质量"),
-            choices=["320", "512", "1024"],
+            choices=[320, 512, 1024],
             value=webui_config['inference']['vr_window_size'] if webui_config['inference']['vr_window_size'] else "512",
             interactive=True,
             allow_custom_value=True
