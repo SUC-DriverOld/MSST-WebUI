@@ -5,8 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 
-from modules.attention.base_attention import Attention
-from modules.conv.base_conv import conform_conv
+from tools.SOME.modules.attention.base_attention import Attention
+from tools.SOME.modules.conv.base_conv import conform_conv
 class GLU(nn.Module):
     def __init__(self, dim):
         super().__init__()

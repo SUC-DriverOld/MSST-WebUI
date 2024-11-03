@@ -28,6 +28,8 @@ data/presets_backup
 !pretrain/*.json
 !.gitkeep
 setup.py
+app.c
+go-webui.bat
 
 *.ckpt
 *.pt

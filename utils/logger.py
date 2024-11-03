@@ -45,7 +45,6 @@ def manage_log_files(log_dir, max_log):
 def set_log_level(logger, level):
     logger.console_handler.setLevel(level)
     level_to_name = {v: k for k, v in logging._nameToLevel.items()}
-    logger.info(f"Console log level set to {level_to_name[level]}")
 
 
 def get_logger(console_level=logging.INFO, max_log=MAX_LOG):

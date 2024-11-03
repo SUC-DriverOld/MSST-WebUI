@@ -2,7 +2,7 @@ import gradio as gr
 import pandas as pd
 
 from utils.constant import *
-from webui.utils import i18n, select_folder, open_folder, stop_all_thread
+from webui.utils import i18n, select_folder, open_folder
 from webui.preset import (
     get_presets_list,
     update_model_name,

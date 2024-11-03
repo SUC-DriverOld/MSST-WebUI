@@ -75,6 +75,14 @@ separator.del_cache()
 >    "instrumental": "results/instrumental"
 > }
 > ```
+> Also, the value can be list, which means the stem will be stored in multiple folders. Example:
+> ```python
+> store_dirs={
+>    "vocals": ["results/vocals", "results/vocals2"], 
+>    "instrumental": "results/instrumental"
+> }
+> ```
+>
 > The keys in the dict are the names of the stems, and the values are the paths to the folders where the stems will be stored. **If you do not want to store a stem, you can omit it from the dict or use "" as its value.**
 > 
 > ### 2. NDarray as input

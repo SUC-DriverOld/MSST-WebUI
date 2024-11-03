@@ -1,4 +1,3 @@
-
 """
 Web UI Setup and Launch Script
 Author: Sucial: https://github.com/SUC-DriverOld
@@ -99,14 +98,7 @@ def setup_webui():
         os.makedirs("cache", exist_ok=True)
         logger.info(i18n("成功清理Gradio缓存"))
 
-    main_link = webui_config['settings']['download_link']
-    if main_link == "Auto":
-        language = get_language()
-        if language in ["zh_CN", "zh_TW", "zh_HK", "zh_SG"]:
-            main_link = "hf-mirror.com"
-        else: 
-            main_link = "huggingface.co"
-
+    main_link = get_main_link()
     os.environ["HF_HOME"] = os.path.abspath(MODEL_FOLDER)
     os.environ["HF_ENDPOINT"] = "https://" + main_link
     os.environ["PATH"] += os.pathsep + os.path.abspath("ffmpeg/bin/")
@@ -151,7 +143,7 @@ if __name__ == "__main__":
     import app
     import platform
     from torch import cuda, backends
-    from webui.utils import load_configs, save_configs, get_language, log_level_debug
+    from webui.utils import load_configs, save_configs, log_level_debug, get_main_link
 
     devices = {}
     force_cpu = False
@@ -165,8 +157,8 @@ if __name__ == "__main__":
         logger.info(i18n("检测到MPS, 使用MPS"))
     else:
         devices = {"cpu": i18n("无可用的加速设备, 使用CPU")}
-        logger.warning(i18n("未检测到可用的加速设备, 使用CPU"))
-        logger.warning(i18n("如果你使用的是NVIDIA显卡, 请更新显卡驱动至最新版后重试"))
+        logger.warning(i18n("\033[33m未检测到可用的加速设备, 使用CPU\033[0m"))
+        logger.warning(i18n("\033[33m如果你使用的是NVIDIA显卡, 请更新显卡驱动至最新版后重试\033[0m"))
         force_cpu = True
 
     platform_info = f"System: {platform.system()}, Machine: {platform.machine()}"

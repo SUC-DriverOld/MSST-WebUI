@@ -3,7 +3,7 @@ from typing import Dict, List
 import numpy as np
 import torch
 
-from utils.infer_utils import decode_bounds_to_alignment, decode_note_sequence
+from tools.SOME.utils.infer_utils import decode_bounds_to_alignment, decode_note_sequence
 from .me_infer import MIDIExtractionInference
 
 

@@ -1,12 +1,10 @@
 import json
 import locale
+import os.path
 import platform
 import yaml
 import tkinter as tk
 import gradio as gr
-import psutil
-import subprocess
-import threading
 import logging
 from tkinter import filedialog
 from ml_collections import ConfigDict
@@ -41,20 +39,19 @@ def get_language():
 
 
 logger = get_logger()
-stop_all_threads = False
-stop_infer_flow = False
 i18n = i18n.I18nAuto(get_language())
 
 
-def get_stop_infer_flow():
-    return stop_infer_flow
-
-def change_stop_infer_flow():
-    global stop_infer_flow
-    stop_infer_flow = False
-
 def webui_restart():
     os.execl(PYTHON, PYTHON, *sys.argv)
+
+def get_main_link():
+    config = load_configs(WEBUI_CONFIG)
+    main_link = config['settings']['download_link']
+    if main_link == "Auto":
+        language = get_language()
+        main_link = "hf-mirror.com" if language == "zh_CN" else "huggingface.co"
+    return main_link
 
 def log_level_debug(isdug):
     config = load_configs(WEBUI_CONFIG)
@@ -62,11 +59,13 @@ def log_level_debug(isdug):
         set_log_level(logger, logging.DEBUG)
         config["settings"]["debug"] = True
         save_configs(config, WEBUI_CONFIG)
+        logger.info("Console log level set to \033[34mDEBUG\033[0m")
         return i18n("已开启调试日志")
     else:
         set_log_level(logger, logging.INFO)
         config["settings"]["debug"] = False
         save_configs(config, WEBUI_CONFIG)
+        logger.info("Console log level set to \033[32mINFO\033[0m")
         return i18n("已关闭调试日志")
 
 def load_selected_model(model_type=None):
@@ -80,7 +79,7 @@ def load_selected_model(model_type=None):
         for files in os.listdir(model_dir):
             if files.endswith(('.ckpt', '.th', '.chpt')):
                 try: 
-                    get_msst_model(files)
+                    get_msst_model(files, model_type)
                     downloaded_model.append(files)
                 except: 
                     continue
@@ -97,19 +96,12 @@ def load_msst_model():
                 model_list.append(files)
     return model_list
 
-def get_msst_model(model_name):
+def get_msst_model(model_name, model_type=None):
     config = load_configs(MSST_MODEL)
-    webui_config = load_configs(WEBUI_CONFIG)
-    main_link = webui_config['settings']['download_link']
+    main_link = get_main_link()
+    model_type = [model_type] if model_type else config.keys()
 
-    if main_link == "Auto":
-        language = locale.getdefaultlocale()[0]
-        if language in ["zh_CN", "zh_TW", "zh_HK", "zh_SG"]:
-            main_link = "hf-mirror.com"
-        else: 
-            main_link = "huggingface.co"
-
-    for keys in config.keys():
+    for keys in model_type:
         for model in config[keys]:
             if model["name"] == model_name:
                 model_type = model["model_type"]
@@ -118,24 +110,20 @@ def get_msst_model(model_name):
                 download_link = model["link"]
                 try:
                     download_link = download_link.replace("huggingface.co", main_link)
-                except: 
+                except:
                     pass
                 return model_path, config_path, model_type, download_link
 
-    try:
+    if os.path.isfile(os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json")):
         unofficial_config = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
-    except FileNotFoundError:
-        raise gr.Error(i18n("模型不存在!"))
-
-    for keys in unofficial_config.keys():
-        for model in unofficial_config[keys]:
-            if model["name"] == model_name:
-                model_type = model["model_type"]
-                model_path = os.path.join(MODEL_FOLDER, keys, model_name)
-                config_path = model["config_path"]
-                download_link = model["link"]
-                return model_path, config_path, model_type, download_link
-
+        for keys in model_type:
+            for model in unofficial_config[keys]:
+                if model["name"] == model_name:
+                    model_type = model["model_type"]
+                    model_path = os.path.join(MODEL_FOLDER, keys, model_name)
+                    config_path = model["config_path"]
+                    download_link = model["link"]
+                    return model_path, config_path, model_type, download_link
     raise gr.Error(i18n("模型不存在!"))
 
 def load_vr_model():
@@ -153,47 +141,30 @@ def load_vr_model():
 
 def get_vr_model(model):
     config = load_configs(VR_MODEL)
-    webui_config = load_configs(WEBUI_CONFIG)
-    model_path = webui_config['settings']['uvr_model_dir']
-    main_link = webui_config['settings']['download_link']
-
-    if main_link == "Auto":
-        language = locale.getdefaultlocale()[0]
-        if language in ["zh_CN", "zh_TW", "zh_HK", "zh_SG"]:
-            main_link = "hf-mirror.com"
-        else: 
-            main_link = "huggingface.co"
+    model_path = load_configs(WEBUI_CONFIG)['settings']['uvr_model_dir']
+    main_link = get_main_link()
 
     for keys in config.keys():
         if keys == model:
             primary_stem = config[keys]["primary_stem"]
             secondary_stem = config[keys]["secondary_stem"]
             model_url = config[keys]["download_link"]
-
             try:
                 model_url = model_url.replace("huggingface.co", main_link)
             except: 
                 pass
             return primary_stem, secondary_stem, model_url, model_path
 
-    try:
+    if os.path.isfile(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json")):
         unofficial_config = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
-    except FileNotFoundError:
-        raise gr.Error(i18n("模型不存在!"))
-
-    for keys in unofficial_config.keys():
-        if keys == model:
-            primary_stem = unofficial_config[keys]["primary_stem"]
-            secondary_stem = unofficial_config[keys]["secondary_stem"]
-            model_url = unofficial_config[keys]["download_link"]
-            return primary_stem, secondary_stem, model_url, model_path
-
+        for keys in unofficial_config.keys():
+            if keys == model:
+                primary_stem = unofficial_config[keys]["primary_stem"]
+                secondary_stem = unofficial_config[keys]["secondary_stem"]
+                model_url = unofficial_config[keys]["download_link"]
+                return primary_stem, secondary_stem, model_url, model_path
     raise gr.Error(i18n("模型不存在!"))
 
-def load_vr_model_stem(model):
-    primary_stem, secondary_stem, _, _= get_vr_model(model)
-    return (gr.Checkbox(label=f"{primary_stem} Only", value=False, interactive=True),
-            gr.Checkbox(label=f"{secondary_stem} Only", value=False, interactive=True))
 
 def select_folder():
     root = tk.Tk()
@@ -224,47 +195,11 @@ def select_file():
 def open_folder(folder):
     if folder == "":
         raise gr.Error(i18n("请先选择文件夹!"))
-
     os.makedirs(folder, exist_ok=True)
     absolute_path = os.path.abspath(folder)
-
     if platform.system() == "Windows":
         os.system(f"explorer {absolute_path}")
     elif platform.system() == "Darwin":
         os.system(f"open {absolute_path}")
     else:
         os.system(f"xdg-open {absolute_path}")
-
-def run_command(command):
-    global stop_all_threads
-    stop_all_threads = False
-
-    print_command(command)
-    try:
-        process = subprocess.Popen(command, shell=True)
-        proc = psutil.Process(process.pid)
-
-        while process.poll() is None:
-            if stop_all_threads:
-                for child in proc.children(recursive=True):
-                    child.terminate()
-                process.terminate()
-                stop_all_threads = False
-                return
-
-        if process.returncode != 0:
-            gr.Error(i18n("发生错误! 请前往终端查看详细信息"))
-
-    except Exception as e:
-        print(e)
-        raise gr.Error(i18n("发生错误! 请前往终端查看详细信息"))
-
-def stop_all_thread():
-    global stop_all_threads, stop_infer_flow
-
-    for thread in threading.enumerate():
-        if thread.name in ["msst_inference", "vr_inference", "msst_training", "msst_valid"]:
-            stop_all_threads = True
-            stop_infer_flow = True
-            gr.Info(i18n("已停止进程"))
-            print("[INFO] " + i18n("已停止进程"))

@@ -18,9 +18,11 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 
 **Windows**: Download the installer from [Releases](https://github.com/SUC-DriverOld/MSST-WebUI/releases) and run it. Or you can clone this repository and run from source.<br>
 **Linux/macOS**: Clone this repository and run from source.<br>
-**Google Colab**: [Click here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) to run the webUI on Google Colab.
+**Google Colab**: [Click here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) to run the webUI on Google Colab.<br>
+**飞书教程文档【中国区】**：[点击此处快速开始](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc?from=from_copylink)
 
 ### Available Download links
+
 |    Websites     | Download Links                                       | Extract Code | Notes                              |
 |:---------------:|------------------------------------------------------|:------------:|------------------------------------|
 | Github Releases | https://github.com/SUC-DriverOld/MSST-WebUI/releases |      -       | Only installer, no models          |
@@ -43,8 +45,8 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
   ```bash
   conda create -n msst python=3.10 -y
   conda activate msst
-  pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-  pip install -r requirements.txt
+  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+  pip install -r requirements.txt --only-binary=samplerate
   ```
 - After installing the requirements, go to `site-packages` folder, open `librosa\util\utils.py` and go to line **2185**. Change the line from `np.dtype(complex): np.dtype(np.float).type,` to `np.dtype(complex): np.dtype(float).type,`. If you do not know how to do this, you can use the following command.
 

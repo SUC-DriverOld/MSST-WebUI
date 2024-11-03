@@ -1,3 +1,19 @@
+"""
+LICENSE: AGPL-3.0
+
+This file defines the main web UI application for the Music-Source-Separation-Training-Inference-Webui. It utilizes Gradio
+to create an interface for separating, training, and configuring models related to music source separation.
+
+Note:
+- This source file is publicly accessible only within the source code and is not visible in the packed executable version.
+In the packed version, this script is compiled to a `app.cp310-win_amd64.pyd` file, making the source code inaccessible.
+- **DO NOT** try to change the code in this file! It is compiled and should not be modified.
+
+This file and its functions collectively define a versatile web interface that consolidates a wide range of functionalities
+for music source separation and model management.
+"""
+
+
 import gradio as gr
 
 from utils.constant import WEBUI_CONFIG, LANGUAGE, PACKAGE_VERSION

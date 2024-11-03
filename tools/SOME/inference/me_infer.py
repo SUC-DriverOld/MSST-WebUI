@@ -4,15 +4,15 @@ from typing import Dict, List
 import numpy as np
 import torch
 
-import modules.rmvpe
-from utils.infer_utils import decode_bounds_to_alignment, decode_gaussian_blurred_probs, decode_note_sequence
+from tools.SOME.modules import rmvpe
+from tools.SOME.utils.infer_utils import decode_bounds_to_alignment, decode_gaussian_blurred_probs, decode_note_sequence
 from .base_infer import BaseInference
 
 
 class MIDIExtractionInference(BaseInference):
     def __init__(self, config: dict, model_path: pathlib.Path, device=None):
         super().__init__(config, model_path, device=device)
-        self.mel_spec = modules.rmvpe.MelSpectrogram(
+        self.mel_spec = rmvpe.MelSpectrogram(
             n_mel_channels=self.config['units_dim'], sampling_rate=self.config['audio_sample_rate'],
             win_length=self.config['win_size'], hop_length=self.config['hop_size'],
             mel_fmin=self.config['fmin'], mel_fmax=self.config['fmax']

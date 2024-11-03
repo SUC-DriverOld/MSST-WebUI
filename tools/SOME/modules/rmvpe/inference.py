@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 from torchaudio.transforms import Resample
 
-from utils.pitch_utils import interp_f0, resample_align_curve
+from tools.SOME.utils.pitch_utils import interp_f0, resample_align_curve
 from .constants import *
 from .model import E2E0
 from .spec import MelSpectrogram

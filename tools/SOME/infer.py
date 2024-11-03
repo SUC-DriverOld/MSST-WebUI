@@ -9,9 +9,9 @@ import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-import inference
-from utils.infer_utils import build_midi_file
-from utils.slicer2 import Slicer
+from tools.SOME import inference
+from tools.SOME.utils.infer_utils import build_midi_file
+from tools.SOME.utils.slicer2 import Slicer
 
 @click.command(help='Run inference with a trained model')
 @click.option('--model', required=True, metavar='CKPT_PATH', help='Path to the model checkpoint (*.ckpt)')

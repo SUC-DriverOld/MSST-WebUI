@@ -7,7 +7,7 @@ import torch
 import tqdm
 from torch import nn
 
-from utils import build_object_from_class_name
+from tools.SOME.utils import build_object_from_class_name
 
 
 class BaseInference:

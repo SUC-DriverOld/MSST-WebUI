@@ -2,8 +2,6 @@
 # Use command: pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 # torch>=2.0.1
 
---only-binary=samplerate
-
 numpy
 pandas
 scipy
