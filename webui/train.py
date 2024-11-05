@@ -29,6 +29,7 @@ def save_training_config(train_model_type, train_config_path, train_dataset_type
     config['training']['metrics'] = train_metrics_list
     config['training']['metrics_scheduler'] = train_metrics_scheduler
     save_configs(config, WEBUI_CONFIG)
+    logger.info(f"Saved training config: {config['training']}")
     return i18n("配置保存成功!")
 
 def update_train_start_check_point(path):
@@ -55,7 +56,7 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
     if len(train_device_ids) == 0:
         return i18n("请选择GPU")
     for gpu in train_device_ids:
-        gpu_ids.append(gpu[:gpu.index(":")])
+        gpu_ids.append(int(gpu[:gpu.index(":")]))
 
     device_ids = " ".join(gpu_ids)
     num_workers = int(train_num_workers)
@@ -105,7 +106,7 @@ def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_
     if len(valid_device_ids) == 0:
         return i18n("请选择GPU")
     for gpu in valid_device_ids:
-        gpu_ids.append(gpu[:gpu.index(":")])
+        gpu_ids.append(int(gpu[:gpu.index(":")]))
 
     device = " ".join(gpu_ids)
     pin_memory = "--pin_memory" if valid_pin_memory else ""

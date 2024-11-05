@@ -25,16 +25,8 @@ import torch.nn.functional as F
 from utils.dataset import MSSDataset
 from utils.utils import demix, sdr, get_model_from_config
 from train.valid import valid_multi_gpu
-
-import warnings
-
-warnings.filterwarnings("ignore")
-
-import logging
-log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"
-date_format = "%H:%M:%S"
-logging.basicConfig(level = logging.INFO, format = log_format, datefmt = date_format)
-logger = logging.getLogger(__name__)
+from utils.logger import get_logger
+logger = get_logger()
 
 
 def masked_loss(y_, y, q, coarse=True):
@@ -126,8 +118,8 @@ def train_model(args):
     parser.add_argument("--use_mse_loss", action='store_true', help="Use default MSE loss")
     parser.add_argument("--use_l1_loss", action='store_true', help="Use L1 loss")
     parser.add_argument("--pre_valid", action='store_true', help='Run validation before training')
-    parser.add_argument("--metrics", nargs='+', type=str, default=["sdr"], choices=['sdr', 'l1_freq', 'si_sdr', 'log_wmse', 'aura_stft', 'aura_mrstft'], help='List of metrics to use.')
-    parser.add_argument("--metric_for_scheduler", default="sdr", choices=['sdr', 'l1_freq', 'si_sdr', 'log_wmse', 'aura_stft', 'aura_mrstft'], help='Metric which will be used for scheduler.')
+    parser.add_argument("--metrics", nargs='+', type=str, default=["sdr"], choices=['sdr', 'l1_freq', 'si_sdr', 'log_wmse', 'aura_stft', 'aura_mrstft', 'bleedless', 'fullness'], help='List of metrics to use.')
+    parser.add_argument("--metric_for_scheduler", default="sdr", choices=['sdr', 'l1_freq', 'si_sdr', 'log_wmse', 'aura_stft', 'aura_mrstft', 'bleedless', 'fullness'], help='Metric which will be used for scheduler.')
     if args is None:
         args = parser.parse_args()
     else:

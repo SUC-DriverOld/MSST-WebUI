@@ -39,6 +39,7 @@ def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_
     config['inference']['vr_high_end_process'] = vr_high_end_process
     config['inference']['vr_enable_post_process'] = vr_enable_post_process
     save_configs(config, WEBUI_CONFIG)
+    logger.debug(f"Saved VR inference config: {config['inference']}")
 
 def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
     vr_input_save = None
@@ -138,9 +139,8 @@ def run_inference(debug, model_file, output_dir, output_format, invert_using_spe
         logger.info(f"Successfully separated files: {success_files}")
         result_queue.put(("success", success_files))
     except Exception as e:
-        logger.error(f"Separation failed: {str(e)}")
+        logger.error(f"Separation failed: {str(e)}\n{traceback.format_exc()}")
         result_queue.put(("error", str(e)))
-        traceback.print_exc()
 
 def stop_vr_inference():
     for process in multiprocessing.active_children():

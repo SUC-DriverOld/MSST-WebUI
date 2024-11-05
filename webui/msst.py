@@ -30,7 +30,7 @@ def save_model_config(selected_model, batch_size, dim_t, num_overlap, normalize)
     if config.inference.get('normalize'):
         config.inference['normalize'] = normalize
     save_configs(config, config_path)
-
+    logger.debug(f"Saved model config: {config['inference']}")
     return i18n("配置保存成功!")
 
 def reset_model_config(selected_model):
@@ -46,6 +46,7 @@ def reset_model_config(selected_model):
     if os.path.exists(backup_config_path):
         shutil.copy(backup_config_path, original_config_path)
         update_inference_settings(selected_model)
+        logger.debug(f"Reset model config: {backup_config_path} -> {original_config_path}")
         return i18n("配置重置成功!")
     else:
         return i18n("备份文件不存在!")
@@ -90,6 +91,7 @@ def save_msst_inference_config(selected_model, input_folder, store_dir, extract_
     config['inference']['store_dir'] = store_dir
     config['inference']['input_dir'] = input_folder
     save_configs(config, WEBUI_CONFIG)
+    logger.debug(f"Saved MSST inference config: {config['inference']}")
 
 def run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
     input_folder = None
@@ -128,7 +130,7 @@ def start_inference(selected_model, input_folder, store_dir, extract_instrumenta
             raise gr.Error(i18n("请选择GPU"))
         try:
             for gpu in gpu_id:
-                gpu_ids.append(gpu[:gpu.index(":")])
+                gpu_ids.append(int(gpu[:gpu.index(":")]))
         except:
             gpu_ids = [0]
     else:
@@ -198,9 +200,8 @@ def run_inference(model_type, config_path, model_path, device, gpu_ids, output_f
         logger.info(f"Successfully separated files: {success_files}")
         result_queue.put(("success", success_files))
     except Exception as e:
-        logger.error(f"Separation failed: {str(e)}")
+        logger.error(f"Separation failed: {str(e)}\n{traceback.format_exc()}")
         result_queue.put(("error", str(e)))
-        traceback.print_exc()
 
 def stop_msst_inference():
     for process in multiprocessing.active_children():

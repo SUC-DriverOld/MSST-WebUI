@@ -4,12 +4,14 @@ import webbrowser
 import time
 from tqdm import tqdm
 import gradio as gr
+import traceback
 
 from utils.constant import *
-from webui.utils import i18n, load_configs, save_configs, load_vr_model, get_vr_model, load_msst_model, get_msst_model, open_folder
+from webui.utils import i18n, load_configs, save_configs, load_vr_model, get_vr_model, load_msst_model, get_msst_model, open_folder, logger
 
 def open_model_folder(model_type):
     if not model_type:
+        gr.Info(i18n("请先选择模型类型"))
         return
     if model_type == "UVR_VR_Models":
         config = load_configs(WEBUI_CONFIG)
@@ -38,11 +40,11 @@ def download_model(model_type, model_name):
         os.makedirs(model_path, exist_ok=True)
         return download_file(model_url, os.path.join(model_path, model_name), model_name)
     else:
-        presets = load_configs(MSST_MODEL)
+        msst_model_map = load_configs(MSST_MODEL)
         model_mapping = load_msst_model()
         if model_name in model_mapping:
             return i18n("模型") + model_name + i18n("已安装")
-        if model_type not in presets:
+        if model_type not in msst_model_map:
             return i18n("模型类型") + model_type + i18n("不存在")
         _, _, _, model_url = get_msst_model(model_name)
         model_path = f"pretrain/{model_type}/{model_name}"
@@ -51,7 +53,7 @@ def download_model(model_type, model_name):
 
 def download_file(url, path, model_name):
     try:
-        print(i18n("模型") + model_name + i18n("下载中"))
+        logger.info(f"Downloading model {model_name} from {url}")
 
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
@@ -72,12 +74,12 @@ def download_file(url, path, model_name):
                         last_update_time = current_time
                 progress_bar.update(bytes_written)
 
-        print("[INFO] " + i18n("模型") + model_name + i18n("下载成功"))
+        logger.info(f"Model {model_name} downloaded successfully")
 
         return i18n("模型") + model_name + i18n("下载成功")
     except Exception as e:
-        print(e)
-        return i18n("模型") + model_name + i18n("下载失败")
+        logger.error(f"Failed to download model: {str(e)}\n{traceback.format_exc()}")
+        return i18n("模型") + model_name + i18n("下载失败") + str(e)
 
 def manual_download_model(model_type, model_name):
     if model_type not in MODEL_CHOICES:
@@ -89,15 +91,16 @@ def manual_download_model(model_type, model_name):
             return i18n("模型") + model_name + i18n("已安装")
         _, _, model_url, _ = get_vr_model(model_name)
     else:
-        presets = load_configs(MSST_MODEL)
+        vr_model_map = load_configs(MSST_MODEL)
         model_mapping = load_msst_model()
         if model_name in model_mapping:
             return i18n("模型") + model_name + i18n("已安装")
-        if model_type not in presets:
+        if model_type not in vr_model_map:
             return i18n("模型类型") + model_type + i18n("不存在")
         _, _, _, model_url = get_msst_model(model_name)
 
     webbrowser.open(model_url)
+    logger.info(f"Opened download link for model {model_name}, link: {model_url}")
     return i18n("已打开") + model_name + i18n("的下载链接")
 
 def update_vr_param(is_BV_model, is_VR51_model, model_param):
@@ -138,10 +141,11 @@ def install_unmsst_model(unmsst_model, unmsst_config, unmodel_class, unmodel_typ
 
         model_map[unmodel_class].append(config)
         save_configs(model_map, os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
+        logger.info(f"Unofficial MSST model {model_name} installed successfully. Model config: {config}")
         return i18n("模型") + os.path.basename(unmsst_model) + i18n("安装成功。重启WebUI以刷新模型列表")
     except Exception as e:
-        print(e)
-        return i18n("模型") + os.path.basename(unmsst_model) + i18n("安装失败")
+        logger.error(f"Failed to install unofficial MSST model: {str(e)}\n{traceback.format_exc()}")
+        return i18n("模型") + os.path.basename(unmsst_model) + i18n("安装失败") + str(e)
 
 def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model_param, is_karaoke_model, is_BV_model, is_VR51_model, balance_value, out_channels, out_channels_lstm, upload_param, unvr_model_link):
     os.makedirs(UNOFFICIAL_MODEL, exist_ok=True)
@@ -189,10 +193,11 @@ def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model
             model_map[model_name]["nout_lstm"] = out_channels_lstm
 
         save_configs(model_map, os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
+        logger.info(f"Unofficial VR model {model_name} installed successfully. Model config: {model_map[model_name]}")
         return i18n("模型") + os.path.basename(unvr_model) + i18n("安装成功。重启WebUI以刷新模型列表")
     except Exception as e:
-        print(e)
-        return i18n("模型") + os.path.basename(unvr_model) + i18n("安装失败")
+        logger.error(f"Failed to install unofficial VR model: {str(e)}\n{traceback.format_exc()}")
+        return i18n("模型") + os.path.basename(unvr_model) + i18n("安装失败") + str(e)
 
 def get_all_model_param():
     model_param = [i18n("上传参数")]

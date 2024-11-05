@@ -38,7 +38,8 @@ import os
 import sys
 import json
 
-# webui config backup path
+# webui config path
+WEBUI_CONFIG = "data/webui_config.json"
 WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
 
 # package version
@@ -46,23 +47,21 @@ with open(WEBUI_CONFIG_BACKUP, "r") as f:
     config = json.load(f)
     PACKAGE_VERSION = config.get("version", "Unknown version")
 
-# webui config path, not the backup path
-WEBUI_CONFIG = "data/webui_config.json"
-
 # presets data path
 PRESETS = "data/presets"
+PRESETS_BACKUP = "data/presets_backup"
 
 # msst model map path
 MSST_MODEL = "data/msst_model_map.json"
+MSST_MODEL_BACKUP = "data_backup/msst_model_map.json"
 
 # vr model map path
 VR_MODEL = "data/vr_model_map.json"
+VR_MODEL_BACKUP = "data_backup/vr_model_map.json"
 
 # language data path
 LANGUAGE = "data/language.json"
-
-# path to presets backup folder
-PRESETS_BACKUP = "data/presets_backup"
+LANGUAGE_BACKUP = "data_backup/language.json"
 
 # path to pretrain folder
 MODEL_FOLDER = "pretrain"
@@ -114,7 +113,7 @@ MODEL_CHOICES = [
     ]
 
 # metrics for model evaluation and training
-METRICS = ['sdr', 'l1_freq', 'si_sdr', 'log_wmse', 'aura_stft', 'aura_mrstft']
+METRICS = ['sdr', 'l1_freq', 'si_sdr', 'log_wmse', 'aura_stft', 'aura_mrstft', 'bleedless', 'fullness']
 
 # ffmpeg executable path, if not found, use system ffmpeg
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"

@@ -97,6 +97,7 @@ def add_to_flow_func(model_type, model_name, input_to_next, output_to_storage, d
         return new_data
 
     updated_df = pd.concat([df, new_data], ignore_index=True)
+    logger.info(f"Add to flow: {model_type}, {model_name}, {input_to_next}, {output_to_storage}")
     return updated_df
 
 def save_flow_func(preset_name, df):
@@ -112,6 +113,7 @@ def save_flow_func(preset_name, df):
     preset_name_delete = gr.Dropdown(label=i18n("请选择预设"), choices=get_presets_list())
     preset_name_select = gr.Dropdown(label=i18n("请选择预设"), choices=get_presets_list())
 
+    logger.info(f"Save preset: {preset_dict} as {preset_name}")
     return output_message, preset_name_delete, preset_name_select
 
 def reset_flow_func():
@@ -139,8 +141,10 @@ def load_preset(preset_name):
                 preset_data[step]["output_to_storage"],
                 preset_flow
             )
+        logger.info(f"Load preset: {preset_name}: {preset_data}")
         return preset_flow
 
+    logger.error(f"Load preset: {preset_name} failed")
     return gr.Dataframe(
         pd.DataFrame({"model_type": [i18n("预设不存在")], "model_name": [i18n("预设不存在")], "input_to_next": [i18n("预设不存在")], "output_to_storage": [i18n("预设不存在")]}),
         interactive=False,
@@ -159,6 +163,7 @@ def delete_func(preset_name):
             interactive=False,
             label=None
         )
+        logger.info(f"Delete preset: {preset_name}")
         return output_message, preset_name_delete, preset_name_select, preset_flow_delete, select_preset_backup
     else:
         return i18n("预设不存在"), None, None, None, None
@@ -167,6 +172,7 @@ def backup_preset_func(preset_name):
     os.makedirs(PRESETS_BACKUP, exist_ok=True)
     backup_file = f"backup_{preset_name}"
     shutil.copy(os.path.join(PRESETS, preset_name), os.path.join(PRESETS_BACKUP, backup_file))
+    logger.info(f"Backup preset: {preset_name} -> {backup_file}")
     return gr.Dropdown(label=i18n("选择需要恢复的预设流程备份"), choices=preset_backup_list(), interactive=True, scale=4)
 
 def restore_preset_func(backup_file):
@@ -178,6 +184,7 @@ def restore_preset_func(backup_file):
     preset_dropdown = gr.Dropdown(label=i18n("请选择预设"), choices=get_presets_list())
     preset_name_delet = gr.Dropdown(label=i18n("请选择预设"), choices=get_presets_list())
     preset_flow_delete = pd.DataFrame({"model_type": [i18n("请选择预设")], "model_name": [i18n("请选择预设")], "input_to_next": [i18n("请选择预设")], "output_to_storage": [i18n("请选择预设")]})
+    logger.info(f"Restore preset: {backup_file} -> {backup_file_rename}")
     return output_message_manage, preset_dropdown, preset_name_delet, preset_flow_delete
 
 
@@ -216,7 +223,7 @@ class Presets:
         if not self.force_cpu and gpu_id:
             try:
                 for gpu in gpu_id:
-                    self.gpu_ids.append(gpu[:gpu.index(":")])
+                    self.gpu_ids.append(int(gpu[:gpu.index(":")]))
             except:
                 self.gpu_ids = [0]
         else:
@@ -314,7 +321,7 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
         shutil.rmtree(TEMP_PATH)
     tmp_store_dir = os.path.join(TEMP_PATH, "step_1_output")
 
-    preset = Presets(preset_name, force_cpu, use_tta)
+    preset = Presets(preset_name, force_cpu, use_tta, logger)
     if not preset.is_exist_models()[0]:
         return i18n("模型") + preset.is_exist_models()[1] + i18n("不存在")
 

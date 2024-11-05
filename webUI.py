@@ -52,8 +52,12 @@ def copy_folders():
     shutil.copytree("configs_backup", "configs")
 
     if os.path.exists("data"):
-        shutil.rmtree("data")
-    shutil.copytree("data_backup", "data")
+        shutil.copy(WEBUI_CONFIG_BACKUP, WEBUI_CONFIG)
+        shutil.copy(MSST_MODEL_BACKUP, MSST_MODEL)
+        shutil.copy(VR_MODEL_BACKUP, VR_MODEL)
+        shutil.copy(LANGUAGE_BACKUP, LANGUAGE)
+    else:
+        shutil.copytree("data_backup", "data")
 
 
 def setup_webui():
@@ -77,7 +81,6 @@ def setup_webui():
 
     if version != PACKAGE_VERSION:
         logger.info(i18n("检测到") + version + i18n("旧版配置, 正在更新至最新版") + PACKAGE_VERSION)
-        presets_config = load_configs(PRESETS)
         webui_config_backup = load_configs(WEBUI_CONFIG_BACKUP)
 
         for module in ["training", "inference", "tools", "settings"]:
@@ -89,7 +92,6 @@ def setup_webui():
 
         copy_folders()
         save_configs(webui_config_backup, WEBUI_CONFIG)
-        save_configs(presets_config, PRESETS)
 
         logger.debug("Merging old config with new config")
 

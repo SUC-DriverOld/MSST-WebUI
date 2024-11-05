@@ -27,15 +27,8 @@ from accelerate import Accelerator
 from utils.dataset import MSSDataset
 from utils.utils import get_model_from_config, demix, sdr
 from train.train import masked_loss, manual_seed, load_not_compatible_weights
-import warnings
-
-warnings.filterwarnings("ignore")
-
-import logging
-log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"
-date_format = "%H:%M:%S"
-logging.basicConfig(level = logging.INFO, format = log_format, datefmt = date_format)
-logger = logging.getLogger(__name__)
+from utils.logger import get_logger
+logger = get_logger()
 
 def valid(model, valid_loader, args, config, device, verbose=False):
     instruments = config.training.instruments

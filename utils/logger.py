@@ -10,6 +10,7 @@ LOG_DIR = "logs"
 
 class ColorFormatter(logging.Formatter):
     def format(self, record):
+        record.pathname = os.path.relpath(record.pathname)
         log_msg = super().format(record)
 
         if record.levelname == "INFO":
@@ -44,7 +45,6 @@ def manage_log_files(log_dir, max_log):
 
 def set_log_level(logger, level):
     logger.console_handler.setLevel(level)
-    level_to_name = {v: k for k, v in logging._nameToLevel.items()}
 
 
 def get_logger(console_level=logging.INFO, max_log=MAX_LOG):
@@ -57,7 +57,7 @@ def get_logger(console_level=logging.INFO, max_log=MAX_LOG):
 
     console_handler = logging.StreamHandler()
     console_handler.setLevel(console_level)
-    formatter = ColorFormatter(fmt="%(asctime)s.%(msecs)03d [%(levelname)s] [%(module)s] %(message)s", datefmt="%H:%M:%S")
+    formatter = ColorFormatter(fmt="%(asctime)s.%(msecs)03d [%(levelname)s] [%(pathname)s:%(lineno)d] %(message)s", datefmt="%H:%M:%S")
     console_handler.setFormatter(formatter)
 
     os.makedirs(LOG_DIR, exist_ok=True)
@@ -67,7 +67,7 @@ def get_logger(console_level=logging.INFO, max_log=MAX_LOG):
 
     file_handler = logging.FileHandler(file_path, mode='a', encoding='utf-8')
     file_handler.setLevel(logging.DEBUG)
-    file_formatter = logging.Formatter(fmt="%(asctime)s.%(msecs)03d [%(levelname)s] [%(module)s] %(message)s", datefmt="%H:%M:%S")
+    file_formatter = logging.Formatter(fmt="%(asctime)s.%(msecs)03d [%(levelname)s] [%(pathname)s:%(lineno)d] %(message)s", datefmt="%H:%M:%S")
     file_handler.setFormatter(file_formatter)
 
     if not logger.hasHandlers():

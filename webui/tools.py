@@ -72,7 +72,7 @@ def convert_audio(uploaded_files, output_format, output_folder, sample_rate, cha
             subprocess.run(command, shell=False, check=True)
             success_files.append(output_file)
         except subprocess.CalledProcessError as e:
-            logger.error(f"Fail to convert file: {file}, error: {e}")
+            logger.error(f"Fail to convert file: {file}, error: {e}\n{traceback.format_exc()}")
             fail_files.append(file)
             continue
 
@@ -103,8 +103,7 @@ def merge_audios(input_folder, output_folder):
         logger.info(f"Merged audio files completed, saved as: {output_file}")
         return i18n("处理完成, 文件已保存为: ") + output_file
     except Exception as e:
-        logger.error(f"Fail to export merged audio. Error: {e}")
-        traceback.print_exc()
+        logger.error(f"Fail to export merged audio. Error: {e}\n{traceback.format_exc()}")
         return i18n("处理失败!") + str(e)
 
 def caculate_sdr(reference_path, estimated_path):
@@ -148,8 +147,7 @@ def ensemble(files, ensemble_mode, weights, output_path):
         logger.info(f"Ensemble files completed, saved as: {output_file}")
         return i18n("处理完成, 文件已保存为: ") + output_file
     except Exception as e:
-        logger.error(f"Fail to ensemble files. Error: {e}")
-        traceback.print_exc()
+        logger.error(f"Fail to ensemble files. Error: {e}\n{traceback.format_exc()}")
         return i18n("处理失败!") + str(e)
 
 def some_inference(audio_file, bpm, output_dir):
@@ -175,6 +173,5 @@ def some_inference(audio_file, bpm, output_dir):
         logger.info(f"SOME inference completed, MIDI file saved as: {midi}")
         return i18n("处理完成, 文件已保存为: ") + midi
     except Exception as e:
-        logger.error(f"Fail to run SOME inference. Error: {e}")
-        traceback.print_exc()
+        logger.error(f"Fail to run SOME inference. Error: {e}\n{traceback.format_exc()}")
         return i18n("处理失败!") + str(e)
