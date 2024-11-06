@@ -164,7 +164,7 @@ if __name__ == "__main__":
         force_cpu = True
 
     platform_info = f"System: {platform.system()}, Machine: {platform.machine()}"
-    logger.info("WebUI Version: " + PACKAGE_VERSION + " " + platform_info)
+    logger.info(f"WebUI Version: {PACKAGE_VERSION}, {platform_info}")
 
     set_debug(args)
     setup_webui()

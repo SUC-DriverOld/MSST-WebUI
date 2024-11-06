@@ -1,15 +1,7 @@
 import json
 import os
-import logging
-
-MSST_MODEL = "data/msst_model_map.json"
-WEBUI_CONFIG = "data/webui_config.json"
-VR_MODEL = "data/vr_model_map.json"
-
-log_format = "%(asctime)s.%(msecs)03d [%(levelname)s] %(module)s - %(message)s"
-date_format = "%H:%M:%S"
-logging.basicConfig(level = logging.INFO, format = log_format, datefmt = date_format)
-logger = logging.getLogger(__name__)
+from utils.constant import WEBUI_CONFIG, MSST_MODEL, VR_MODEL
+from webui.utils import load_configs, logger
 
 def load_configs(config_path):
     with open(config_path, 'r', encoding="utf-8") as f:

@@ -125,9 +125,8 @@ def vr(webui_config, force_cpu):
                 value=webui_config['inference']['vr_enable_post_process'] if webui_config['inference']['vr_enable_post_process'] else False,
                 interactive=True
             )
-    with gr.Row():
-        vr_inference_audio = gr.Button(i18n("输入音频分离"), variant="primary", visible=True)
-        vr_inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False)
+    vr_inference_audio = gr.Button(i18n("输入音频分离"), variant="primary", visible=True)
+    vr_inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False)
     with gr.Row():
         vr_output_message = gr.Textbox(label="Output Message", scale=5)
         stop_vr = gr.Button(i18n("强制停止"), scale=1)

@@ -85,9 +85,8 @@ def preset(webui_config, force_cpu):
                 )
                 select_output_dir = gr.Button(i18n("选择文件夹"), scale=1)
                 open_output_dir = gr.Button(i18n("打开文件夹"), scale=1)
-            with gr.Row():
-                inference_audio = gr.Button(i18n("输入音频分离"), variant="primary", visible=True)
-                inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False)
+            inference_audio = gr.Button(i18n("输入音频分离"), variant="primary", visible=True)
+            inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False)
             with gr.Row():
                 output_message_flow = gr.Textbox(label="Output Message", scale=5)
                 stop_preset_inference = gr.Button(i18n("强制停止"), scale=1)

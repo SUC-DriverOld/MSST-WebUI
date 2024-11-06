@@ -1,6 +1,5 @@
 import json
 import locale
-import os.path
 import platform
 import yaml
 import tkinter as tk
