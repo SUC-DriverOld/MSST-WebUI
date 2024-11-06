@@ -10,7 +10,20 @@ Arguments:
 
 Example:
 ```
-ensemble.py --files ./results_tracks/vocals1.wav ./results_tracks/vocals2.wav --weights 2 1 --type max_fft --output out.wav
+utils/ensemble.py --files ./results_tracks/vocals1.wav ./results_tracks/vocals2.wav --weights 2 1 --type max_fft --output out.wav
+```
+
+```
+usage: ensemble.py [-h] --files FILES [FILES ...] [--type TYPE] [--weights WEIGHTS [WEIGHTS ...]] [--output OUTPUT]
+
+options:
+  -h, --help            show this help message and exit
+  --files FILES [FILES ...]
+                        Path to all audio-files to ensemble
+  --type TYPE           One of avg_wave, median_wave, min_wave, max_wave, avg_fft, median_fft, min_fft, max_fft
+  --weights WEIGHTS [WEIGHTS ...]
+                        Weights to create ensemble. Number of weights must be equal to number of files
+  --output OUTPUT       Path to wav file where ensemble result will be stored
 ```
 
 ### Ensemble types:
