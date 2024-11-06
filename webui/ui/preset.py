@@ -59,6 +59,11 @@ def preset(webui_config, force_cpu):
                     value=webui_config['inference']['preset_use_tta'] if webui_config['inference']['preset_use_tta'] else False,
                     interactive=True
                 )
+                extra_output_dir = gr.Checkbox(
+                    label=i18n("将次级输出保存至输出目录的单独文件夹内"),
+                    value=webui_config['inference']['extra_output_dir'] if webui_config['inference']['extra_output_dir'] else False,
+                    interactive=True
+                )
             with gr.Tabs():
                 with gr.TabItem(label=i18n("输入音频")) as audio_tab:
                     input_audio = gr.Files(label=i18n("上传一个或多个音频文件"), type="filepath")
@@ -175,7 +180,8 @@ def preset(webui_config, force_cpu):
             preset_dropdown,
             force_cpu,
             output_format_flow,
-            use_tta
+            use_tta,
+            extra_output_dir
         ],
         outputs=output_message_flow
     )
@@ -187,7 +193,8 @@ def preset(webui_config, force_cpu):
             preset_dropdown,
             force_cpu,
             output_format_flow,
-            use_tta
+            use_tta,
+            extra_output_dir
         ],
         outputs=output_message_flow
     )

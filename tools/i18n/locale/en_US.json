@@ -159,6 +159,7 @@
     "预设流程允许按照预设的顺序运行多个模型。每一个模型的输出将作为下一个模型的输入。": "Preset flows allow multiple models to run in a predetermined order. The output of each model will be used as the input for the next model.",
     "使用预设": "Use preset",
     "该模式下的UVR推理参数将直接沿用UVR分离页面的推理参数, 如需修改请前往UVR分离页面。<br>修改完成后, 还需要任意处理一首歌才能保存参数! ": "The UVR inference parameters in this mode will directly use the inference parameters from the UVR separation page. If you need to modify them, please go to the UVR separation page.<br>After the modification is completed, you still need to process any song to save the parameters!",
+    "将次级输出保存至输出目录的单独文件夹内": "Save secondary output to extra_output in the output directory",
     "制作预设": "Create preset",
     "预设名称": "Preset name",
     "请输入预设名称": "Please enter preset name",

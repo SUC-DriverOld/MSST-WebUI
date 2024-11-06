@@ -287,7 +287,7 @@ class Presets:
         elif result[0] == "error":
             return 0, None
 
-def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta):
+def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir):
     if not input_audio:
         return i18n("请上传至少一个音频文件!")
     if os.path.exists(TEMP_PATH):
@@ -297,31 +297,40 @@ def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_for
     for audio in input_audio:
         shutil.copy(audio, os.path.join(TEMP_PATH, "step_0_output"))
     input_folder = os.path.join(TEMP_PATH, "step_0_output")
-    msg = preset_inference(input_folder, store_dir, preset, force_cpu, output_format, use_tta, is_audio=True)
+    msg = preset_inference(input_folder, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir, is_audio=True)
     shutil.rmtree(TEMP_PATH)
     return msg
 
-def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, is_audio=False):
+def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir: bool, is_audio=False):
     config = load_configs(WEBUI_CONFIG)
     config['inference']['preset'] = preset_name
     config['inference']['force_cpu'] = force_cpu
     config['inference']['output_format'] = output_format
     config['inference']['preset_use_tta'] = use_tta
     config['inference']['store_dir'] = store_dir
+    config['inference']['extra_output_dir'] = extra_output_dir
     if not is_audio:
         config['inference']['input_dir'] = input_folder
     save_configs(config, WEBUI_CONFIG)
 
     os.makedirs(store_dir, exist_ok=True)
-    os.makedirs(os.path.join(store_dir, "direct_output"), exist_ok=True)
 
-    direct_output = os.path.join(store_dir, "direct_output")
+    direct_output = store_dir
+    if extra_output_dir:
+        os.makedirs(os.path.join(store_dir, "extra_output"), exist_ok=True)
+        direct_output = os.path.join(store_dir, "extra_output")
+
     input_to_use = input_folder
     if os.path.exists(TEMP_PATH) and not is_audio:
         shutil.rmtree(TEMP_PATH)
     tmp_store_dir = os.path.join(TEMP_PATH, "step_1_output")
 
     preset = Presets(preset_name, force_cpu, use_tta, logger)
+
+    logger.info(f"Starting preset inference process, use presets: {preset_name}")
+    logger.debug(f"presets: {preset.presets}")
+    logger.debug(f"total_steps: {preset.total_steps}, force_cpu: {force_cpu}, use_tta: {use_tta}, extra_output_dir: {extra_output_dir}")
+
     if not preset.is_exist_models()[0]:
         return i18n("模型") + preset.is_exist_models()[1] + i18n("不存在")
 
