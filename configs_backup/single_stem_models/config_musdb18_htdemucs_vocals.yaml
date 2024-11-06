@@ -13,7 +13,7 @@ training:
   channels: 2
   normalize: true
   instruments: ['drums', 'bass', 'other', 'vocals']
-  target_instrument: null
+  target_instrument: vocals
   num_epochs: 1000
   num_steps: 1000
   optimizer: adam
