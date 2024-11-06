@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from modules.conform.Gconform import Gmidi_conform
+from tools.SOME.modules.conform.Gconform import Gmidi_conform
 
 
 

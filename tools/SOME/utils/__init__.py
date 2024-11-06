@@ -153,9 +153,9 @@ def load_ckpt(
             ],
             key=lambda x: int(re.search(r'\d+', x.name).group(0))
         )
-    assert len(checkpoint_path) > 0, f'| ckpt not found in {ckpt_base_dir}.'
+    assert len(checkpoint_path) > 0, f'ckpt not found in {ckpt_base_dir}.'
     checkpoint_path = checkpoint_path[-1]
-    ckpt_loaded = torch.load(checkpoint_path, map_location=device)
+    ckpt_loaded = torch.load(checkpoint_path, map_location=device, weights_only=True)
     if key_in_ckpt is None:
         state_dict = ckpt_loaded
     else:
@@ -173,7 +173,7 @@ def load_ckpt(
                 new_param = cur_model_state_dict[key]
                 if new_param.shape != param.shape:
                     unmatched_keys.append(key)
-                    print('| Unmatched keys: ', key, new_param.shape, param.shape)
+                    print('Unmatched keys: ', key, new_param.shape, param.shape)
         for key in unmatched_keys:
             del state_dict[key]
     cur_model.load_state_dict(state_dict, strict=strict)
@@ -182,7 +182,7 @@ def load_ckpt(
         shown_model_name = f'\'{prefix_in_ckpt}\''
     elif key_in_ckpt is not None:
         shown_model_name = f'\'{key_in_ckpt}\''
-    print(f'| load {shown_model_name} from \'{checkpoint_path}\'.')
+    print(f'load {shown_model_name} from \'{checkpoint_path}\'.')
 
 
 def remove_padding(x, padding_idx=0):
@@ -196,7 +196,7 @@ def remove_padding(x, padding_idx=0):
 
 
 def print_arch(model, model_name='model'):
-    print(f"| {model_name} Arch: ", model)
+    print(f"{model_name} Arch: ", model)
     # num_params(model, model_name=model_name)
 
 
@@ -204,7 +204,7 @@ def num_params(model, print_out=True, model_name="model"):
     parameters = filter(lambda p: p.requires_grad, model.parameters())
     parameters = sum([np.prod(p.size()) for p in parameters]) / 1_000_000
     if print_out:
-        print(f'| {model_name} Trainable Parameters: %.3fM' % parameters)
+        print(f'{model_name} Trainable Parameters: %.3fM' % parameters)
     return parameters
 
 
@@ -215,7 +215,7 @@ def build_object_from_class_name(cls_str, parent_cls, *args, **kwargs):
     cls_name = cls_str.split(".")[-1]
     cls_type = getattr(importlib.import_module(pkg), cls_name)
     if parent_cls is not None:
-        assert issubclass(cls_type, parent_cls), f'| {cls_type} is not subclass of {parent_cls}.'
+        assert issubclass(cls_type, parent_cls), f'{cls_type} is not subclass of {parent_cls}.'
 
     return cls_type(*args, **filter_kwargs(kwargs, cls_type))
 

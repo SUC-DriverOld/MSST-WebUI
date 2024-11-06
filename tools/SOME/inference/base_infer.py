@@ -7,7 +7,7 @@ import torch
 import tqdm
 from torch import nn
 
-from utils import build_object_from_class_name
+from tools.SOME.utils import build_object_from_class_name
 
 
 class BaseInference:
@@ -24,14 +24,14 @@ class BaseInference:
         model: nn.Module = build_object_from_class_name(
             self.config['model_cls'], nn.Module, config=self.config
         ).eval().to(self.device)
-        state_dict = torch.load(self.model_path, map_location=self.device)['state_dict']
+        state_dict = torch.load(self.model_path, map_location=self.device, weights_only=True)['state_dict']
         prefix_in_ckpt = 'model'
         state_dict = OrderedDict({
             k[len(prefix_in_ckpt) + 1:]: v
             for k, v in state_dict.items() if k.startswith(f'{prefix_in_ckpt}.')
         })
         model.load_state_dict(state_dict, strict=True)
-        print(f'| load \'{prefix_in_ckpt}\' from \'{self.model_path}\'.')
+        print(f'load \'{prefix_in_ckpt}\' from \'{self.model_path}\'.')
         return model
 
     def preprocess(self, waveform: np.ndarray) -> Dict[str, torch.Tensor]:

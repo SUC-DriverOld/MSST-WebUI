@@ -2,8 +2,6 @@
 # Use command: pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 # torch>=2.0.1
 
---only-binary=samplerate
-
 numpy
 pandas
 scipy
@@ -37,6 +35,7 @@ psutil
 accelerate
 huggingface-hub>=0.23.0
 prodigyopt
+torch_log_wmse
 
 # Sep 7, 2024: fastapi updated to 0.114.0, which may cause issues. Please use fastapi==0.111.0 instead.
 fastapi==0.111.0

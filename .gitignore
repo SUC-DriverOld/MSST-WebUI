@@ -1,10 +1,11 @@
 .vscode/
+.idea/
 __pycache__/
 *.pyc
 configs/
 configs/viperx/*.yaml
 configs_template/
-data/
+data/*.json
 ffmpeg/bin/*.exe
 workenv/
 temp/
@@ -19,12 +20,20 @@ config_unofficial/
 cache/
 tmpdir/
 pretrain/hub
+build/
+logs/
+data/presets
+data/presets_backup
 
 !pretrain/*.json
 !.gitkeep
+setup.py
+app.c
+go-webui.bat
 
 *.ckpt
 *.pt
 *.pth
 *.th
 *.chpt
+*.pyd
