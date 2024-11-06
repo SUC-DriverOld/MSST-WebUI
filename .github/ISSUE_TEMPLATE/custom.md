@@ -22,5 +22,5 @@ Provide console screenshots here.
 ### Provide log here (optional)
 Provide log here. The log files are stored in the log folder and named after the date. Please use a text editor to open the latest log file and copy the contents below.
 
-#### Future request
+### Future request
 Please briefly describe the function you want to implement, and I will consider adding it in the next version.
