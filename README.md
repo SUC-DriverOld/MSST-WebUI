@@ -61,6 +61,19 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
   python webUI.py
   ```
 
+  The optional arguments are as follows.
+
+  ```
+  usage: webUI.py [-h] [--server_name SERVER_NAME] [--server_port SERVER_PORT] [--share] [--debug]
+
+  options:
+    -h, --help                 show this help message and exit
+    --server_name SERVER_NAME  Server IP address (Default: Auto). For example: 0.0.0.0
+    --server_port SERVER_PORT  Server port (Default: Auto). For example: 7860
+    --share                    Enable share link (Default: False).
+    --debug                    Enable debug mode (Default: False).
+  ```
+
 - If you run webUI on a cloud platform, see [this document](tools/webUI_for_clouds/README.md) for more details.
 
 > [!NOTE]
