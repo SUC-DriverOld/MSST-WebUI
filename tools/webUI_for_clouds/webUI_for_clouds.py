@@ -6,7 +6,7 @@ from torch import cuda
 from multiprocessing import cpu_count
 from utils.constant import *
 from webui.utils import i18n, load_configs, webui_restart, log_level_debug, logger
-from tools.webUI_for_clouds.download_models import download_model
+from download_models import download_model
 
 webui_config = load_configs(WEBUI_CONFIG)
 language_dict = load_configs(LANGUAGE)
@@ -925,6 +925,9 @@ def settings():
     debug_mode.change(fn=log_level_debug,inputs=debug_mode,outputs=setting_output_message)
 
 if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.set_start_method('spawn')
+
     debug = webui_config["settings"].get("debug", False)
     if debug:
         log_level_debug(True)

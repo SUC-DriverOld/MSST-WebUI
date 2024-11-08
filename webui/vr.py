@@ -24,16 +24,16 @@ def load_vr_model_stem(model):
 def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
     config = load_configs(WEBUI_CONFIG)
     config['inference']['vr_select_model'] = vr_select_model
-    config['inference']['vr_window_size'] = vr_window_size
-    config['inference']['vr_aggression'] = vr_aggression
+    config['inference']['vr_window_size'] = int(vr_window_size)
+    config['inference']['vr_aggression'] = int(vr_aggression)
     config['inference']['output_format'] = vr_output_format
     config['inference']['force_cpu'] = vr_use_cpu
     config['inference']['vr_primary_stem_only'] = vr_primary_stem_only
     config['inference']['vr_secondary_stem_only'] = vr_secondary_stem_only
     config['inference']['input_dir'] = vr_input
     config['inference']['store_dir'] = vr_store_dir
-    config['inference']['vr_batch_size'] = vr_batch_size
-    config['inference']['vr_post_process_threshold'] = vr_post_process_threshold
+    config['inference']['vr_batch_size'] = int(vr_batch_size)
+    config['inference']['vr_post_process_threshold'] = float(vr_post_process_threshold)
     config['inference']['vr_invert_spect'] = vr_invert_spect
     config['inference']['vr_enable_tta'] = vr_enable_tta
     config['inference']['vr_high_end_process'] = vr_high_end_process

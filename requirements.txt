@@ -36,6 +36,7 @@ accelerate
 huggingface-hub>=0.23.0
 prodigyopt
 torch_log_wmse
+colorama
 
 # Sep 7, 2024: fastapi updated to 0.114.0, which may cause issues. Please use fastapi==0.111.0 instead.
 fastapi==0.111.0

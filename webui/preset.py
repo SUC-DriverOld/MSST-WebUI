@@ -211,11 +211,11 @@ class Presets:
         self.debug = webui_config["settings"].get("debug", False)
         self.vr_model_path = webui_config['settings']['uvr_model_dir']
         self.invert_using_spec = webui_config['inference']['vr_invert_spect']
-        self.batch_size = webui_config['inference']['vr_batch_size']
-        self.window_size = webui_config['inference']['vr_window_size']
-        self.aggression = webui_config['inference']['vr_aggression']
+        self.batch_size = int(webui_config['inference']['vr_batch_size'])
+        self.window_size = int(webui_config['inference']['vr_window_size'])
+        self.aggression = int(webui_config['inference']['vr_aggression'])
         self.enable_post_process = webui_config['inference']['vr_enable_post_process']
-        self.post_process_threshold = webui_config['inference']['vr_post_process_threshold']
+        self.post_process_threshold = float(webui_config['inference']['vr_post_process_threshold'])
         self.high_end_process = webui_config['inference']['vr_high_end_process']
         
         gpu_id = webui_config["inference"].get("device", None)
