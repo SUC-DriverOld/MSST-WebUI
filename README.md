@@ -19,7 +19,7 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 **Windows**: Download the installer from [Releases](https://github.com/SUC-DriverOld/MSST-WebUI/releases) and run it. Or you can clone this repository and run from source.<br>
 **Linux/macOS**: Clone this repository and run from source.<br>
 **Google Colab**: [Click here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) to run the webUI on Google Colab.<br>
-**飞书教程文档【中国区】**：[点击此处快速开始](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc?from=from_copylink)
+**[For Chinese Users] Feishu Documents**：[Click to jump](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc?from=from_copylink)
 
 ### Available Download links
 
@@ -27,9 +27,9 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
 |:---------------:|------------------------------------------------------|:------------:|------------------------------------|
 | Github Releases | https://github.com/SUC-DriverOld/MSST-WebUI/releases |      -       | Only installer, no models          |
 |   Huggingface   | https://huggingface.co/Sucial/MSST-WebUI/tree/main   |      -       | Installer and all available models |
-| 【中国区】hf-mirror  | https://hf-mirror.com/Sucial/MSST-WebUI/tree/main    |      -       | 包含安装程序和所有可用模型                      |
-|    【中国区】百度网盘    | https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q      |     1145     | 包含安装程序和所有可用模型                      |
-| 【中国区】123盘(即将弃用) | https://www.123pan.cn/s/1bmETd-AefWh.html            |     1145     | 包含安装程序和所有可用模型                      |
+| [For Chinese Users] hf-mirror  | https://hf-mirror.com/Sucial/MSST-WebUI/tree/main    |      -       | Installer and all available models  |
+| [For Chinese Users] BaiduNetdisk  | https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q      |     1145     | Installer and all available models  |
+| [For Chinese Users] 123Pan | https://www.123pan.cn/s/1bmETd-AefWh.html            |     1145     | Installer and all available models  |
 
 ## Run from source
 
