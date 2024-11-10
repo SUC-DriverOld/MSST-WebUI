@@ -39,7 +39,7 @@ all necessary backups and dependencies are in place for successful execution.
 import os
 import sys
 import shutil
-import warnings
+import time
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
@@ -92,8 +92,8 @@ def setup_webui():
 
         copy_folders()
         save_configs(webui_config_backup, WEBUI_CONFIG)
-
         logger.debug("Merging old config with new config")
+        time.sleep(1)
 
     if webui_config["settings"].get("auto_clean_cache", False):
         shutil.rmtree("cache")
@@ -120,6 +120,7 @@ def set_debug(args):
     if args.debug or debug:
         log_level_debug(True)
     else:
+        import warnings
         log_level_debug(False)
         warnings.filterwarnings("ignore")
 

@@ -36,7 +36,7 @@ pip install tools/webUI_for_clouds/librosa-0.9.2-py3-none-any.whl
 
 - If you want to use "Vocals to MIDI", use the following command to download the weights.
 ```bash
-wget https://huggingface.co/Sucial/SOME_Models/resolve/main/model_steps_64000_simplified.ckpt -O MSST-WebUI/tools/SOME_weights/model_steps_64000_simplified.ckpt
+wget https://huggingface.co/Sucial/MSST-WebUI/resolve/main/SOME_weights/model_steps_64000_simplified.ckpt -O MSST-WebUI/tools/SOME_weights/model_steps_64000_simplified.ckpt
 ```
 
 - You need to setup for WebUI manually. If you use jupyter, you can use the following code.

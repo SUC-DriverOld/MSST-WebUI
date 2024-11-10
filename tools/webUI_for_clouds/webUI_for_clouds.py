@@ -40,22 +40,26 @@ def load_preset_cloud_model(model_type):
 
 def cloud_msst_infer_audio(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
     from webui.msst import run_inference_single
-    if download_model("msst", selected_model):
+    if selected_model:
+        assert download_model("msst", selected_model), i18n("模型下载失败, 请重试!")
         return run_inference_single(selected_model, input_audio, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
 
 def cloud_msst_infer_folder(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
     from webui.msst import run_multi_inference
-    if download_model("msst", selected_model):
+    if selected_model:
+        assert download_model("msst", selected_model), i18n("模型下载失败, 请重试!")
         return run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
 
 def cloud_vr_infer_audio(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
     from webui.vr import vr_inference_single
-    if download_model("uvr", vr_select_model):
+    if vr_select_model:
+        assert download_model("uvr", vr_select_model), i18n("模型下载失败, 请重试!")
         return vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
 
 def cloud_vr_infer_folder(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
     from webui.vr import vr_inference_multi
-    if download_model("uvr", vr_select_model):
+    if vr_select_model:
+        assert download_model("uvr", vr_select_model), i18n("模型下载失败, 请重试!")
         return vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
 
 def check_preset(preset):
@@ -64,22 +68,20 @@ def check_preset(preset):
         model_type = preset_data[step]["model_type"]
         model_name = preset_data[step]["model_name"]
         if model_type == "UVR_VR_Models":
-            if not download_model("uvr", model_name):
-                return False
+            assert download_model("uvr", model_name), i18n("模型下载失败, 请重试!")
         else:
-            if not download_model("msst", model_name):
-                return False
+            assert download_model("msst", model_name), i18n("模型下载失败, 请重试!")
     return True
 
 def cloud_preset_infer_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir):
     from webui.preset import preset_inference_audio
-    if check_preset(preset):
-        return preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir)
+    assert check_preset(preset), i18n("模型下载失败, 请重试!")
+    return preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir)
 
 def cloud_preset_infer_folder(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir, is_audio=False):
     from webui.preset import preset_inference
-    if check_preset(preset_name):
-        return preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir, is_audio)
+    assert check_preset(preset_name), i18n("模型下载失败, 请重试!")
+    return preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir, is_audio)
 
 def setup():
     global device, force_cpu_value
@@ -100,8 +102,8 @@ def setup():
 def app():
     with gr.Blocks(theme=gr.Theme.load('tools/themes/theme_blue.json')) as webui:
         gr.Markdown(value=f"""### Music-Source-Separation-Training-Inference-Webui For Clouds v{PACKAGE_VERSION}""")
-        gr.Markdown(value=i18n("Author: [Github@KitsuneX07](https://github.com/KitsuneX07) | [Github@SUC-DriverOld](https://github.com/SUC-DriverOld), [点击前往教程文档 Click here to visit tutorial document](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)"))
-        gr.Markdown(value="**请将需要处理的音频放置到input文件夹内, 处理完成后的音频将会保存到results文件夹内! 云端输入输出目录不可更改!** <br>**Please put the audio files you need to process in the input folder, and the processed audio files will be saved in the results folder! The cloud input and output directories cannot be changed!**")
+        gr.Markdown(value=i18n("作者: [Github@KitsuneX07](https://github.com/KitsuneX07) | [Github@SUC-DriverOld](https://github.com/SUC-DriverOld), [点击前往教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)"))
+        gr.Markdown(value=i18n("**请将需要处理的音频放置到input文件夹内, 处理完成后的音频将会保存到results文件夹内! 云端输入输出目录不可更改!**"))
 
         with gr.Tabs():
             with gr.TabItem(label=i18n("MSST分离")):

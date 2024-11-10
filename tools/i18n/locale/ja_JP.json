@@ -326,5 +326,8 @@
     "小工具": "ツール",
     "安装模型": "モデルをインストール",
     "MSST训练": "MSSTトレーニング",
-    "设置": "設定"
+    "设置": "設定",
+    "模型下载失败, 请重试!": "モデルのダウンロードに失敗しました、もう一度お試しください！",
+    "作者: [Github@KitsuneX07](https://github.com/KitsuneX07) | [Github@SUC-DriverOld](https://github.com/SUC-DriverOld), [点击前往教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)": "作者: [Github@KitsuneX07](https://github.com/KitsuneX07) | [Github@SUC-DriverOld](https://github.com/SUC-DriverOld)",
+    "**请将需要处理的音频放置到input文件夹内, 处理完成后的音频将会保存到results文件夹内! 云端输入输出目录不可更改!**": "**処理するオーディオをinputフォルダに配置し、処理が完了するとオーディオはresultsフォルダに保存されます！クラウドの入出力ディレクトリは変更できません！**"
 }

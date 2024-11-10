@@ -42,6 +42,7 @@ i18n = i18n.I18nAuto(get_language())
 
 
 def webui_restart():
+    logger.info("Restarting WebUI...")
     os.execl(PYTHON, PYTHON, *sys.argv)
 
 def get_main_link():

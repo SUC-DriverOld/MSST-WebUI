@@ -41,7 +41,12 @@ def scan_files(input_paths):
 
     return i18n_dict
 
-input_paths = ["E:\\vs\\MSST-WebUI\\webui", "E:\\vs\\MSST-WebUI\\webUI.py", "E:\\vs\\MSST-WebUI\\app.py"]
+input_paths = [
+    "E:\\vs\\MSST-WebUI\\webui",
+    "E:\\vs\\MSST-WebUI\\webUI.py",
+    "E:\\vs\\MSST-WebUI\\app.py",
+    "E:\\vs\\MSST-WebUI\\tools\\webUI_for_clouds\\webUI_for_clouds.py"
+]
 output_file = "E:\\vs\\MSST-WebUI\\tools\\i18n\\locale\\template.json"
 i18n_dict = scan_files(input_paths)
 save_to_json(i18n_dict, output_file)

@@ -326,5 +326,8 @@
     "小工具": "🛠️🔧",
     "安装模型": "🔧📦",
     "MSST训练": "🏋️‍♂️📚MSST",
-    "设置": "⚙️🔧"
+    "设置": "⚙️🔧",
+    "模型下载失败, 请重试!": "📦⬇️❌, 🔄🔁!",
+    "作者: [Github@KitsuneX07](https://github.com/KitsuneX07) | [Github@SUC-DriverOld](https://github.com/SUC-DriverOld), [点击前往教程文档](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)": "Authors: [Github@KitsuneX07](https://github.com/KitsuneX07) | [Github@SUC-DriverOld](https://github.com/SUC-DriverOld)",
+    "**请将需要处理的音频放置到input文件夹内, 处理完成后的音频将会保存到results文件夹内! 云端输入输出目录不可更改!**": "**Please place the audio to be processed in the input folder, and the processed audio will be saved in the results folder! The cloud input and output directories cannot be changed!**"
 }
