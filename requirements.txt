@@ -42,4 +42,8 @@ colorama
 fastapi==0.111.0
 
 # After installing the requirements, go to site-packages folder, open "\librosa\util\utils.py" and go to line 2185
-# Change the line from "np.dtype(complex): np.dtype(np.float).type," to "np.dtype(complex): np.dtype(float).type,"
+# Change the line from "np.dtype(complex): np.dtype(np.float).type," to "np.dtype(complex): np.dtype(float).type,"\
+
+# ComfyUI requirements
+PySide6
+PySide6-Fluent-Widgets
