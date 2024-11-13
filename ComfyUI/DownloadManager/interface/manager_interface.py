@@ -1,11 +1,11 @@
 import os
 import json
 import hashlib
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QFrame, QTreeWidgetItem, QSpacerItem, QTableWidgetItem, QSizePolicy, QHeaderView, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QFrame, QTableWidgetItem, QHeaderView, QVBoxLayout
 from PySide6.QtCore import Qt
 from qfluentwidgets import  (ScrollArea, InfoBar, InfoBarPosition, TableWidget, CheckBox, PushButton, IndeterminateProgressRing, Dialog, TitleLabel, CommandBar, Action)
 from qfluentwidgets import FluentIcon as FIF
-from common.data import models_info
+from ComfyUI.DownloadManager.common.data import models_info
 
 
 class managerInterface(QFrame):

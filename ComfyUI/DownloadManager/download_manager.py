@@ -1,8 +1,8 @@
 from qfluentwidgets import FluentWindow, NavigationItemPosition
 from qfluentwidgets import FluentIcon as FIF
-from interface.download_interface import downloadInterface
-from interface.manager_interface import managerInterface
-from interface.settings_interface import settingsInterface
+from ComfyUI.DownloadManager.interface.download_interface import downloadInterface
+from ComfyUI.DownloadManager.interface.manager_interface import managerInterface
+from ComfyUI.DownloadManager.interface.settings_interface import settingsInterface
 
 
 class DownloadManager(FluentWindow):

@@ -1,10 +1,12 @@
 import os
 import sys
+sys.path.append(os.getcwd())
+
 from qfluentwidgets import setTheme, setThemeColor, Theme, FluentTranslator
 from download_manager import DownloadManager
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QTranslator
-from common.config import cfg
+from ComfyUI.DownloadManager.common.config import cfg
 
 
 def main():
@@ -15,6 +17,7 @@ def main():
     theme_color = cfg.get(cfg.themeColor)
     locale = cfg.get(cfg.language).value
     fluent_translator = FluentTranslator(locale=locale)
+    
 
     i18n_path = os.path.join(os.path.dirname(__file__), "resource", "i18n", f"app_{locale.name()}.qm")
     # print(i18n_path)

@@ -1,12 +1,11 @@
-from PySide6.QtWidgets import QWidget, QSpacerItem, QFrame, QVBoxLayout, QLabel, QPushButton
+from PySide6.QtWidgets import QWidget, QSpacerItem, QFrame, QVBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIntValidator
 from qfluentwidgets import (setTheme, ScrollArea, setThemeColor, SettingCardGroup, OptionsSettingCard, 
                             CustomColorSettingCard, SettingCard, InfoBar, LineEdit, TitleLabel, ComboBoxSettingCard,
-                            RadioButton
                             )
 from qfluentwidgets import FluentIcon as FIF
-from common.config import cfg
+from ComfyUI.DownloadManager.common.config import cfg
 
 
 class settingsInterface(QFrame):

@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QFrame, QLabel, QWidget, QHBoxLayout, QTreeWidgetItem
-from PySide6.QtCore import Qt, Signal, QEasingCurve, QUrl
+from PySide6.QtWidgets import QFrame, QWidget, QHBoxLayout, QTreeWidgetItem
+from PySide6.QtCore import Qt, QEasingCurve, QUrl
 from PySide6.QtGui import QDesktopServices
 from qfluentwidgets import (
     CommandBar, FlowLayout, ScrollArea, Action, VBoxLayout, TreeWidget, ProgressBar, BodyLabel, SmoothMode,
@@ -7,9 +7,9 @@ from qfluentwidgets import (
 )
 from qfluentwidgets import FluentIcon as FIF
 from huggingface_hub import hf_hub_url
-from common.data import msst_model_data, vr_model_data, ARIA2_RPC_URL, HF_ENDPOINT
-from common.download_thread import DownloadThread
-from widgets.tag_widget import TagWidget
+from ComfyUI.DownloadManager.common.data import msst_model_data, vr_model_data, ARIA2_RPC_URL, HF_ENDPOINT
+from ComfyUI.DownloadManager.common.download_thread import DownloadThread
+from ComfyUI.DownloadManager.widgets.tag_widget import TagWidget
 import requests
 import json
 import os
