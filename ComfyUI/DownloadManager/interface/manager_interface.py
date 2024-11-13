@@ -18,13 +18,13 @@ class managerInterface(QFrame):
     def setupUI(self):
         self.layout = QVBoxLayout(self)
         
-        self.settingLabel = TitleLabel("本地模型管理", self)
+        self.settingLabel = TitleLabel(self.tr("Local Model Library"), self)
         self.settingLabel.setFixedHeight(40)
 
         self.command_bar = CommandBar(self)
         self.command_bar.addWidget(self.settingLabel)
         self.command_bar.addSeparator()
-        self.command_bar.addAction(Action(FIF.SYNC, "刷新", triggered=self.populateTable))
+        self.command_bar.addAction(Action(FIF.SYNC, self.tr("Refresh"), triggered=self.populateTable))
 
         self.layout.addWidget(self.command_bar)
 
@@ -33,7 +33,13 @@ class managerInterface(QFrame):
         self.table.setBorderRadius(8)
         self.table.verticalHeader().hide()
         self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(['model_name', 'model_class', 'isInstalled', 'hashCheck', 'delete'])
+        self.table.setHorizontalHeaderLabels([
+            self.tr('model_name'), 
+            self.tr('model_class'), 
+            self.tr('isInstalled'), 
+            self.tr('hashCheck'), 
+            self.tr('delete')
+        ])
         self.populateTable()
 
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
@@ -127,8 +133,8 @@ class managerInterface(QFrame):
 
         if not os.path.exists(file_path):
             InfoBar.error(
-                title='校验失败',
-                content="文件不存在",
+                title=self.tr("Hash Check Failed"),
+                content=self.tr("File not found"),
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,
@@ -140,8 +146,8 @@ class managerInterface(QFrame):
         sz = os.path.getsize(file_path)
         if sz != size:
             InfoBar.error(
-                title='校验失败',
-                content="文件不完整",
+                title=self.tr("Hash Check Failed"),
+                content=self.tr("File size not match"),
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,
@@ -153,8 +159,8 @@ class managerInterface(QFrame):
         hash = self.calculate_sha256(file_path)
         if hash == sha256:
             InfoBar.success(
-                title='校验成功',
-                content="文件完整",
+                title=self.tr("Hash Check Passed"),
+                content=self.tr("Hash match"),
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,
@@ -163,8 +169,8 @@ class managerInterface(QFrame):
             hash_infobar.close()
         else:
             InfoBar.error(
-                title='校验失败',
-                content="文件不完整",
+                title=self.tr("Hash Check Failed"),
+                content=self.tr("Hash not match"),
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,
@@ -176,8 +182,8 @@ class managerInterface(QFrame):
         file_path = self.table_data[model]['parget_position']
         if not os.path.exists(file_path):
             InfoBar.error(
-                title='删除失败',
-                content="文件不存在",
+                title=self.tr("Deletion failed"),
+                content=self.tr("File not found"),
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,
@@ -186,8 +192,8 @@ class managerInterface(QFrame):
             return
         
         delete_dialog = Dialog(
-            title='删除文件',
-            content=f"是否确定删除模型文件: {model}?",
+            title=self.tr("Delete Model"),
+            content=self.tr(f"Are you sure to delete the model {model}?"),
             parent=self
         )
         if delete_dialog.exec():
@@ -196,8 +202,8 @@ class managerInterface(QFrame):
             self.populateTable()
             # self.table.update()
             InfoBar.success(
-                title='删除成功',
-                content="文件已删除",
+                title=self.tr("Deletion success"),
+                content=self.tr("Model has been deleted successfully"),
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,

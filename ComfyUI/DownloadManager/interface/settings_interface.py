@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QSpacerItem, QFrame, QVBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIntValidator
 from qfluentwidgets import (setTheme, ScrollArea, setThemeColor, ExpandLayout, SettingCardGroup, OptionsSettingCard, 
-                            CustomColorSettingCard, SettingCard, InfoBar, LineEdit, TitleLabel
+                            CustomColorSettingCard, SettingCard, InfoBar, LineEdit, TitleLabel, ComboBoxSettingCard
                             )
 from qfluentwidgets import FluentIcon as FIF
 from common.config import cfg
@@ -18,7 +18,7 @@ class settingsInterface(QFrame):
     def setupUI(self):
         self.layout = QVBoxLayout(self)
         
-        self.settingLabel = TitleLabel("设置", self)
+        self.settingLabel = TitleLabel(self.tr("Settings"), self)
         self.layout.addWidget(self.settingLabel)
 
         self.scroll_area = ScrollArea(self)
@@ -34,7 +34,7 @@ class settingsInterface(QFrame):
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         # self.scroll_area.setViewportMargins(0, 80, 0, 20)
         
-        self.personalGroup.addSettingCards([self.themeCard, self.themeColorCard])
+        self.personalGroup.addSettingCards([self.themeCard, self.themeColorCard, self.languageCard])
         self.settingGroup.addSettingCards([self.aria2Card, self.hfEndpointCard])
 
         self.cardsLayout.addWidget(self.personalGroup)
@@ -46,12 +46,12 @@ class settingsInterface(QFrame):
     
     def initSettingCards(self):    
         self.personalGroup = SettingCardGroup(
-            "个性化", self.widget)
+            self.tr("Personalization"), self.widget)
         self.themeCard = OptionsSettingCard(
             cfg.themeMode,
             FIF.BRUSH,
-            "应用主题",
-            "选择应用的主题",
+            self.tr("Theme"),
+            self.tr("Choose the theme of the application"),
             texts=[
                 self.tr('Light'), self.tr('Dark'),
                 self.tr('Use system setting')
@@ -61,17 +61,25 @@ class settingsInterface(QFrame):
         self.themeColorCard = CustomColorSettingCard(
             cfg.themeColor,
             FIF.PALETTE,
-            "主题颜色",
-            "选择应用的主题颜色",
+            self.tr("Theme Color"),
+            self.tr("Choose the color of the theme"),
             self.personalGroup
+        )
+        self.languageCard = ComboBoxSettingCard(
+            cfg.language,
+            FIF.LANGUAGE,
+            self.tr('Language'),
+            self.tr('Set your preferred language for UI'),
+            texts=['简体中文', 'English', self.tr('Use system setting')],
+            parent=self.personalGroup
         )
 
         self.settingGroup = SettingCardGroup(
-            "配置", self.widget)
+            self.tr("Configuration"), self.widget)
         self.aria2Card = SettingCard(
             FIF.GLOBE,
             "Aria2 RPC",
-            "配置Aria2 RPC的地址和端口",
+            self.tr("Set the port of Aria2 RPC server"),
             self.settingGroup
         )
         aria2_port_line_edit = LineEdit()
@@ -85,7 +93,7 @@ class settingsInterface(QFrame):
         self.hfEndpointCard = SettingCard(
             FIF.APPLICATION,
             "Hugging Face Endpoint",
-            "设置Hugging Face下载源地址",
+            self.tr("Set up HuggingFace (mirror) site."),
             self.settingGroup
         )
 
@@ -114,8 +122,8 @@ class settingsInterface(QFrame):
         
     def showRestartTooltip(self):
         InfoBar.success(
-            'Updated successfully',
-            'Configuration takes effect after restart',
+            self.tr("Settings saved"),
+            self.tr("Please restart the application to apply the changes"),
             duration=1500,
             parent=self
         )

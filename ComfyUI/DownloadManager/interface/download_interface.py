@@ -36,7 +36,7 @@ class downloadInterface(QFrame):
     def setupUI(self):
         self.command_bar = CommandBar(self)
 
-        self.label = TitleLabel("Download Center")
+        self.label = TitleLabel(self.tr("Download Center"))
         self.label.setStyleSheet("color: white;")
 
         self.flow_widget = QWidget(self)
@@ -59,11 +59,11 @@ class downloadInterface(QFrame):
 
         self.command_bar.addWidget(self.label)
         self.command_bar.addSeparator()
-        self.command_bar.addAction(Action(FIF.FOLDER, '打开文件夹', triggered=self.openFolder))
-        self.command_bar.addAction(Action(FIF.DOWNLOAD, '下载模型', triggered=self.download_all_models))
+        self.command_bar.addAction(Action(FIF.FOLDER, self.tr("Open Folder"), triggered=self.openFolder))
+        self.command_bar.addAction(Action(FIF.DOWNLOAD, self.tr("Download Model(s)"), triggered=self.download_all_models))
         # self.command_bar.addAction(Action(FIF.CANCEL, '取消下载', triggered=self.download_thread.terminate))
-        self.command_bar.addAction(Action(FIF.SEND, '发送到Aria2', triggered=self.send_to_aria2))
-        self.command_bar.addAction(Action(FIF.DELETE, '清空', triggered=self.clearModels))
+        self.command_bar.addAction(Action(FIF.SEND, self.tr("Send To Aria2"), triggered=self.send_to_aria2))
+        self.command_bar.addAction(Action(FIF.DELETE, self.tr("clear"), triggered=self.clearModels))
         self.command_bar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.command_bar.addSeparator()
         self.layout = VBoxLayout(self)
@@ -86,9 +86,9 @@ class downloadInterface(QFrame):
 
         self.single_progress_bar = ProgressBar(self)
 
-        self.single_progress_label = BodyLabel("当前文件下载进度:", self)
-        self.total_progress_label = BodyLabel("总下载进度:", self)
-        self.download_speed_label = BodyLabel("当前没有下载任务", self)
+        self.single_progress_label = BodyLabel(self.tr("Current file download progress:"), self)
+        self.total_progress_label = BodyLabel(self.tr("Total download progress:"), self)
+        self.download_speed_label = BodyLabel(self.tr("No active download task"), self)
         self.download_speed_label.setStyleSheet("background: transparent;")
 
         single_progress_layout = QHBoxLayout()
@@ -116,7 +116,7 @@ class downloadInterface(QFrame):
     def populateTree(self):
         self.tree = TreeWidget(self)
         self.tree.setFixedHeight(400)
-        self.tree.setHeaderLabel("Model Library")
+        self.tree.setHeaderLabel(self.tr("Model Library"))
         self.tree.setBorderVisible(False)
         self.tree.setIndentation(50)
         self.tree.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH)
@@ -226,21 +226,21 @@ class downloadInterface(QFrame):
         self.generate_urls()
         if not self.model_urls:
             InfoBar.error(title="ERROR",
-                     content="请先选择要下载的模型", 
+                     content=self.tr("Please select models to download first!"), 
                      isClosable=True,
                      position=InfoBarPosition.TOP,
                      duration=5000,
                      parent=self)
             return
         InfoBar.info(title="INFO",
-                     content="下载任务已开始，请勿重复点击...", 
+                     content=self.tr("Downloading models, Please do not click repeatedly..."), 
                      isClosable=True,
                      position=InfoBarPosition.TOP,
                      duration=5000,
                      parent=self)
         self.total_progress_bar.setValue(0)
         self.single_progress_bar.setValue(0) 
-        self.download_speed_label.setText("准备下载...")
+        self.download_speed_label.setText(self.tr("Preparing to download..."))
         target_dir = "./pretrain"
         self.total_progress = 0
 
@@ -253,13 +253,13 @@ class downloadInterface(QFrame):
         self.download_thread.finished.connect(self.download_finished)
 
     def update_download_speed(self, speed):
-        print(f"当前下载速度: {speed}")
-        self.download_speed_label.setText(f"下载速度: {speed}")   
+        # print(f"当前下载速度: {speed}")
+        self.download_speed_label.setText(self.tr(f"Download speed: {speed}"))   
 
     def download_finished(self):
-        self.download_speed_label.setText("下载完成！当前没有下载任务")    
+        self.download_speed_label.setText(self.tr("Download task completed!"))    
         InfoBar.success(title="SUCCESS",
-                     content="下载任务完成！", 
+                     content=self.tr("Download task completed!"), 
                      isClosable=True,
                      position=InfoBarPosition.TOP,
                      duration=5000,
@@ -291,7 +291,7 @@ class downloadInterface(QFrame):
                 response = requests.post(ARIA2_RPC_URL, data=json.dumps(json_rpc_data))
             except requests.exceptions.ConnectionError as e:
                 InfoBar.error(title="ERROR",
-                        content=f"连接Aria2 RPC失败: {e}, 请检查是否开启Aria2服务", 
+                        content=self.tr(f"Failed to connect to Aria2 RPC: {e}. Please check if the Aria2 service is running."),
                         isClosable=True,
                         position=InfoBarPosition.TOP,
                         duration=-1,
@@ -300,7 +300,7 @@ class downloadInterface(QFrame):
 
             if response.status_code == 200:
                 InfoBar.success(title="SUCCESS",
-                     content="下载任务已提交到Aria2", 
+                     content=self.tr("The download task(s) has been submitted to Aria2."), 
                      isClosable=True,
                      position=InfoBarPosition.TOP,
                      duration=5000,
@@ -308,7 +308,7 @@ class downloadInterface(QFrame):
                 
             else:
                 InfoBar.error(title="ERROR",
-                     content=f"提交任务失败，错误信息: {response.text}", 
+                     content=self.tr(f"Failed to submit the task, error message: {response.text}"), 
                      isClosable=True,
                      position=InfoBarPosition.TOP,
                      duration=5000,
