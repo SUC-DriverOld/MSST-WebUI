@@ -1,6 +1,6 @@
 import os
 import sys
-from qfluentwidgets import setTheme, setThemeColor, Theme
+from qfluentwidgets import setTheme, setThemeColor, Theme, FluentTranslator
 from download_manager import DownloadManager
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QTranslator
@@ -14,8 +14,14 @@ def main():
     theme = cfg.get(cfg.theme)
     theme_color = cfg.get(cfg.themeColor)
     locale = cfg.get(cfg.language).value
-    print(locale)
-    translator.load(locale, "app", "./resource/i18n", )
+    fluent_translator = FluentTranslator(locale=locale)
+
+    i18n_path = os.path.join(os.path.dirname(__file__), "resource", "i18n", f"app_{locale.name()}.qm")
+    # print(i18n_path)
+    translator.load(i18n_path)
+    app.installTranslator(translator)
+    app.installTranslator(fluent_translator)
+    
     if theme == "Dark":
         setTheme(Theme.DARK)
     elif theme == "Light":
@@ -30,4 +36,4 @@ def main():
     
     
 if __name__ == '__main__':
-    main()    
+    main()

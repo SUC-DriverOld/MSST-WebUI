@@ -17,4 +17,4 @@ class DownloadManager(FluentWindow):
         self.addSubInterface(download_interface, FIF.DOWNLOAD, "Download Center")
         self.addSubInterface(manager_interface, FIF.TAG, "Manager")
         self.addSubInterface(settings_interface, FIF.SETTING, "Settings", NavigationItemPosition.BOTTOM)
-        self.resize(800, 600)
+        self.resize(900, 600)

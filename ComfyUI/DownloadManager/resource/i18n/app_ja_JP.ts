@@ -1,93 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="zh_CN">
+<TS version="2.1" language="ja_JP">
 <context>
     <name>downloadInterface</name>
     <message>
         <location filename="../../interface/download_interface.py" line="39"/>
         <source>Download Center</source>
-        <translation>下载中心</translation>
+        <translation>ダウンロードセンター</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="62"/>
         <source>Open Folder</source>
-        <translation>打开文件夹</translation>
+        <translation>フォルダを開く</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="63"/>
         <source>Download Model(s)</source>
-        <translation>下载模型</translation>
+        <translation>モデルをダウンロード</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="65"/>
         <source>Send To Aria2</source>
-        <translation>发送到Aria2</translation>
+        <translation>Aria2に送信</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="66"/>
         <source>clear</source>
-        <translation>清空</translation>
+        <translation>クリアする</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="89"/>
         <source>Current file download progress:</source>
-        <translation>当前任务下载进度:</translation>
+        <translation>現在のファイルのダウンロード進行状況：</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="90"/>
         <source>Total download progress:</source>
-        <translation>总下载进度:</translation>
+        <translation>全体のダウンロード進行状況：</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="91"/>
         <source>No active download task</source>
-        <translation>当前没有下载任务</translation>
+        <translation>現在アクティブなダウンロードタスクはありません</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="119"/>
         <source>Model Library</source>
-        <translation>模型仓库</translation>
+        <translation>モデルライブラリ</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="229"/>
         <source>Please select models to download first!</source>
-        <translation>请先选则要下载的模型！</translation>
+        <translation>まずダウンロードするモデルを選択してください！</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="236"/>
         <source>Downloading models, Please do not click repeatedly...</source>
-        <translation>下载已开始，请勿重复点击...</translation>
+        <translation>モデルをダウンロード中です。繰り返しクリックしないでください。</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="243"/>
         <source>Preparing to download...</source>
-        <translation>准备下载...</translation>
+        <translation>ダウンロードの準備中...</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="257"/>
         <source>Download speed: {speed}</source>
-        <translation>下载速度：{speed}</translation>
+        <translation>ダウンロード速度: {speed}</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="260"/>
         <location filename="../../interface/download_interface.py" line="262"/>
         <source>Download task completed!</source>
-        <translation>下载任务完成！</translation>
+        <translation>ダウンロードタスクが完了しました！</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="294"/>
         <source>Failed to connect to Aria2 RPC: {e}. Please check if the Aria2 service is running.</source>
-        <translation>连接到Aria2 RPC失败:{e}，请检查是否开启了Aria2服务.</translation>
+        <translation>Aria2 RPCへの接続に失敗しました: {e}。Aria2サービスが実行中かどうかを確認してください。</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="303"/>
         <source>The download task(s) has been submitted to Aria2.</source>
-        <translation>下载任务已成功发送到Aria2.</translation>
+        <translation>ダウンロードタスクがAria2に送信されました。</translation>
     </message>
     <message>
         <location filename="../../interface/download_interface.py" line="311"/>
         <source>Failed to submit the task, error message: {response.text}</source>
-        <translation>提交任务失败，错误信息为{e}</translation>
+        <translation>タスクの送信に失敗しました、エラーメッセージ: {response.text}</translation>
     </message>
 </context>
 <context>
@@ -95,95 +95,95 @@
     <message>
         <location filename="../../interface/manager_interface.py" line="21"/>
         <source>Local Model Library</source>
-        <translation>本地模型</translation>
+        <translation>ローカルモデルライブラリ</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="27"/>
         <source>Refresh</source>
-        <translation>刷新</translation>
+        <translation>リフレッシュ</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="37"/>
         <source>model_name</source>
-        <translation>模型名称</translation>
+        <translation>モデル名</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="38"/>
         <source>model_class</source>
-        <translation>模型类别</translation>
+        <translation>モデルカテゴリ</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="39"/>
         <source>isInstalled</source>
-        <translation>安装情况</translation>
+        <translation>インストール状況</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="40"/>
         <source>hashCheck</source>
-        <translation>校验文件</translation>
+        <translation>ハッシュの検証</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="42"/>
         <source>delete</source>
-        <translation>删除</translation>
+        <translation>削除</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="136"/>
         <location filename="../../interface/manager_interface.py" line="149"/>
         <location filename="../../interface/manager_interface.py" line="172"/>
         <source>Hash Check Failed</source>
-        <translation>哈希校验失败</translation>
+        <translation>ハッシュ検証に失敗しました</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="137"/>
         <location filename="../../interface/manager_interface.py" line="186"/>
         <source>File not found</source>
-        <translation>文件不存在</translation>
+        <translation>ファイルが見つかりません</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="150"/>
         <source>File size not match</source>
-        <translation>文件大小不匹配</translation>
+        <translation>ファイルサイズが一致しません</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="162"/>
         <source>Hash Check Passed</source>
-        <translation>校验成功</translation>
+        <translation>ハッシュ検証成功</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="163"/>
         <source>Hash match</source>
-        <translation>哈希匹配</translation>
+        <translation>ハッシュ値が一致しました</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="173"/>
         <source>Hash not match</source>
-        <translation>哈希不匹配</translation>
+        <translation>ハッシュ値が一致しません</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="185"/>
         <source>Deletion failed</source>
-        <translation>删除失败</translation>
+        <translation>削除に失敗しました</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="195"/>
         <source>Delete Model</source>
-        <translation>删除模型</translation>
+        <translation>モデルを削除</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="196"/>
         <source>Are you sure to delete the model {model}?</source>
-        <translation>确定要删除模型{model}吗？它会消失很久很久，真的很久...</translation>
+        <translation>モデル {model} を削除してもよろしいですか？</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="205"/>
         <source>Deletion success</source>
-        <translation>删除成功</translation>
+        <translation>削除に成功しました</translation>
     </message>
     <message>
         <location filename="../../interface/manager_interface.py" line="206"/>
         <source>Model has been deleted successfully</source>
-        <translation>模型已经成功删除</translation>
+        <translation>モデルは正常に削除されました</translation>
     </message>
 </context>
 <context>
@@ -191,83 +191,83 @@
     <message>
         <location filename="../../interface/settings_interface.py" line="21"/>
         <source>Settings</source>
-        <translation>设置</translation>
+        <translation>設定</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="49"/>
         <source>Personalization</source>
-        <translation>个性化</translation>
+        <translation>パーソナライズ</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="53"/>
         <source>Theme</source>
-        <translation>主题</translation>
+        <translation>テーマ</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="54"/>
         <source>Choose the theme of the application</source>
-        <translation>选择应用的主题</translation>
+        <translation>アプリケーションのテーマを選択してください</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="56"/>
         <source>Light</source>
-        <translation>亮色模式</translation>
+        <translation>ライトテーマ</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="56"/>
         <source>Dark</source>
-        <translation>暗色模式</translation>
+        <translation>ダークテーマ</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="58"/>
         <location filename="../../interface/settings_interface.py" line="73"/>
         <source>Use system setting</source>
-        <translation>跟随系统</translation>
+        <translation>システム設定を使用</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="64"/>
         <source>Theme Color</source>
-        <translation>主题色</translation>
+        <translation>テーマカラー</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="65"/>
         <source>Choose the color of the theme</source>
-        <translation>选择应用主题色</translation>
+        <translation>テーマの色を選択してください</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="71"/>
         <source>Language</source>
-        <translation>语言</translation>
+        <translation>言語</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="72"/>
         <source>Set your preferred language for UI</source>
-        <translation>设置应用的语言</translation>
+        <translation>アプリの表示言語を設定してください</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="78"/>
         <source>Configuration</source>
-        <translation>配置选项</translation>
+        <translation>構成設定</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="82"/>
         <source>Set the port of Aria2 RPC server</source>
-        <translation>设置Aria2 RPC端口</translation>
+        <translation>Aria2 RPCサーバーのポートを設定してください</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="96"/>
         <source>Set up HuggingFace (mirror) site.</source>
-        <translation>设置HuggingFace下载站点</translation>
+        <translation>HuggingFace（ミラー）サイトを設定してください</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="125"/>
         <source>Settings saved</source>
-        <translation>设置已保存</translation>
+        <translation>設定が保存されました</translation>
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="126"/>
         <source>Please restart the application to apply the changes</source>
-        <translation>请重启应用以应用设置</translation>
+        <translation>変更を適用するためにアプリケーションを再起動してください</translation>
     </message>
 </context>
 </TS>
