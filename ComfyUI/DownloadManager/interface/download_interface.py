@@ -7,7 +7,7 @@ from qfluentwidgets import (
 )
 from qfluentwidgets import FluentIcon as FIF
 from huggingface_hub import hf_hub_url
-from ComfyUI.DownloadManager.common.data import msst_model_data, vr_model_data, ARIA2_RPC_URL, HF_ENDPOINT
+from ComfyUI.DownloadManager.common.data import msst_model_data, vr_model_data, ARIA2_RPC_URL, HF_ENDPOINT, ARIA2_RPC_SECRET
 from ComfyUI.DownloadManager.common.download_thread import DownloadThread
 from ComfyUI.DownloadManager.widgets.tag_widget import TagWidget
 import requests
@@ -282,6 +282,7 @@ class downloadInterface(QFrame):
                 "method": "aria2.addUri",
                 "id": 1,
                 "params": [
+                    f"token:{ARIA2_RPC_SECRET}",
                     [url],
                     {"dir": target_path, "out": model_filename}
                 ]

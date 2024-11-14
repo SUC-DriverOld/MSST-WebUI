@@ -4,7 +4,8 @@ from .language import Language, LanguageSerializer
 class AppConfig(QConfig):
     
     aria2_port = ConfigItem("aria2", "Aria2_RPC_URL", 16800, restart=True)
-    hf_endpoint = ConfigItem("huggingface", "HF_ENDPOINT", "https://hf-mirror.com")
+    aria2_secret = ConfigItem("aria2", "Aria2_RPC_SECRET", "", restart=True)
+    hf_endpoint = ConfigItem("huggingface", "HF_ENDPOINT", "https://hf-mirror.com", restart=True)
     language = OptionsConfigItem(
         "MainWindow", "Language", Language.AUTO, OptionsValidator(Language), LanguageSerializer(), restart=True
         )

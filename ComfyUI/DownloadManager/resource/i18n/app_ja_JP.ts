@@ -75,17 +75,17 @@
         <translation>ダウンロードタスクが完了しました！</translation>
     </message>
     <message>
-        <location filename="../../interface/download_interface.py" line="294"/>
+        <location filename="../../interface/download_interface.py" line="295"/>
         <source>Failed to connect to Aria2 RPC: {e}. Please check if the Aria2 service is running.</source>
         <translation>Aria2 RPCへの接続に失敗しました: {e}。Aria2サービスが実行中かどうかを確認してください。</translation>
     </message>
     <message>
-        <location filename="../../interface/download_interface.py" line="303"/>
+        <location filename="../../interface/download_interface.py" line="304"/>
         <source>The download task(s) has been submitted to Aria2.</source>
         <translation>ダウンロードタスクがAria2に送信されました。</translation>
     </message>
     <message>
-        <location filename="../../interface/download_interface.py" line="311"/>
+        <location filename="../../interface/download_interface.py" line="312"/>
         <source>Failed to submit the task, error message: {response.text}</source>
         <translation>タスクの送信に失敗しました、エラーメッセージ: {response.text}</translation>
     </message>
@@ -220,7 +220,7 @@
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="58"/>
-        <location filename="../../interface/settings_interface.py" line="73"/>
+        <location filename="../../interface/settings_interface.py" line="74"/>
         <source>Use system setting</source>
         <translation>システム設定を使用</translation>
     </message>
@@ -235,37 +235,42 @@
         <translation>テーマの色を選択してください</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="71"/>
+        <location filename="../../interface/settings_interface.py" line="72"/>
         <source>Language</source>
         <translation>言語</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="72"/>
+        <location filename="../../interface/settings_interface.py" line="73"/>
         <source>Set your preferred language for UI</source>
         <translation>アプリの表示言語を設定してください</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="78"/>
+        <location filename="../../interface/settings_interface.py" line="79"/>
         <source>Configuration</source>
         <translation>構成設定</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="82"/>
+        <location filename="../../interface/settings_interface.py" line="83"/>
         <source>Set the port of Aria2 RPC server</source>
         <translation>Aria2 RPCサーバーのポートを設定してください</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="96"/>
+        <location filename="../../interface/settings_interface.py" line="97"/>
+        <source>Set the secret token of Aria2 RPC server</source>
+        <translation>Aria2 RPCサーバーの秘密トークンを設定する</translation>
+    </message>
+    <message>
+        <location filename="../../interface/settings_interface.py" line="111"/>
         <source>Set up HuggingFace (mirror) site.</source>
         <translation>HuggingFace（ミラー）サイトを設定してください</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="125"/>
+        <location filename="../../interface/settings_interface.py" line="143"/>
         <source>Settings saved</source>
         <translation>設定が保存されました</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="126"/>
+        <location filename="../../interface/settings_interface.py" line="144"/>
         <source>Please restart the application to apply the changes</source>
         <translation>変更を適用するためにアプリケーションを再起動してください</translation>
     </message>

@@ -75,17 +75,17 @@
         <translation>下载任务完成！</translation>
     </message>
     <message>
-        <location filename="../../interface/download_interface.py" line="294"/>
+        <location filename="../../interface/download_interface.py" line="295"/>
         <source>Failed to connect to Aria2 RPC: {e}. Please check if the Aria2 service is running.</source>
         <translation>连接到Aria2 RPC失败:{e}，请检查是否开启了Aria2服务.</translation>
     </message>
     <message>
-        <location filename="../../interface/download_interface.py" line="303"/>
+        <location filename="../../interface/download_interface.py" line="304"/>
         <source>The download task(s) has been submitted to Aria2.</source>
         <translation>下载任务已成功发送到Aria2.</translation>
     </message>
     <message>
-        <location filename="../../interface/download_interface.py" line="311"/>
+        <location filename="../../interface/download_interface.py" line="312"/>
         <source>Failed to submit the task, error message: {response.text}</source>
         <translation>提交任务失败，错误信息为{e}</translation>
     </message>
@@ -220,7 +220,7 @@
     </message>
     <message>
         <location filename="../../interface/settings_interface.py" line="58"/>
-        <location filename="../../interface/settings_interface.py" line="73"/>
+        <location filename="../../interface/settings_interface.py" line="74"/>
         <source>Use system setting</source>
         <translation>跟随系统</translation>
     </message>
@@ -235,37 +235,42 @@
         <translation>选择应用主题色</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="71"/>
+        <location filename="../../interface/settings_interface.py" line="72"/>
         <source>Language</source>
         <translation>语言</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="72"/>
+        <location filename="../../interface/settings_interface.py" line="73"/>
         <source>Set your preferred language for UI</source>
         <translation>设置应用的语言</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="78"/>
+        <location filename="../../interface/settings_interface.py" line="79"/>
         <source>Configuration</source>
         <translation>配置选项</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="82"/>
+        <location filename="../../interface/settings_interface.py" line="83"/>
         <source>Set the port of Aria2 RPC server</source>
         <translation>设置Aria2 RPC端口</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="96"/>
+        <location filename="../../interface/settings_interface.py" line="97"/>
+        <source>Set the secret token of Aria2 RPC server</source>
+        <translation>设置 Aria2 RPC 端口密钥</translation>
+    </message>
+    <message>
+        <location filename="../../interface/settings_interface.py" line="111"/>
         <source>Set up HuggingFace (mirror) site.</source>
         <translation>设置HuggingFace下载站点</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="125"/>
+        <location filename="../../interface/settings_interface.py" line="143"/>
         <source>Settings saved</source>
         <translation>设置已保存</translation>
     </message>
     <message>
-        <location filename="../../interface/settings_interface.py" line="126"/>
+        <location filename="../../interface/settings_interface.py" line="144"/>
         <source>Please restart the application to apply the changes</source>
         <translation>请重启应用以应用设置</translation>
     </message>

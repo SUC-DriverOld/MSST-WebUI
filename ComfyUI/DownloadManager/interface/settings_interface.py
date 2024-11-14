@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QWidget, QSpacerItem, QFrame, QVBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIntValidator
-from qfluentwidgets import (setTheme, ScrollArea, setThemeColor, SettingCardGroup, OptionsSettingCard, 
+from qfluentwidgets import (setTheme, ScrollArea, setThemeColor, SettingCardGroup, OptionsSettingCard, PasswordLineEdit,
                             CustomColorSettingCard, SettingCard, InfoBar, LineEdit, TitleLabel, ComboBoxSettingCard,
                             )
 from qfluentwidgets import FluentIcon as FIF
@@ -35,7 +35,7 @@ class settingsInterface(QFrame):
         # self.scroll_area.setViewportMargins(0, 80, 0, 20)
         
         self.personalGroup.addSettingCards([self.themeCard, self.themeColorCard, self.languageCard])
-        self.settingGroup.addSettingCards([self.aria2Card, self.hfEndpointCard])
+        self.settingGroup.addSettingCards([self.aria2Card, self.aria2SecretCard, self.hfEndpointCard])
 
         self.cardsLayout.addWidget(self.personalGroup)
         self.cardsLayout.addWidget(self.settingGroup)
@@ -91,6 +91,20 @@ class settingsInterface(QFrame):
         self.aria2Card.hBoxLayout.addSpacerItem(QSpacerItem(20, 20))
         aria2_port_line_edit.textChanged.connect(self.setAria2Port)
 
+        self.aria2SecretCard = SettingCard(
+            FIF.SETTING,
+            "Aria2 Secret",
+            self.tr("Set the secret token of Aria2 RPC server"),
+            self.settingGroup
+        )
+        aria2_secret_line_edit = PasswordLineEdit()
+        aria2_secret_line_edit.setClearButtonEnabled(True)
+        aria2_secret_line_edit.setPlaceholderText("Secret key")
+        aria2_secret_line_edit.setText(str(cfg.get(cfg.aria2_secret)))
+        self.aria2SecretCard.hBoxLayout.addWidget(aria2_secret_line_edit)
+        self.aria2SecretCard.hBoxLayout.addSpacerItem(QSpacerItem(20, 20))
+        aria2_secret_line_edit.textChanged.connect(self.setAria2Secret)
+
         self.hfEndpointCard = SettingCard(
             FIF.APPLICATION,
             "Hugging Face Endpoint",
@@ -113,6 +127,9 @@ class settingsInterface(QFrame):
     def setAria2Port(self, port):
         port = int(port)
         cfg.set(cfg.aria2_port, port)
+
+    def setAria2Secret(self, secret):
+        cfg.set(cfg.aria2_secret, secret)    
 
     def connectSignalToSlot(self):
         cfg.appRestartSig.connect(self.showRestartTooltip)

@@ -13,4 +13,5 @@ models_info = load_json('./data/models_info.json')
 
 port = cfg.get(cfg.aria2_port)
 ARIA2_RPC_URL = f"http://localhost:{port}/jsonrpc"
+ARIA2_RPC_SECRET = cfg.get(cfg.aria2_secret)
 HF_ENDPOINT = cfg.get(cfg.hf_endpoint)
