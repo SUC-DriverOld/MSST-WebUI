@@ -11,4 +11,4 @@ class AppConfig(QConfig):
         )
     
 cfg = AppConfig()
-qconfig.load("./data/AppConfig.json", cfg)
+qconfig.load("./ComfyUI/DownloadManager/data/AppConfig.json", cfg)
