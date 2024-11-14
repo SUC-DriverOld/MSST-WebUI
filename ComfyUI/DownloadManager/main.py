@@ -6,11 +6,13 @@ from qfluentwidgets import setTheme, setThemeColor, Theme, FluentTranslator
 from download_manager import DownloadManager
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QTranslator
+from PySide6.QtGui import QIcon
 from ComfyUI.DownloadManager.common.config import cfg
 
 
 def main():
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon("ComfyUI/DownloadManager/resource/icon/DownloadManager.ico"))
     translator = QTranslator()
     
     theme = cfg.get(cfg.theme)
