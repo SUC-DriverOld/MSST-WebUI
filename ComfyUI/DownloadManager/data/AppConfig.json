@@ -1,0 +1,16 @@
+{
+    "aria2": {
+        "Aria2_RPC_URL": 16800,
+        "Aria2_RPC_SECRET": ""
+    },
+    "huggingface": {
+        "HF_ENDPOINT": "https://hf-mirror.com"
+    },
+    "MainWindow": {
+        "Language": "Auto"
+    },
+    "QFluentWidgets": {
+        "ThemeColor": "#ff39c5b9",
+        "ThemeMode": "Dark"
+    }
+}

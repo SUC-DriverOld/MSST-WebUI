@@ -1,0 +1,12 @@
+{
+    "aria2": {
+        "Aria2_RPC_URL": 16800
+    },
+    "huggingface": {
+        "HF_ENDPOINT": "https://hf-mirror.com"
+    },
+    "QFluentWidgets": {
+        "ThemeColor": "#ff39c5b9",
+        "ThemeMode": "Dark"
+    }
+}
