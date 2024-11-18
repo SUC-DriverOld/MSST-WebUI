@@ -7,7 +7,7 @@ from ComfyUI.Editor.editor import Editor
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QTranslator
 from PySide6.QtGui import QIcon
-from ComfyUI.DownloadManager.common.config import cfg
+from ComfyUI.Editor.common.config import cfg
 
 
 def main():

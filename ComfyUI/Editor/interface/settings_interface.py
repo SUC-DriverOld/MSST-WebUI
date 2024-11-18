@@ -4,7 +4,7 @@ from qfluentwidgets import (setTheme, ScrollArea, setThemeColor, SettingCardGrou
                             CustomColorSettingCard, InfoBar, TitleLabel, ComboBoxSettingCard, SettingCard
                             )
 from qfluentwidgets import FluentIcon as FIF
-from ComfyUI.DownloadManager.common.config import cfg
+from ComfyUI.Editor.common.config import cfg
 
 
 class settingsInterface(QFrame):
@@ -74,17 +74,6 @@ class settingsInterface(QFrame):
         
         self.settingsGroup = SettingCardGroup(
             self.tr("Settings"), self.widget)
-        self.pan_sensitivity = SettingCard(
-            cfg.pan_sensitivity,
-            FIF.PAN,
-            self.tr("Pan Sensitivity"),
-            self.tr("Set the sensitivity of the pan"),
-            texts=[
-                self.tr('Low'), self.tr('Medium'),
-                self.tr('High')
-            ],
-            parent=self.settingsGroup
-        )
 
         self.connectSignalToSlot()    
 
