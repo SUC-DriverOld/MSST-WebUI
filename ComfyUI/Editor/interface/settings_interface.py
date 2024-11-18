@@ -1,8 +1,7 @@
-from PySide6.QtWidgets import QWidget, QSpacerItem, QFrame, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QIntValidator
-from qfluentwidgets import (setTheme, ScrollArea, setThemeColor, SettingCardGroup, OptionsSettingCard, PasswordLineEdit,
-                            CustomColorSettingCard, SettingCard, InfoBar, LineEdit, TitleLabel, ComboBoxSettingCard,
+from qfluentwidgets import (setTheme, ScrollArea, setThemeColor, SettingCardGroup, OptionsSettingCard,
+                            CustomColorSettingCard, InfoBar, TitleLabel, ComboBoxSettingCard, SettingCard
                             )
 from qfluentwidgets import FluentIcon as FIF
 from ComfyUI.DownloadManager.common.config import cfg
@@ -35,10 +34,8 @@ class settingsInterface(QFrame):
         # self.scroll_area.setViewportMargins(0, 80, 0, 20)
         
         self.personalGroup.addSettingCards([self.themeCard, self.themeColorCard, self.languageCard])
-        self.settingGroup.addSettingCards([self.aria2Card, self.aria2SecretCard, self.hfEndpointCard])
 
         self.cardsLayout.addWidget(self.personalGroup)
-        self.cardsLayout.addWidget(self.settingGroup)
 
         self.layout.addWidget(self.scroll_area)
         self.setLayout(self.layout)
@@ -74,63 +71,22 @@ class settingsInterface(QFrame):
             texts=['简体中文', '日本語', 'English', self.tr('Use system setting')],
             parent=self.personalGroup
         )
-
-        self.settingGroup = SettingCardGroup(
-            self.tr("Configuration"), self.widget)
-        self.aria2Card = SettingCard(
-            FIF.GLOBE,
-            "Aria2 RPC",
-            self.tr("Set the port of Aria2 RPC server"),
-            self.settingGroup
+        
+        self.settingsGroup = SettingCardGroup(
+            self.tr("Settings"), self.widget)
+        self.pan_sensitivity = SettingCard(
+            cfg.pan_sensitivity,
+            FIF.PAN,
+            self.tr("Pan Sensitivity"),
+            self.tr("Set the sensitivity of the pan"),
+            texts=[
+                self.tr('Low'), self.tr('Medium'),
+                self.tr('High')
+            ],
+            parent=self.settingsGroup
         )
-        aria2_port_line_edit = LineEdit()
-        aria2_port_line_edit.setText(str(cfg.get(cfg.aria2_port)))
-        int_validator = QIntValidator(0, 100000)
-        aria2_port_line_edit.setValidator(int_validator)
-        self.aria2Card.hBoxLayout.addWidget(aria2_port_line_edit)
-        self.aria2Card.hBoxLayout.addSpacerItem(QSpacerItem(20, 20))
-        aria2_port_line_edit.textChanged.connect(self.setAria2Port)
-
-        self.aria2SecretCard = SettingCard(
-            FIF.SETTING,
-            "Aria2 Secret",
-            self.tr("Set the secret token of Aria2 RPC server"),
-            self.settingGroup
-        )
-        aria2_secret_line_edit = PasswordLineEdit()
-        aria2_secret_line_edit.setClearButtonEnabled(True)
-        aria2_secret_line_edit.setPlaceholderText("Secret key")
-        aria2_secret_line_edit.setText(str(cfg.get(cfg.aria2_secret)))
-        self.aria2SecretCard.hBoxLayout.addWidget(aria2_secret_line_edit)
-        self.aria2SecretCard.hBoxLayout.addSpacerItem(QSpacerItem(20, 20))
-        aria2_secret_line_edit.textChanged.connect(self.setAria2Secret)
-
-        self.hfEndpointCard = SettingCard(
-            FIF.APPLICATION,
-            "Hugging Face Endpoint",
-            self.tr("Set up HuggingFace (mirror) site."),
-            self.settingGroup
-        )
-
-        hf_endpoint_line_edit = LineEdit()
-        hf_endpoint_line_edit.setText(str(cfg.get(cfg.hf_endpoint)))
-        hf_endpoint_line_edit.setFixedWidth(len(hf_endpoint_line_edit.text()) * 8)
-        self.hfEndpointCard.hBoxLayout.addWidget(hf_endpoint_line_edit)
-        self.hfEndpointCard.hBoxLayout.addSpacerItem(QSpacerItem(20, 20))
-        # hf_endpoint_line_edit.textChanged.connect(self.setHfEndpoint)
-        hf_endpoint_line_edit.editingFinished.connect(lambda: self.setHfEndpoint(hf_endpoint_line_edit.text()))
 
         self.connectSignalToSlot()    
-
-    def setHfEndpoint(self, endpoint):
-        cfg.set(cfg.hf_endpoint, endpoint)
-
-    def setAria2Port(self, port):
-        port = int(port)
-        cfg.set(cfg.aria2_port, port)
-
-    def setAria2Secret(self, secret):
-        cfg.set(cfg.aria2_secret, secret)    
 
     def connectSignalToSlot(self):
         cfg.appRestartSig.connect(self.showRestartTooltip)

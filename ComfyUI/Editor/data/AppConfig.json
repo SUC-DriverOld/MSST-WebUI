@@ -1,0 +1,12 @@
+{
+    "MainWindow": {
+        "Language": "Auto"
+    },
+    "Editor": {
+        "PanSensitivity": 0.5
+    },
+    "QFluentWidgets": {
+        "ThemeColor": "#ff39c5bb",
+        "ThemeMode": "Dark"
+    }
+}

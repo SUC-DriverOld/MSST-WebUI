@@ -37,7 +37,7 @@ class downloadInterface(QFrame):
         self.command_bar = CommandBar(self)
 
         self.label = TitleLabel(self.tr("Download Center"))
-        self.label.setStyleSheet("color: white;")
+        # self.label.setStyleSheet("color: white;")
 
         self.flow_widget = QWidget(self)
         self.flow_layout = FlowLayout(self.flow_widget)
