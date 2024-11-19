@@ -75,7 +75,7 @@ class managerInterface(QFrame):
 
             # is_installed = row['is_installed']
             checkbox = CheckBox()
-            is_installed = os.path.exists(row['parget_position'])
+            is_installed = os.path.exists(row['target_position'])
             if self.table_data[model]['is_installed'] != is_installed:
                 self.table_data[model]['is_installed'] = is_installed
                 dump = True
@@ -126,7 +126,7 @@ class managerInterface(QFrame):
         hash_infobar.hBoxLayout.insertWidget(0, spinner)
         hash_infobar.setCustomBackgroundColor("dark", "#39c5bbff")
         row = self.table_data[model]
-        file_path = row['parget_position']
+        file_path = row['target_position']
         print(os.path.abspath(file_path))
         size = row['model_size']
         sha256 = row['sha256']
@@ -179,7 +179,7 @@ class managerInterface(QFrame):
             hash_infobar.close()
 
     def deleteModel(self, model):
-        file_path = self.table_data[model]['parget_position']
+        file_path = self.table_data[model]['target_position']
         if not os.path.exists(file_path):
             InfoBar.error(
                 title=self.tr("Deletion failed"),

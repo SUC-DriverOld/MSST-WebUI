@@ -1,0 +1,58 @@
+{
+    "index": -1,
+    "model_name": "model_mdx23c_ep_271_l1_freq_72.2383.ckpt",
+    "model_type": "mdx23c",
+    "path": "./pretrain/single_stem_models/model_mdx23c_ep_271_l1_freq_72.2383.ckpt",
+    "config_path": "configs_backup/single_stem_models/config_mdx23c_similarity.yaml",
+    "input": [
+        "input"
+    ],
+    "output": [
+        "similarity",
+        "difference"
+    ],
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 8,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 8
+        },
+        {
+            "parameter": "dim_t",
+            "type": "int",
+            "default_value": 256,
+            "max_value": 10000,
+            "min_value": 1,
+            "current_value": 256
+        },
+        {
+            "parameter": "num_overlap",
+            "type": "int",
+            "default_value": 8,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 8
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "use_tta",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "down_stream_nodes": [],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ]
+}

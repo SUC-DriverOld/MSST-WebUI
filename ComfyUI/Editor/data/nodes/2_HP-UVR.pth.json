@@ -1,0 +1,81 @@
+{
+    "index": -1,
+    "model_name": "2_HP-UVR.pth",
+    "model_type": null,
+    "path": "./pretrain/VR_Models/2_HP-UVR.pth",
+    "config_path": null,
+    "input": [
+        "input"
+    ],
+    "output": [
+        "Instrumental",
+        "Vocals"
+    ],
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 2,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 2
+        },
+        {
+            "parameter": "window_size",
+            "type": "int",
+            "default_value": 512,
+            "max_value": 10000,
+            "min_value": 1,
+            "current_value": 512
+        },
+        {
+            "parameter": "aggression",
+            "type": "int",
+            "default_value": 5,
+            "max_value": 100,
+            "min_value": -100,
+            "current_value": 5
+        },
+        {
+            "parameter": "post_process_threshold",
+            "type": "float",
+            "default_value": 0.2,
+            "max_value": 0.3,
+            "min_value": 0.1,
+            "current_value": 0.2
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "invert_spect",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "enable_tta",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "high_end_process",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "enable_post_process",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "down_stream_nodes": [],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ]
+}

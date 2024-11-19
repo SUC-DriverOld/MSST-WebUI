@@ -1,0 +1,58 @@
+{
+    "index": -1,
+    "model_name": "model_bs_roformer_ep_937_sdr_10.5309.ckpt",
+    "model_type": "bs_roformer",
+    "path": "./pretrain/single_stem_models/model_bs_roformer_ep_937_sdr_10.5309.ckpt",
+    "config_path": "configs/single_stem_models/model_bs_roformer_ep_937_sdr_10.5309.yaml",
+    "input": [
+        "input"
+    ],
+    "output": [
+        "vocals",
+        "other"
+    ],
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 8,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 8
+        },
+        {
+            "parameter": "dim_t",
+            "type": "int",
+            "default_value": 512,
+            "max_value": 10000,
+            "min_value": 1,
+            "current_value": 512
+        },
+        {
+            "parameter": "num_overlap",
+            "type": "int",
+            "default_value": 2,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 2
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "use_tta",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "down_stream_nodes": [],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ]
+}

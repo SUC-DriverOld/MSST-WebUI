@@ -1,9 +1,9 @@
-from PySide6.QtWidgets import QWidget, QGraphicsItem
+from PySide6.QtWidgets import QGraphicsItem
 from PySide6.QtCore import Qt, QPointF, QRectF
 from PySide6.QtGui import QPainter, QBrush, QPen, QPolygonF, QColor, QFont, QFontMetrics
 # import sys
 # from PySide6.QtWidgets import QApplication, QHBoxLayout
-# sys.path.append("/home/tong/projects/python/MSST-WebUI")
+# sys.path.append("D:\projects\python\MSST-WebUI")
 # for test
 from ComfyUI.Editor.common.config import cfg
 from ComfyUI.Editor.component.graphic_switch_button import SwitchButton
@@ -218,36 +218,113 @@ class BoolPort(QGraphicsItem):
         print(f"{self.parameter} state changed to {self.current_value}")
         # self.update()    
 
+
+class FormatSelector(QGraphicsItem):
+    def __init__(self, options=None, parent=None):
+        super().__init__(parent)
+        self.options = options if options else ["wav", "mp3", "flac"]
+        self.currentIndex = 0  # 默认选中第一个选项
+        self.itemRadius = 8    # 单个选项圆圈的半径
+        self.spacing = 66      # 每个选项之间的水平间距
+        self.width = 200
+        self.height = 20
+        self.font = font
+        self.color = color
+        self.initItems()
+
+    def initItems(self):
+        """初始化选择器"""
+        self.updateSelection()
+
+    def updateSelection(self):
+        """更新当前选中的样式"""
+        self.update()
+
+    def boundingRect(self) -> QRectF:
+        """定义组件的边界"""
+        return QRectF(0, 0, self.width, self.height)
+
+    def paint(self, painter, option, widget=None):
+        """绘制选择器"""
+        painter.setFont(self.font)
+        font_metrics = QFontMetrics(self.font)
+
+        for i, option in enumerate(self.options):
+            circle_x = 10 + i * self.spacing
+            circle_y = self.height / 2 - self.itemRadius
+
+            painter.setPen(QPen(QColor(100, 100, 100), 1))
+            if i == self.currentIndex:
+                painter.setBrush(QBrush(self.color))
+            else:
+                painter.setBrush(QBrush(Qt.white))
+            painter.drawEllipse(circle_x, circle_y, 2 * self.itemRadius, 2 * self.itemRadius)
+
+            text_width = font_metrics.horizontalAdvance(option)
+            text_height = font_metrics.height()
+
+            max_text_width = self.spacing - 2 * self.itemRadius - 10
+            if text_width > max_text_width:
+                truncated_text = font_metrics.elidedText(option, Qt.ElideRight, max_text_width)
+            else:
+                truncated_text = option
+
+            text_x = circle_x + 2 * self.itemRadius + 5
+            text_y = (self.height - text_height) / 2
+
+            painter.setPen(QPen(self.color))
+            text_rect = QRectF(text_x, text_y, max_text_width, text_height)
+            painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
+
+    def mousePressEvent(self, event):
+        """处理鼠标点击事件"""
+        pos = event.pos()
+        for i in range(len(self.options)):
+            circle_x = 10 + i * self.spacing
+            circle_y = self.height / 2 - self.itemRadius
+            circle_rect = QRectF(circle_x, circle_y, 2 * self.itemRadius, 2 * self.itemRadius)
+
+            if circle_rect.contains(pos):
+                self.currentIndex = i
+                self.updateSelection()
+                break
+        super().mousePressEvent(event)
+
+    def select(self, index):
+        """选择某个选项"""
+        if 0 <= index < len(self.options):
+            self.currentIndex = index
+            self.updateSelection()
+
+    def getSelectedValue(self):
+        """返回当前选择的值"""
+        return self.options[self.currentIndex]
+
         
+
+
 if __name__ == "__main__":
-    from PySide6.QtWidgets import QGraphicsScene, QGraphicsView
     app = QApplication(sys.argv)
-    
-    # 创建一个场景和视图
+    from PySide6.QtWidgets import QGraphicsScene, QGraphicsView
+    # 创建场景和视图
     scene = QGraphicsScene()
     view = QGraphicsView(scene)
-    view.setBaseSize(500, 500)
+    view.setFixedSize(220, 60)  # 固定视图大小，稍微多出一些边距
 
-    # 创建 InputPort 和 OutputPort 实例并添加到场景
-    input_port = InputPort(text="Input")
-    output_port = OutputPort(text="Output Port")
-    parameter_port = ParameterPort(parameter="Parameter Port", default_value=50, type=int, max_value=100, min_value=0)
-    bool_port = BoolPort(parameter="Bool Port")
-    input_port.setPos(0, 10)
-    output_port.setPos(100, 10)
-    bool_port.setPos(0, 30)
-    parameter_port.setPos(0, 50)
+    # 添加 FormatSelector
+    selector = FormatSelector(["wav", "mp3", "flac"])
+    scene.addItem(selector)
+    selector.setPos(10, 20)  # 定位组件到场景中
 
-    scene.addItem(input_port)
-    scene.addItem(output_port)
-    scene.addItem(bool_port)
-    scene.addItem(parameter_port)
+    # 绑定鼠标点击后打印当前选项的功能
+    # def mousePressEvent(event):
+    #     # 调用原始事件处理逻辑
+    #     QGraphicsScene.mousePressEvent(scene, event)
+    #     # 打印当前选择的值
+    #     print("当前选择的格式:", selector.getSelectedValue())
 
-    # 设置视图和窗口
-    view.setRenderHint(QPainter.Antialiasing)  # 开启抗锯齿效果
-    view.setRenderHint(QPainter.SmoothPixmapTransform)
-    view.setScene(scene)
+    # # 重写鼠标事件
+    # scene.mousePressEvent = mousePressEvent
+
     view.show()
-    
-
-    sys.exit(app.exec())        
+    sys.exit(app.exec())

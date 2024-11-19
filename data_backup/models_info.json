@@ -5,7 +5,7 @@
         "model_size": 126792647,
         "sha256": "d9c654305888fe09668078ade76962b32d3782848f158192da7403a650e935a6",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/1_HP-UVR.pth"
+        "target_position": "./pretrain/VR_Models/1_HP-UVR.pth"
     },
     "2_HP-UVR.pth": {
         "model_class": "VR_Models",
@@ -13,7 +13,7 @@
         "model_size": 126782699,
         "sha256": "26d6400d2d2e90811ba2381828c8c3519196097375af524c3d0edd969acf5356",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/2_HP-UVR.pth"
+        "target_position": "./pretrain/VR_Models/2_HP-UVR.pth"
     },
     "3_HP-Vocal-UVR.pth": {
         "model_class": "VR_Models",
@@ -21,7 +21,7 @@
         "model_size": 126792647,
         "sha256": "7d3f9be265b2f2c3d684f23a9905674627c2552e0f6b5f36325cef8dc1f0ff6b",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/3_HP-Vocal-UVR.pth"
+        "target_position": "./pretrain/VR_Models/3_HP-Vocal-UVR.pth"
     },
     "4_HP-Vocal-UVR.pth": {
         "model_class": "VR_Models",
@@ -29,7 +29,7 @@
         "model_size": 126792647,
         "sha256": "295d1e1e3a52c17a040a4a6fe390214ad8ca0797f091b7c6d8db97d247a27271",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/4_HP-Vocal-UVR.pth"
+        "target_position": "./pretrain/VR_Models/4_HP-Vocal-UVR.pth"
     },
     "5_HP-Karaoke-UVR.pth": {
         "model_class": "VR_Models",
@@ -37,7 +37,7 @@
         "model_size": 126782699,
         "sha256": "fe00891defbb61f4261500af22f7624f1a3df8dc75fa3998d1aece02e6be4537",
         "is_installed": true,
-        "parget_position": "./pretrain/VR_Models/5_HP-Karaoke-UVR.pth"
+        "target_position": "./pretrain/VR_Models/5_HP-Karaoke-UVR.pth"
     },
     "6_HP-Karaoke-UVR.pth": {
         "model_class": "VR_Models",
@@ -45,7 +45,7 @@
         "model_size": 126782699,
         "sha256": "4ce7eaaa9e56f09366b788aebf6d3a72aec8145692c56f1e090e4e7e2d7ce65f",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/6_HP-Karaoke-UVR.pth"
+        "target_position": "./pretrain/VR_Models/6_HP-Karaoke-UVR.pth"
     },
     "7_HP2-UVR.pth": {
         "model_class": "VR_Models",
@@ -53,7 +53,7 @@
         "model_size": 550120123,
         "sha256": "545ee733b704a263bf6f75328c5ed14f0fb439dcda7a6e8f53c8cecb92877afe",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/7_HP2-UVR.pth"
+        "target_position": "./pretrain/VR_Models/7_HP2-UVR.pth"
     },
     "8_HP2-UVR.pth": {
         "model_class": "VR_Models",
@@ -61,7 +61,7 @@
         "model_size": 550131079,
         "sha256": "e072299a87cf3fcdd36da6adc6d2837bed0c07a208775a7678c3d5deeea58f79",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/8_HP2-UVR.pth"
+        "target_position": "./pretrain/VR_Models/8_HP2-UVR.pth"
     },
     "9_HP2-UVR.pth": {
         "model_class": "VR_Models",
@@ -69,7 +69,7 @@
         "model_size": 550131079,
         "sha256": "a99d032ed8c9d59077a8a41f0ceccb279d59ec10c87102167a283151d25ad9a2",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/9_HP2-UVR.pth"
+        "target_position": "./pretrain/VR_Models/9_HP2-UVR.pth"
     },
     "10_SP-UVR-2B-32000-1.pth": {
         "model_class": "VR_Models",
@@ -77,7 +77,7 @@
         "model_size": 31938951,
         "sha256": "a178d8a8bc2c992bc5e5a045ef5ab8706d55c375d1bfe34700c1946d6c2d28b6",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/10_SP-UVR-2B-32000-1.pth"
+        "target_position": "./pretrain/VR_Models/10_SP-UVR-2B-32000-1.pth"
     },
     "11_SP-UVR-2B-32000-2.pth": {
         "model_class": "VR_Models",
@@ -85,7 +85,7 @@
         "model_size": 31938951,
         "sha256": "9e80e69ecd2244496710fa77e7d2c785bad93e2a87a7def65c38272cc9fd1613",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/11_SP-UVR-2B-32000-2.pth"
+        "target_position": "./pretrain/VR_Models/11_SP-UVR-2B-32000-2.pth"
     },
     "12_SP-UVR-3B-44100.pth": {
         "model_class": "VR_Models",
@@ -93,7 +93,7 @@
         "model_size": 31938951,
         "sha256": "5b826e6a44dbe007bde36c720bb2afeed008348cef1b61e35898fee5282d3918",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/12_SP-UVR-3B-44100.pth"
+        "target_position": "./pretrain/VR_Models/12_SP-UVR-3B-44100.pth"
     },
     "13_SP-UVR-4B-44100-1.pth": {
         "model_class": "VR_Models",
@@ -101,7 +101,7 @@
         "model_size": 31938951,
         "sha256": "afb84b3d1da4a7e24033e5a0e85dbde2ac5f5e4b1e839788748735ac3bcc5046",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/13_SP-UVR-4B-44100-1.pth"
+        "target_position": "./pretrain/VR_Models/13_SP-UVR-4B-44100-1.pth"
     },
     "14_SP-UVR-4B-44100-2.pth": {
         "model_class": "VR_Models",
@@ -109,7 +109,7 @@
         "model_size": 31938951,
         "sha256": "78404d85d6e4e11a3d2362f6577fc398f77406b7881fbac402e0c6191d6efca1",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/14_SP-UVR-4B-44100-2.pth"
+        "target_position": "./pretrain/VR_Models/14_SP-UVR-4B-44100-2.pth"
     },
     "15_SP-UVR-MID-44100-1.pth": {
         "model_class": "VR_Models",
@@ -117,7 +117,7 @@
         "model_size": 31938951,
         "sha256": "bd03d4061ce34569e8df9e0a13a235af7ff0d3c0c3def491db4439f9ff344dd0",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/15_SP-UVR-MID-44100-1.pth"
+        "target_position": "./pretrain/VR_Models/15_SP-UVR-MID-44100-1.pth"
     },
     "16_SP-UVR-MID-44100-2.pth": {
         "model_class": "VR_Models",
@@ -125,7 +125,7 @@
         "model_size": 31938951,
         "sha256": "f0e5025987670f963a339db861b078d8526bf912f0ce2e00f732a7f0a3e846cc",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/16_SP-UVR-MID-44100-2.pth"
+        "target_position": "./pretrain/VR_Models/16_SP-UVR-MID-44100-2.pth"
     },
     "17_HP-Wind_Inst-UVR.pth": {
         "model_class": "VR_Models",
@@ -133,7 +133,7 @@
         "model_size": 223661285,
         "sha256": "acc6d472b4b478da9c9ab5af45b167749e05a7f65b30c7d5988b3700a513aeee",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/17_HP-Wind_Inst-UVR.pth"
+        "target_position": "./pretrain/VR_Models/17_HP-Wind_Inst-UVR.pth"
     },
     "MGM_HIGHEND_v4.pth": {
         "model_class": "VR_Models",
@@ -141,7 +141,7 @@
         "model_size": 31861529,
         "sha256": "67bf5241072ae938ae0e6bec44d2d8307d9db81a5299382a5cfe12188131f9ce",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/MGM_HIGHEND_v4.pth"
+        "target_position": "./pretrain/VR_Models/MGM_HIGHEND_v4.pth"
     },
     "MGM_LOWEND_A_v4.pth": {
         "model_class": "VR_Models",
@@ -149,7 +149,7 @@
         "model_size": 31938951,
         "sha256": "c5def7a35afecde33a77db214b3e9eeff0e47e8329ff5522d33332bc02b4b0e3",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/MGM_LOWEND_A_v4.pth"
+        "target_position": "./pretrain/VR_Models/MGM_LOWEND_A_v4.pth"
     },
     "MGM_LOWEND_B_v4.pth": {
         "model_class": "VR_Models",
@@ -157,7 +157,7 @@
         "model_size": 31938951,
         "sha256": "93d6a08abf6357e5f37d4eb6892267520f5bb9e90f45486b08a0857d5fcb2ec8",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/MGM_LOWEND_B_v4.pth"
+        "target_position": "./pretrain/VR_Models/MGM_LOWEND_B_v4.pth"
     },
     "MGM_MAIN_v4.pth": {
         "model_class": "VR_Models",
@@ -165,7 +165,7 @@
         "model_size": 31938951,
         "sha256": "0e6f0c0592333a3b215f61ac1e01f6c24c059f903f0789cf634e92daffae1dce",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/MGM_MAIN_v4.pth"
+        "target_position": "./pretrain/VR_Models/MGM_MAIN_v4.pth"
     },
     "UVR-BVE-4B_SN-44100-1.pth": {
         "model_class": "VR_Models",
@@ -173,7 +173,7 @@
         "model_size": 223650277,
         "sha256": "56165bdfa0dd5df7930ff76652200dc287e1bfef622bba5c812c736dc22067fe",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/UVR-BVE-4B_SN-44100-1.pth"
+        "target_position": "./pretrain/VR_Models/UVR-BVE-4B_SN-44100-1.pth"
     },
     "UVR-De-Echo-Aggressive.pth": {
         "model_class": "VR_Models",
@@ -181,7 +181,7 @@
         "model_size": 127139365,
         "sha256": "1bd1d79d9c5d1b17d20f96f8a9f8aff1b55a83014f70712446bf420c0188e0a0",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/UVR-De-Echo-Aggressive.pth"
+        "target_position": "./pretrain/VR_Models/UVR-De-Echo-Aggressive.pth"
     },
     "UVR-De-Echo-Normal.pth": {
         "model_class": "VR_Models",
@@ -189,7 +189,7 @@
         "model_size": 127139365,
         "sha256": "b849dd575643b075c257fb7a96c2ef5a79d7a5e7df74a2b319ad47118f1ee769",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/UVR-De-Echo-Normal.pth"
+        "target_position": "./pretrain/VR_Models/UVR-De-Echo-Normal.pth"
     },
     "UVR-DeEcho-DeReverb.pth": {
         "model_class": "VR_Models",
@@ -197,7 +197,7 @@
         "model_size": 223650277,
         "sha256": "e644028ec82865dc0fe082bc6fea85a43f7c71cfe375caee2da2d154aa661ee7",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/UVR-DeEcho-DeReverb.pth"
+        "target_position": "./pretrain/VR_Models/UVR-DeEcho-DeReverb.pth"
     },
     "UVR-DeNoise-Lite.pth": {
         "model_class": "VR_Models",
@@ -205,7 +205,7 @@
         "model_size": 17922277,
         "sha256": "0023492fe98c406817b5253965de19ede65d1c147db015a3a428f07602e99571",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/UVR-DeNoise-Lite.pth"
+        "target_position": "./pretrain/VR_Models/UVR-DeNoise-Lite.pth"
     },
     "UVR-DeNoise.pth": {
         "model_class": "VR_Models",
@@ -213,7 +213,7 @@
         "model_size": 127139365,
         "sha256": "5addf43ece5bddd18da9f575a02d7ffdb32342414e6ad7ac8d1dd7a04138a628",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/UVR-DeNoise.pth"
+        "target_position": "./pretrain/VR_Models/UVR-DeNoise.pth"
     },
     "UVR-DeReverb-aufr33-jarredou_4band_v4_ms_fullband.pth": {
         "model_class": "VR_Models",
@@ -221,7 +221,7 @@
         "model_size": 58928133,
         "sha256": "fff726b0adf09f2eadc2151645557db81e1a01fe15d91f9bbbfa9b50a007f1fd",
         "is_installed": false,
-        "parget_position": "./pretrain/VR_Models/UVR-DeReverb-aufr33-jarredou_4band_v4_ms_fullband.pth"
+        "target_position": "./pretrain/VR_Models/UVR-DeReverb-aufr33-jarredou_4band_v4_ms_fullband.pth"
     },
     "HTDemucs4.th": {
         "model_class": "multi_stem_models",
@@ -229,7 +229,7 @@
         "model_size": 84141911,
         "sha256": "8726e21a993978c7ba086d3872e7608d7d5bfca646ca4aca459ffda844faa8b4",
         "is_installed": true,
-        "parget_position": "./pretrain/multi_stem_models/HTDemucs4.th"
+        "target_position": "./pretrain/multi_stem_models/HTDemucs4.th"
     },
     "HTDemucs4_6stems.th": {
         "model_class": "multi_stem_models",
@@ -237,7 +237,7 @@
         "model_size": 54996327,
         "sha256": "34c22ccb381c6f9fdbf324f04e1e2fe21aaaf293f5ded163a162697ff9a02ddd",
         "is_installed": true,
-        "parget_position": "./pretrain/multi_stem_models/HTDemucs4_6stems.th"
+        "target_position": "./pretrain/multi_stem_models/HTDemucs4_6stems.th"
     },
     "aufr33-jarredou_DrumSep_model_mdx23c_ep_141_sdr_10.8059.ckpt": {
         "model_class": "multi_stem_models",
@@ -245,7 +245,7 @@
         "model_size": 437652699,
         "sha256": "d2a4aa53eb584d21eead358a4e66d1882ad182911be018f052b5da73be9096d0",
         "is_installed": false,
-        "parget_position": "./pretrain/multi_stem_models/aufr33-jarredou_DrumSep_model_mdx23c_ep_141_sdr_10.8059.ckpt"
+        "target_position": "./pretrain/multi_stem_models/aufr33-jarredou_DrumSep_model_mdx23c_ep_141_sdr_10.8059.ckpt"
     },
     "model_bandit_plus_dnr_sdr_11.47.chpt": {
         "model_class": "multi_stem_models",
@@ -253,7 +253,7 @@
         "model_size": 148891175,
         "sha256": "c48284779f7d1258a6527d3aaa18a532d45c1f506e2dcc25d5ab179a8c5e2573",
         "is_installed": false,
-        "parget_position": "./pretrain/multi_stem_models/model_bandit_plus_dnr_sdr_11.47.chpt"
+        "target_position": "./pretrain/multi_stem_models/model_bandit_plus_dnr_sdr_11.47.chpt"
     },
     "model_drumsep.th": {
         "model_class": "multi_stem_models",
@@ -261,7 +261,7 @@
         "model_size": 167400043,
         "sha256": "aefaa8543c9b9c75e22f5f32b53ab86dfe416457849af1383ff1aef83401423f",
         "is_installed": true,
-        "parget_position": "./pretrain/multi_stem_models/model_drumsep.th"
+        "target_position": "./pretrain/multi_stem_models/model_drumsep.th"
     },
     "model_mdx23c_ep_168_sdr_7.0207.ckpt": {
         "model_class": "multi_stem_models",
@@ -269,7 +269,7 @@
         "model_size": 448119834,
         "sha256": "c1d31e3c47a98e8cdb12b3382a1a313c1a95c835da4310dd6350e7e1892f821c",
         "is_installed": false,
-        "parget_position": "./pretrain/multi_stem_models/model_mdx23c_ep_168_sdr_7.0207.ckpt"
+        "target_position": "./pretrain/multi_stem_models/model_mdx23c_ep_168_sdr_7.0207.ckpt"
     },
     "model_scnet_sdr_9.3244.ckpt": {
         "model_class": "multi_stem_models",
@@ -277,7 +277,7 @@
         "model_size": 168868194,
         "sha256": "fe550315a76e8f4aed8475d7d5952137504a3b6c63b3adcef2443bfe73aac540",
         "is_installed": true,
-        "parget_position": "./pretrain/multi_stem_models/model_scnet_sdr_9.3244.ckpt"
+        "target_position": "./pretrain/multi_stem_models/model_scnet_sdr_9.3244.ckpt"
     },
     "scnet_checkpoint_musdb18.ckpt": {
         "model_class": "multi_stem_models",
@@ -285,7 +285,7 @@
         "model_size": 42434986,
         "sha256": "1bc0d1abb20bfdf966dcd07637bafd03e4bc13653d09ef18bc9b3e342eafe2aa",
         "is_installed": false,
-        "parget_position": "./pretrain/multi_stem_models/scnet_checkpoint_musdb18.ckpt"
+        "target_position": "./pretrain/multi_stem_models/scnet_checkpoint_musdb18.ckpt"
     },
     "Apollo_LQ_MP3_restoration.ckpt": {
         "model_class": "single_stem_models",
@@ -293,7 +293,7 @@
         "model_size": 66541845,
         "sha256": "99d9af7f1ff20e63c393035513a655392818d66b4d7fc23d658175c1f15e8d76",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/Apollo_LQ_MP3_restoration.ckpt"
+        "target_position": "./pretrain/single_stem_models/Apollo_LQ_MP3_restoration.ckpt"
     },
     "HTDemucs4_FT_bass.th": {
         "model_class": "single_stem_models",
@@ -301,7 +301,7 @@
         "model_size": 84141271,
         "sha256": "e57c48e6b0e38af4f7118d7bd08c49f0a0c0edf7d09143bdd902ea0d237303e6",
         "is_installed": true,
-        "parget_position": "./pretrain/single_stem_models/HTDemucs4_FT_bass.th"
+        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_bass.th"
     },
     "HTDemucs4_FT_drums.th": {
         "model_class": "single_stem_models",
@@ -309,7 +309,7 @@
         "model_size": 84141271,
         "sha256": "ba3fe64ae8ef66ac9a4857222ce48efbdc5eb3ad375cb79dd13debee5aaa4066",
         "is_installed": true,
-        "parget_position": "./pretrain/single_stem_models/HTDemucs4_FT_drums.th"
+        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_drums.th"
     },
     "HTDemucs4_FT_other.th": {
         "model_class": "single_stem_models",
@@ -317,7 +317,7 @@
         "model_size": 84141271,
         "sha256": "ef3bcb9c8b40d14ae5d51b6db2587339cc12c6b77c0be151ce6d69002e087bf2",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/HTDemucs4_FT_other.th"
+        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_other.th"
     },
     "HTDemucs4_FT_vocals_official.th": {
         "model_class": "single_stem_models",
@@ -325,7 +325,7 @@
         "model_size": 84141271,
         "sha256": "f3cf25b222c4eed7cd49dd8b2c9597d50c18bd154090f7b919cfa5f93cf22c49",
         "is_installed": true,
-        "parget_position": "./pretrain/single_stem_models/HTDemucs4_FT_vocals_official.th"
+        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_vocals_official.th"
     },
     "aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt": {
         "model_class": "single_stem_models",
@@ -333,7 +333,7 @@
         "model_size": 835982664,
         "sha256": "83bfe991cec4fbadde9f30d1f79cd5293ad0b1f936256be327bba5cbb4883374",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt"
+        "target_position": "./pretrain/single_stem_models/aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt"
     },
     "aspiration_mel_band_roformer_sdr_18.9845.ckpt": {
         "model_class": "single_stem_models",
@@ -341,7 +341,7 @@
         "model_size": 835983746,
         "sha256": "9e791258c866c6c8da66052693d8cc3b64f1f42c01e052dbdc570cd278380cc5",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/aspiration_mel_band_roformer_sdr_18.9845.ckpt"
+        "target_position": "./pretrain/single_stem_models/aspiration_mel_band_roformer_sdr_18.9845.ckpt"
     },
     "denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt": {
         "model_class": "single_stem_models",
@@ -349,7 +349,7 @@
         "model_size": 913097300,
         "sha256": "a25e3b233722cd81e2de7b8e798a3fef29d4b9799ccacda60b0dc958a1e2a5bb",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt"
+        "target_position": "./pretrain/single_stem_models/denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt"
     },
     "denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt": {
         "model_class": "single_stem_models",
@@ -357,7 +357,7 @@
         "model_size": 913097300,
         "sha256": "7c1c39191edc34e942ca7f2346ce6b6c0e1208a5f76349ffce6f696bd12910de",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt"
+        "target_position": "./pretrain/single_stem_models/denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt"
     },
     "dereverb_mdx23c_sdr_6.9096.ckpt": {
         "model_class": "single_stem_models",
@@ -365,7 +365,7 @@
         "model_size": 448098867,
         "sha256": "eae2471b707758d74db38ac1b1d5800e12f57c4e9d1ebbb2faf004b8e086e914",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/dereverb_mdx23c_sdr_6.9096.ckpt"
+        "target_position": "./pretrain/single_stem_models/dereverb_mdx23c_sdr_6.9096.ckpt"
     },
     "dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt": {
         "model_class": "single_stem_models",
@@ -373,7 +373,7 @@
         "model_size": 913107578,
         "sha256": "9262877b87e9ebb0fb808a456b0a411fa677f5df31c8383c1254af531c078970",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt"
+        "target_position": "./pretrain/single_stem_models/dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt"
     },
     "dereverb_mel_band_roformer_less_aggressive_anvuew_sdr_18.8050.ckpt": {
         "model_class": "single_stem_models",
@@ -381,7 +381,7 @@
         "model_size": 913107578,
         "sha256": "0db8f1b41c00cead1112e967262a12802fd32e76c0c3a8eb207e772bae25d07b",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/dereverb_mel_band_roformer_less_aggressive_anvuew_sdr_18.8050.ckpt"
+        "target_position": "./pretrain/single_stem_models/dereverb_mel_band_roformer_less_aggressive_anvuew_sdr_18.8050.ckpt"
     },
     "deverb_bs_roformer_8_256dim_8depth.ckpt": {
         "model_class": "single_stem_models",
@@ -389,7 +389,7 @@
         "model_size": 170770820,
         "sha256": "ee204fc59fa4111674536d47bd1ef3759acb9f7cf5a759ec4b867a828bb76c64",
         "is_installed": true,
-        "parget_position": "./pretrain/single_stem_models/deverb_bs_roformer_8_256dim_8depth.ckpt"
+        "target_position": "./pretrain/single_stem_models/deverb_bs_roformer_8_256dim_8depth.ckpt"
     },
     "deverb_bs_roformer_8_384dim_10depth.ckpt": {
         "model_class": "single_stem_models",
@@ -397,7 +397,7 @@
         "model_size": 361499604,
         "sha256": "9c38653aaa5e49f2f7b84dd3be2b6b679e0cbea23978e6b48389ee6f0a914768",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/deverb_bs_roformer_8_384dim_10depth.ckpt"
+        "target_position": "./pretrain/single_stem_models/deverb_bs_roformer_8_384dim_10depth.ckpt"
     },
     "deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt": {
         "model_class": "single_stem_models",
@@ -405,7 +405,7 @@
         "model_size": 489578757,
         "sha256": "29c311f2f3561c73f2084d59aa5dc2a077d907293bbbb1ce6548247ddb0671ff",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt"
+        "target_position": "./pretrain/single_stem_models/deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt"
     },
     "mel_band_roformer_crowd_aufr33_viperx_sdr_8.7144.ckpt": {
         "model_class": "single_stem_models",
@@ -413,7 +413,7 @@
         "model_size": 913096801,
         "sha256": "ca8799531fe51c94172cc047226209ed48bf7d8c02e04671795a15d2a1c318af",
         "is_installed": true,
-        "parget_position": "./pretrain/single_stem_models/mel_band_roformer_crowd_aufr33_viperx_sdr_8.7144.ckpt"
+        "target_position": "./pretrain/single_stem_models/mel_band_roformer_crowd_aufr33_viperx_sdr_8.7144.ckpt"
     },
     "model_bs_roformer_ep_937_sdr_10.5309.ckpt": {
         "model_class": "single_stem_models",
@@ -421,7 +421,7 @@
         "model_size": 393068365,
         "sha256": "a2e825a03bc908cb04dbd88eddeefbf5147dd1cf1f95cebf453d9dbfabec494b",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/model_bs_roformer_ep_937_sdr_10.5309.ckpt"
+        "target_position": "./pretrain/single_stem_models/model_bs_roformer_ep_937_sdr_10.5309.ckpt"
     },
     "model_mdx23c_ep_271_l1_freq_72.2383.ckpt": {
         "model_class": "single_stem_models",
@@ -429,7 +429,7 @@
         "model_size": 437613512,
         "sha256": "1227f8d97c7436004d03e46091427393abefebcc08ce53ef30082742c4e482f7",
         "is_installed": false,
-        "parget_position": "./pretrain/single_stem_models/model_mdx23c_ep_271_l1_freq_72.2383.ckpt"
+        "target_position": "./pretrain/single_stem_models/model_mdx23c_ep_271_l1_freq_72.2383.ckpt"
     },
     "Kim_MelBandRoformer.ckpt": {
         "model_class": "vocal_models",
@@ -437,7 +437,7 @@
         "model_size": 913106900,
         "sha256": "87201f4d31afb5bc79993230fc49446918425574db48c01c405e44f365c7559e",
         "is_installed": false,
-        "parget_position": "./pretrain/vocal_models/Kim_MelBandRoformer.ckpt"
+        "target_position": "./pretrain/vocal_models/Kim_MelBandRoformer.ckpt"
     },
     "model_bs_roformer_ep_317_sdr_12.9755.ckpt": {
         "model_class": "vocal_models",
@@ -445,7 +445,7 @@
         "model_size": 639331213,
         "sha256": "5b84f37e8d444c8cb30c79d77f613a41c05868ff9c9ac6c7049c00aefae115aa",
         "is_installed": false,
-        "parget_position": "./pretrain/vocal_models/model_bs_roformer_ep_317_sdr_12.9755.ckpt"
+        "target_position": "./pretrain/vocal_models/model_bs_roformer_ep_317_sdr_12.9755.ckpt"
     },
     "model_bs_roformer_ep_368_sdr_12.9628.ckpt": {
         "model_class": "vocal_models",
@@ -453,7 +453,7 @@
         "model_size": 639317465,
         "sha256": "f6c94864adfb73bbb0ca58ec14d58dd0b364549e9fb61433ae51916f3e2f8d0b",
         "is_installed": true,
-        "parget_position": "./pretrain/vocal_models/model_bs_roformer_ep_368_sdr_12.9628.ckpt"
+        "target_position": "./pretrain/vocal_models/model_bs_roformer_ep_368_sdr_12.9628.ckpt"
     },
     "model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt": {
         "model_class": "vocal_models",
@@ -461,7 +461,7 @@
         "model_size": 1007816988,
         "sha256": "21b9d0958e35b8ebfbe2afe69bbd5444e5ffe2f5d80ae0d583b833d2f3c0d139",
         "is_installed": false,
-        "parget_position": "./pretrain/vocal_models/model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt"
+        "target_position": "./pretrain/vocal_models/model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt"
     },
     "model_mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt": {
         "model_class": "vocal_models",
@@ -469,7 +469,7 @@
         "model_size": 913096801,
         "sha256": "1de20d459332fe8869aeb01327a31df0032262706e1365114e852dc271779813",
         "is_installed": true,
-        "parget_position": "./pretrain/vocal_models/model_mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt"
+        "target_position": "./pretrain/vocal_models/model_mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt"
     },
     "model_swin_upernet_ep_56_sdr_10.6703.ckpt": {
         "model_class": "vocal_models",
@@ -477,7 +477,7 @@
         "model_size": 939903161,
         "sha256": "d59fa555bfcfc909b1aa9f7f961ad2ab41bfecd9d8d224defdd380cd3225c916",
         "is_installed": false,
-        "parget_position": "./pretrain/vocal_models/model_swin_upernet_ep_56_sdr_10.6703.ckpt"
+        "target_position": "./pretrain/vocal_models/model_swin_upernet_ep_56_sdr_10.6703.ckpt"
     },
     "model_vocals_htdemucs_sdr_8.78.ckpt": {
         "model_class": "vocal_models",
@@ -485,7 +485,7 @@
         "model_size": 168124336,
         "sha256": "0ea6e9495685045e6b4e66174131be5d19808bb0d6d1a1ba717d238f9380e8d0",
         "is_installed": true,
-        "parget_position": "./pretrain/vocal_models/model_vocals_htdemucs_sdr_8.78.ckpt"
+        "target_position": "./pretrain/vocal_models/model_vocals_htdemucs_sdr_8.78.ckpt"
     },
     "model_vocals_mdx23c_sdr_10.17.ckpt": {
         "model_class": "vocal_models",
@@ -493,7 +493,7 @@
         "model_size": 448101203,
         "sha256": "49d51472769e34a2501cd1da782346a3212555c3a5619fc2c53507445528d816",
         "is_installed": false,
-        "parget_position": "./pretrain/vocal_models/model_vocals_mdx23c_sdr_10.17.ckpt"
+        "target_position": "./pretrain/vocal_models/model_vocals_mdx23c_sdr_10.17.ckpt"
     },
     "model_vocals_mel_band_roformer_sdr_8.42.ckpt": {
         "model_class": "vocal_models",
@@ -501,7 +501,7 @@
         "model_size": 134917909,
         "sha256": "d9ce706b49cebf0af018590d8deb47ad5434987bf8f7bd3a87a4e5e8c30acb26",
         "is_installed": false,
-        "parget_position": "./pretrain/vocal_models/model_vocals_mel_band_roformer_sdr_8.42.ckpt"
+        "target_position": "./pretrain/vocal_models/model_vocals_mel_band_roformer_sdr_8.42.ckpt"
     },
     "model_vocals_segm_models_sdr_9.77.ckpt": {
         "model_class": "vocal_models",
@@ -509,6 +509,6 @@
         "model_size": 863683537,
         "sha256": "9cb6e969309f96602318fcf5970a6973899db86e5fd9d8f9cf8f15bacdd299bb",
         "is_installed": false,
-        "parget_position": "./pretrain/vocal_models/model_vocals_segm_models_sdr_9.77.ckpt"
+        "target_position": "./pretrain/vocal_models/model_vocals_segm_models_sdr_9.77.ckpt"
     }
 }

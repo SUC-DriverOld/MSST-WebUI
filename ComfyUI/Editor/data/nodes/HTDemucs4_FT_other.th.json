@@ -1,0 +1,52 @@
+{
+    "index": -1,
+    "model_name": "HTDemucs4_FT_other.th",
+    "model_type": "htdemucs",
+    "path": "./pretrain/single_stem_models/HTDemucs4_FT_other.th",
+    "config_path": "configs/single_stem_models/config_musdb18_htdemucs_other.yaml",
+    "input": [
+        "input"
+    ],
+    "output": [
+        "drums",
+        "bass",
+        "other",
+        "vocals"
+    ],
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 8,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 8
+        },
+        {
+            "parameter": "num_overlap",
+            "type": "int",
+            "default_value": 4,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 4
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "use_tta",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "down_stream_nodes": [],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ]
+}

@@ -7,7 +7,6 @@ from ComfyUI.Editor.common.config import cfg
 color = cfg.get(cfg.themeColor)
 
 class SwitchButton(QGraphicsItem, QObject):
-    # 定义一个状态变化信号，传递布尔值表示开关状态
     stateChanged = Signal(bool)
 
     def __init__(self, parent=None):

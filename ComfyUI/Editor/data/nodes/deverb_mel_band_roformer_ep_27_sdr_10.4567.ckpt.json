@@ -1,0 +1,58 @@
+{
+    "index": -1,
+    "model_name": "deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt",
+    "model_type": "mel_band_roformer",
+    "path": "./pretrain/single_stem_models/deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt",
+    "config_path": "configs/single_stem_models/deverb_mel_band_roformer.yaml",
+    "input": [
+        "input"
+    ],
+    "output": [
+        "noreverb",
+        "reverb"
+    ],
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 4,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 4
+        },
+        {
+            "parameter": "dim_t",
+            "type": "int",
+            "default_value": 256,
+            "max_value": 10000,
+            "min_value": 1,
+            "current_value": 256
+        },
+        {
+            "parameter": "num_overlap",
+            "type": "int",
+            "default_value": 4,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 4
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "use_tta",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "down_stream_nodes": [],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ]
+}

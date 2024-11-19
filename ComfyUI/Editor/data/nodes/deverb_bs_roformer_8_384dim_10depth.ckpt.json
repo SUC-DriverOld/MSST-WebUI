@@ -1,0 +1,58 @@
+{
+    "index": -1,
+    "model_name": "deverb_bs_roformer_8_384dim_10depth.ckpt",
+    "model_type": "bs_roformer",
+    "path": "./pretrain/single_stem_models/deverb_bs_roformer_8_384dim_10depth.ckpt",
+    "config_path": "configs/single_stem_models/deverb_bs_roformer_8_384dim_10depth.yaml",
+    "input": [
+        "input"
+    ],
+    "output": [
+        "noreverb",
+        "reverb"
+    ],
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 4,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 4
+        },
+        {
+            "parameter": "dim_t",
+            "type": "int",
+            "default_value": 801,
+            "max_value": 10000,
+            "min_value": 1,
+            "current_value": 801
+        },
+        {
+            "parameter": "num_overlap",
+            "type": "int",
+            "default_value": 4,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 4
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "use_tta",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "down_stream_nodes": [],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ]
+}
