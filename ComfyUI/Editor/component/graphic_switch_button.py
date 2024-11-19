@@ -1,19 +1,22 @@
-from PySide6.QtCore import QRectF, Qt, QPropertyAnimation, QPointF, Property, QObject
-from PySide6.QtWidgets import QGraphicsItem, QGraphicsScene, QGraphicsView, QApplication
+from PySide6.QtCore import QRectF, Qt, QPropertyAnimation, QPointF, Property, QObject, Signal
+from PySide6.QtWidgets import QGraphicsItem, QApplication, QGraphicsScene, QGraphicsView
 from PySide6.QtGui import QBrush, QPen, QColor, QPainter
-import sys
-sys.path.append("D:\projects\python\MSST-WebUI")
+# import sys
+# sys.path.append("/home/tong/projects/python/MSST-WebUI")
 from ComfyUI.Editor.common.config import cfg
 color = cfg.get(cfg.themeColor)
 
 class SwitchButton(QGraphicsItem, QObject):
+    # 定义一个状态变化信号，传递布尔值表示开关状态
+    stateChanged = Signal(bool)
+
     def __init__(self, parent=None):
         QObject.__init__(self, parent)
         QGraphicsItem.__init__(self, parent)
 
-        self.width = 30  # 按钮的总宽度
-        self.height = 15  # 按钮的高度
-        self.margin = 3   # 圆形按钮的边距
+        self.width = 30  # 宽度
+        self.height = 15  # 高度
+        self.margin = 2   # 圆形按钮的边距
         self.is_on = False  # 开关状态
         self._knob_pos = self.margin  # 圆形按钮的 x 轴位置
         self.knob_radius = self.height / 2 - self.margin  # 圆形按钮的半径
@@ -25,7 +28,6 @@ class SwitchButton(QGraphicsItem, QObject):
         # 禁用点击事件标志
         self.is_animation_running = False
 
-        # 动画完成信号连接
         self.animation.finished.connect(self.onAnimationFinished)
 
     def boundingRect(self):
@@ -53,15 +55,16 @@ class SwitchButton(QGraphicsItem, QObject):
     def toggle(self):
         """切换状态并启动动画"""
         self.is_on = not self.is_on
-        self.is_animation_running = True  # 禁用点击事件
+        self.is_animation_running = True
 
-        # 动画起始位置和结束位置
         start_pos = self._knob_pos
         end_pos = self.width - self.height + self.margin if self.is_on else self.margin
 
         self.animation.setStartValue(start_pos)
         self.animation.setEndValue(end_pos)
         self.animation.start()
+
+        self.stateChanged.emit(self.is_on)
 
     def onAnimationFinished(self):
         """动画完成时允许点击"""
@@ -75,8 +78,26 @@ class SwitchButton(QGraphicsItem, QObject):
         self._knob_pos = pos
         self.update()
 
-    knobPosition = Property(float, getKnobPosition, setKnobPosition)
+    def isOn(self):
+        return self.is_on
+    
+    def setToggled(self, state: bool):
+        """设置开关状态并触发动画"""
+        if self.is_on != state:
+            self.is_on = state
+            self.is_animation_running = True
 
+            start_pos = self._knob_pos
+            end_pos = self.width - self.height + self.margin if self.is_on else self.margin
+
+            self.animation.setStartValue(start_pos)
+            self.animation.setEndValue(end_pos)
+            self.animation.start()
+
+            self.stateChanged.emit(self.is_on)
+
+
+    knobPosition = Property(float, getKnobPosition, setKnobPosition)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -85,9 +106,12 @@ if __name__ == "__main__":
     view = QGraphicsView(scene)
     view.setRenderHint(QPainter.Antialiasing)
     view.setSceneRect(0, 0, 400, 300)
+
     switch = SwitchButton()
     scene.addItem(switch)
     switch.setPos(50, 50)
+
+    switch.stateChanged.connect(lambda state: print(f"Switch is {'On' if state else 'Off'}"))
 
     view.show()
     sys.exit(app.exec())
