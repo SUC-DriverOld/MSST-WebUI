@@ -1,115 +1,181 @@
-from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Qt, QPointF, QRect
-from PySide6.QtGui import QPainter, QBrush, QPen
-# import sys
-# from PySide6.QtWidgets import QApplication, QHBoxLayout
-# sys.path.append("/home/tong/projects/python/MSST-WebUI")
+from PySide6.QtWidgets import QWidget, QGraphicsItem
+from PySide6.QtCore import Qt, QPointF, QRectF
+from PySide6.QtGui import QPainter, QBrush, QPen, QPolygonF, QColor, QFont, QFontMetrics
+import sys
+from PySide6.QtWidgets import QApplication, QHBoxLayout
+sys.path.append("D:\projects\python\MSST-WebUI")
 # for test
-from qfluentwidgets import CaptionLabel
 from ComfyUI.Editor.common.config import cfg
 color = cfg.get(cfg.themeColor)
+font = QFont("Consolas", 12)
 
-class InputPort(QWidget):
-    def __init__(self, parent=None, connected=False, text=""):
+class InputPort(QGraphicsItem):
+    def __init__(self, parent=None, text="just for test"):
         super().__init__(parent)
-        self.setFixedSize(100, 20)
-        self.connected = connected
-        self.label = CaptionLabel(text, self)
-        self.label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.label.move(25, 0)
+        self.width = 100
+        self.height = 20
+        self.is_connected = False
+        self.text = text
 
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+    def boundingRect(self):
+        return QRectF(0, 0, self.width, self.height)
+    
+    def paint(self, painter, option, widget):
+        self.polygon = QPolygonF([
+            QPointF(2.5, 2.5),
+            QPointF(10, 2.5),
+            QPointF(17.5, 10),
+            QPointF(10, 17.5),
+            QPointF(2.5, 17.5)
+        ])
 
-        circle_center = QPointF(10, self.height() / 2)
-        circle_radius = 8
+        pen = QPen(color)  # 边框颜色
+        pen.setWidth(2)  # 边框宽度
+        painter.setPen(pen)
 
-        circle_rect = QRect(circle_center.x() - circle_radius, circle_center.y() - circle_radius, circle_radius * 2, circle_radius * 2)
+        # 设置填充颜色
+        if self.is_connected:
+            painter.setBrush(QBrush(color))
+        else:
+            painter.setBrush(QBrush(Qt.transparent))
+
+        painter.drawPolygon(self.polygon)    
+
+        painter.setFont(font)
+        painter.setPen(QPen(Qt.white)) # white
+        font_metrics = QFontMetrics(font)
+        text_width = font_metrics.horizontalAdvance(self.text)  # 计算文本宽度
+        max_text_width = 75 # 最大文本宽度 100 - 20 - 2.5 * 2
+        if text_width > max_text_width:
+            truncated_text = font_metrics.elidedText(self.text, Qt.ElideRight, max_text_width)
+        else:
+            truncated_text = self.text
         
-        pen = QPen(color, 2)
-        painter.setPen(pen)
-        if self.connected:
-            painter.setBrush(QBrush(color))
-        else:
-            painter.setBrush(Qt.transparent)
-            painter.setPen(QPen(color, 2, Qt.DashLine))  # 未连接时，使用虚线边框
+        text_height = font_metrics.height()
+        text_rect = QRectF(22.5, (self.height - text_height) / 2, max_text_width, text_height)
+        painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
 
-        painter.drawEllipse(circle_rect)
+    def setConnectionState(self, connected):
+        """设置连接状态，并触发重绘"""
+        self.is_connected = connected
+        self.update() 
 
-    def updateCircle(self):
-        circle_center = QPointF(15, self.height() / 2)
-        circle_radius = 8
-        circle_rect = QRect(circle_center.x() - circle_radius, circle_center.y() - circle_radius, circle_radius * 2, circle_radius * 2)
-        # 只更新圆圈区域
-        self.update(circle_rect)
-
-    @property
-    def center(self):
-        """返回圆圈的中心点"""
-        return QPointF(15, self.height() / 2)
-
-    def setConnected(self, connected):
-        """设置连接状态并触发圆圈更新"""
-        if self.connected != connected:
-            self.connected = connected
-            self.updateCircle()
-
-
-class OutputPort(QWidget):
-    def __init__(self, parent=None, connected=False, text=""):
+class OutputPort(QGraphicsItem):
+    def __init__(self, parent=None, text="just for test"):
         super().__init__(parent)
-        self.setFixedSize(100, 20)
-        self.connected = connected
-        self.label = CaptionLabel(text, self)
-        self.label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.label.adjustSize()
-        # print(self.label.width())
-        self.label.move(75 - self.label.width(), 0)
+        self.width = 100
+        self.height = 20
+        self.is_connected = False
+        self.text = text
 
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        circle_center = QPointF(self.width() - 10, self.height() / 2)
-        circle_radius = 8
+    def boundingRect(self):
+        return QRectF(0, 0, self.width, self.height)
+    
+    def paint(self, painter, option, widget):
+        self.polygon = QPolygonF([
+            QPointF(82.5, 2.5),
+            QPointF(90, 2.5),
+            QPointF(97.5, 10),
+            QPointF(90, 17.5),
+            QPointF(82.5, 17.5)
+        ])
 
-        circle_rect = QRect(circle_center.x() - circle_radius, circle_center.y() - circle_radius, circle_radius * 2, circle_radius * 2)
-
-        pen = QPen(color, 2)
+        pen = QPen(color)  # 边框颜色
+        pen.setWidth(2)  # 边框宽度
         painter.setPen(pen)
 
-        if self.connected:
+        # 设置填充颜色
+        if self.is_connected:
             painter.setBrush(QBrush(color))
         else:
-            painter.setBrush(Qt.transparent)
-            painter.setPen(QPen(color, 2, Qt.DashLine))
+            painter.setBrush(QBrush(Qt.transparent))
 
-        painter.drawEllipse(circle_rect)
+        painter.drawPolygon(self.polygon)    
 
-    def updateCircle(self):
-        circle_center = QPointF(self.width() - 15, self.height() / 2)
-        circle_radius = 8
-        circle_rect = QRect(circle_center.x() - circle_radius, circle_center.y() - circle_radius, circle_radius * 2, circle_radius * 2)
-        self.update(circle_rect)
+        painter.setFont(font)
+        painter.setPen(QPen(Qt.white)) # white
+        font_metrics = QFontMetrics(font)
+        text_width = font_metrics.horizontalAdvance(self.text)  # 计算文本宽度
+        max_text_width = 75 # 最大文本宽度 100 - 20 - 2.5 * 2
+        if text_width > max_text_width:
+            truncated_text = font_metrics.elidedText(self.text, Qt.ElideRight, max_text_width)
+        else:
+            truncated_text = self.text
 
-    @property
-    def center(self):
-        """返回圆圈的中心点"""
-        return QPointF(self.width() - 15, self.height() / 2)
+        # Calculate vertical centering and draw the text
+        text_height = font_metrics.height()
+        text_rect = QRectF(77.5 - min(max_text_width, text_width), (self.height - text_height) / 2, max_text_width, text_height)
+        painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
 
-    def setConnected(self, connected):
-        """设置连接状态并触发圆圈更新"""
-        if self.connected != connected:
-            self.connected = connected
-            self.updateCircle()
+    def setConnectionState(self, connected):
+        """设置连接状态，并触发重绘"""
+        self.is_connected = connected
+        self.update() 
 
-if __name__ == '__main__':
+
+class ParameterPort(QGraphicsItem):
+    def __init__(self, parent=None, parameter="just for test", default_value=None, type="int", max_value=None, min_value=None, current_value=None):
+        super().__init__(parent)
+        self.width = 200
+        self.height = 20
+        self.parameter = parameter
+        self.default_value = default_value
+        self.parameter_type = type
+        self.max_value = max_value
+        self.min_value = min_value
+        self.current_value = current_value if current_value is not None else default_value
+
+    def boundingRect(self):
+        return QRectF(0, 0, self.width, self.height)
+    
+    def paint(self, painter, option, widget):
+        self.text = f"{self.parameter}: {self.current_value}"
+        painter.setFont(font)
+        painter.setPen(QPen(Qt.white)) # white
+        font_metrics = QFontMetrics(font)
+        text_width = font_metrics.horizontalAdvance(self.text)  # 计算文本宽度
+        max_text_width = 195 # 最大文本宽度 200 - 20 - 2.5 * 2
+        if text_width > max_text_width:
+            truncated_text = font_metrics.elidedText(self.text, Qt.ElideMiddle, max_text_width)
+        else:
+            truncated_text = self.text
+
+        # Calculate vertical centering and draw the text
+        text_height = font_metrics.height()
+        text_rect = QRectF(2.5, (self.height - text_height) / 2, max_text_width, text_height)
+        painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            parent_view = self.scene().views()[0]
+            
+        return super().mousePressEvent(event)    
+
+        
+if __name__ == "__main__":
+    from PySide6.QtWidgets import QGraphicsScene, QGraphicsView
     app = QApplication(sys.argv)
-    window = QWidget()
-    window_layout = QHBoxLayout(window)
+    
+    # 创建一个场景和视图
+    scene = QGraphicsScene()
+    view = QGraphicsView(scene)
+
+    # 创建 InputPort 和 OutputPort 实例并添加到场景
     input_port = InputPort(text="Input")
-    output_port = OutputPort(text="Output")
-    window_layout.addWidget(input_port)
-    window_layout.addWidget(output_port)
-    window.show()
-    sys.exit(app.exec())
+    output_port = OutputPort(text="Output Port")
+    input_port.setPos(0, 10)
+    output_port.setPos(100, 10)
+
+    scene.addItem(input_port)
+    
+    scene.addItem(output_port)
+
+    # 设置视图和窗口
+    view.setRenderHint(QPainter.Antialiasing)  # 开启抗锯齿效果
+    view.setRenderHint(QPainter.SmoothPixmapTransform)
+    view.setScene(scene)
+    view.setSceneRect(scene.itemsBoundingRect())  # 自适应场景大小
+    view.show()
+    
+
+    sys.exit(app.exec())        
