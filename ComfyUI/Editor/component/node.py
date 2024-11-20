@@ -39,11 +39,15 @@ example of a node_dict:
 }
 """
 
-from PySide6.QtWidgets import QGraphicsItem
-from PySide6.QtGui import QFont, QPen, QFontMetrics
+import sys
+sys.path.append("D:\projects\python\MSST-WebUI")
+
+from PySide6.QtWidgets import QGraphicsItem, QGraphicsDropShadowEffect
+from PySide6.QtGui import QFont, QPen, QFontMetrics, QBrush, QColor, QPainterPath
 from PySide6.QtCore import Qt, QRectF
 import json
 from ComfyUI.Editor.component.node_port import InputPort, OutputPort, ParameterPort, BoolPort, FormatSelector
+from ComfyUI.Editor.component.file_drag_area import FileDragArea
 from ComfyUI.Editor.common.config import cfg
 color = cfg.get(cfg.themeColor)
 font = QFont("Consolas", 12)
@@ -62,8 +66,15 @@ class ModelNode(QGraphicsItem):
         self.parameter_ports = []
         self.bool_ports = []
         self.add_ports()
+        self.init_shadow()
+        self.setFlags(QGraphicsItem.ItemIsSelectable | QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemSendsGeometryChanges)
         
-        
+    def init_shadow(self):
+        self.shadow = QGraphicsDropShadowEffect()
+        self.shadow.setOffset(0, 0)
+        self.shadow.setBlurRadius(20)
+        self.shadow_color = QColor('#aaeeee00')
+
     def load_json(self, model_name):
         path = f"ComfyUI/Editor/data/nodes/{model_name}.json"
         try:
@@ -81,19 +92,40 @@ class ModelNode(QGraphicsItem):
             raise e    
         
     def paint(self, painter, option, widget):
+
+        self.shadow.setColor('#00000000')
+        self.setGraphicsEffect(self.shadow)
+
+        if self.isSelected():
+            self.shadow.setColor(self.shadow_color)
+            self.setGraphicsEffect(self.shadow)
+
+        node_outline = QPainterPath()
+        node_outline.addRoundedRect(0, 0, self.width, self.height, 5, 5)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(QColor('#dd151515')))
+        painter.drawPath(node_outline.simplified())
+
+        title_outline = QPainterPath()
+        title_outline.setFillRule(Qt.WindingFill)
+        title_outline.addRoundedRect(0, 0, self.width, 30, 5, 5)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(color)
+        painter.drawPath(title_outline.simplified())
+        
         self.label = self.model_name
         painter.setFont(font)
         painter.setPen(QPen(Qt.white))
         painter.setBrush(color)
         font_metrics = QFontMetrics(font)
         text_width = font_metrics.horizontalAdvance(self.label)
-        max_text_width = 195
+        max_text_width = 190
         if text_width > max_text_width:
             truncated_text = font_metrics.elidedText(self.label, Qt.ElideRight, max_text_width)
         else:
             truncated_text = self.label
         text_height = font_metrics.height()
-        text_rect = QRectF(2.5, (self.height - text_height) / 2, max_text_width, text_height)
+        text_rect = QRectF(5, (30 - text_height) / 2, max_text_width, text_height)
         painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
         
     def boundingRect(self):
@@ -104,11 +136,13 @@ class ModelNode(QGraphicsItem):
             port = InputPort(text=text)
             port.setParentItem(self)
             port.setPos(0, 30 + i * 20)
+            port.setParentNode(self, index=i)
             self.input_ports.append(port)
         for i, text in enumerate(self.node_dict["output"]):
             port = OutputPort(text=text)
             port.setParentItem(self)
             port.setPos(100, 30 + i * 20)
+            port.setParentNode(self, index=i)
             self.output_ports.append(port)
         for i, param in enumerate(self.node_dict["parameter"]):
             port = ParameterPort(
@@ -120,7 +154,8 @@ class ModelNode(QGraphicsItem):
                 current_value=param["current_value"]
             )
             port.setParentItem(self)
-            port.setPos(0, 30 + (max(self.len[0] + self.len[1]) + i) * 20)
+            port.setPos(0, 30 + (max(self.len[0], self.len[1]) + i) * 20)
+            port.setParentNode(self, index=i)
             self.parameter_ports.append(port)
             
         for i, param in enumerate(self.node_dict["bool"]):
@@ -130,8 +165,311 @@ class ModelNode(QGraphicsItem):
                 current_value=param["current_value"]
             )
             port.setParentItem(self)
-            port.setPos(0, 30 + (max(self.len[0] + self.len[1]) + self.len[2] + i) * 20)
+            port.setPos(0, 30 + (max(self.len[0], self.len[1]) + self.len[2] + i) * 20)
+            port.setParentNode(self, index=i)
             self.bool_ports.append(port)
             
-        format_selector = FormatSelector()
+        self.format_selector = FormatSelector()
+        for i, format in enumerate(["wav", "mp3", "flac"]):
+            if format == self.node_dict["output_format"]:
+                self.format_selector.select(i)
+                break
+        self.format_selector.setParentItem(self)
+        self.format_selector.setParentNode(self)
+        self.format_selector.setPos(0, 30 + (max(self.len[0], self.len[1]) + self.len[2] + self.len[3]) * 20)
+
+
+class InputNode(QGraphicsItem):
+    def __init__(self, parent = None, path = "input/"):
+        super().__init__(parent)
+        self.node_dict = {
+            "index": -1, # index of the node, default is -1
+            "parameter": [
+                {
+                    "parameter": "folder_path",
+                    "type": "str",
+                    "default_value": f"{path}",
+                    "max_value": None,
+                    "min_value": None,
+                    "current_value": f"{path}"
+                }
+            ]
+        }
+        self.width = 200
+        self.height = 70
         
+        self.init_shadow()
+        self.add_ports()
+        self.setFlags(QGraphicsItem.ItemIsSelectable | QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemSendsGeometryChanges)
+
+    def init_shadow(self):
+        self.shadow = QGraphicsDropShadowEffect()
+        self.shadow.setOffset(0, 0)
+        self.shadow.setBlurRadius(20)
+        self.shadow_color = QColor('#aaeeee00')
+
+    def paint(self, painter, option, widget):
+        self.shadow.setColor('#00000000')
+        self.setGraphicsEffect(self.shadow)
+
+        if self.isSelected():
+            self.shadow.setColor(self.shadow_color)
+            self.setGraphicsEffect(self.shadow)
+
+        node_outline = QPainterPath()
+        node_outline.addRoundedRect(0, 0, self.width, self.height, 5, 5)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(QColor('#dd151515')))
+        painter.drawPath(node_outline.simplified())
+
+        title_outline = QPainterPath()
+        title_outline.setFillRule(Qt.WindingFill)
+        title_outline.addRoundedRect(0, 0, self.width, 30, 5, 5)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(color)
+        painter.drawPath(title_outline.simplified())
+        
+        self.label = "Input Node"
+        painter.setFont(font)
+        painter.setPen(QPen(Qt.white))
+        painter.setBrush(color)
+        font_metrics = QFontMetrics(font)
+        text_width = font_metrics.horizontalAdvance(self.label)
+        max_text_width = 190
+        if text_width > max_text_width:
+            truncated_text = font_metrics.elidedText(self.label, Qt.ElideRight, max_text_width)
+        else:
+            truncated_text = self.label
+        text_height = font_metrics.height()
+        text_rect = QRectF(5, (30 - text_height) / 2, max_text_width, text_height)
+        painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
+
+    def boundingRect(self):
+        return QRectF(0, 0, self.width, self.height)
+    
+    def add_ports(self):
+        self.output_port = OutputPort(text="Input")
+        self.output_port.setParentItem(self)
+        self.output_port.setPos(100, 30)
+        self.output_port.setParentNode(self, index=0)
+
+        self.parameter_port = ParameterPort(
+            parameter="folder_path",
+            type=str,
+            default_value=self.node_dict["parameter"][0]["default_value"],
+            max_value=None,
+            min_value=None,
+            current_value=self.node_dict["parameter"][0]["default_value"]
+        )
+
+        self.parameter_port.setParentItem(self)
+        self.parameter_port.setPos(0, 50)
+        self.parameter_port.setParentNode(self, index=0)
+
+        
+class OutputNode(QGraphicsItem):
+    def __init__(self, parent = None, path = "output/"):
+        super().__init__(parent)
+        self.node_dict = {
+            "index": -1, # index of the node, default is -1
+            "parameter": [
+                {
+                    "parameter": "folder_path",
+                    "type": "str",
+                    "default_value": f"{path}",
+                    "max_value": None,
+                    "min_value": None,
+                    "current_value": f"{path}"
+                }
+            ]
+        }
+        self.width = 200
+        self.height = 70
+        self.init_shadow()
+        self.add_ports()
+        self.setFlags(QGraphicsItem.ItemIsSelectable | QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemSendsGeometryChanges)
+
+    def init_shadow(self):
+        self.shadow = QGraphicsDropShadowEffect()
+        self.shadow.setOffset(0, 0)
+        self.shadow.setBlurRadius(20)
+        self.shadow_color = QColor('#aaeeee00')
+
+    def paint(self, painter, option, widget):
+        self.shadow.setColor('#00000000')
+        self.setGraphicsEffect(self.shadow)
+
+        if self.isSelected():
+            self.shadow.setColor(self.shadow_color)
+            self.setGraphicsEffect(self.shadow)
+
+        node_outline = QPainterPath()
+        node_outline.addRoundedRect(0, 0, self.width, self.height, 5, 5)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(QColor('#dd151515')))
+        painter.drawPath(node_outline.simplified())
+
+        title_outline = QPainterPath()
+        title_outline.setFillRule(Qt.WindingFill)
+        title_outline.addRoundedRect(0, 0, self.width, 30, 5, 5)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(color)
+        painter.drawPath(title_outline.simplified())
+        
+        self.label = "Input Node"
+        painter.setFont(font)
+        painter.setPen(QPen(Qt.white))
+        painter.setBrush(color)
+        font_metrics = QFontMetrics(font)
+        text_width = font_metrics.horizontalAdvance(self.label)
+        max_text_width = 190
+        if text_width > max_text_width:
+            truncated_text = font_metrics.elidedText(self.label, Qt.ElideRight, max_text_width)
+        else:
+            truncated_text = self.label
+        text_height = font_metrics.height()
+        text_rect = QRectF(5, (30 - text_height) / 2, max_text_width, text_height)
+        painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
+
+    def boundingRect(self):
+        return QRectF(0, 0, self.width, self.height)
+    
+    def add_ports(self):
+        self.input_port = InputPort(text="Output")
+        self.input_port.setParentItem(self)
+        self.input_port.setPos(0, 30)
+        self.input_port.setParentNode(self, index=0)
+
+        self.parameter_port = ParameterPort(
+            parameter="folder_path",
+            type=str,
+            default_value=self.node_dict["parameter"][0]["default_value"],
+            max_value=None,
+            min_value=None,
+            current_value=self.node_dict["parameter"][0]["default_value"]
+        )
+
+        self.parameter_port.setParentItem(self)
+        self.parameter_port.setPos(0, 50)
+        self.parameter_port.setParentNode(self, index=0)
+
+
+class FileInputNode(QGraphicsItem):
+    def __init__(self, parent = None, path = "input/"):
+        super().__init__(parent)
+        self.node_dict = {
+            "index": -1, # index of the node, default is -1
+            "parameter": [
+                {
+                    "parameter": "file_path",
+                    "type": "str",
+                    "default_value": f"{path}",
+                    "max_value": None,
+                    "min_value": None,
+                    "current_value": f"{path}"
+                }
+            ]
+        }
+        self.width = 200
+        self.height = 200
+        
+        self.init_shadow()
+        self.add_ports()
+        self.add_file_drag_area()
+        self.setFlags(QGraphicsItem.ItemIsSelectable | QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemSendsGeometryChanges)   
+
+    def init_shadow(self):
+        self.shadow = QGraphicsDropShadowEffect()
+        self.shadow.setOffset(0, 0)
+        self.shadow.setBlurRadius(20)
+        self.shadow_color = QColor('#aaeeee00')
+
+    def paint(self, painter, option, widget):
+        self.shadow.setColor('#00000000')
+        self.setGraphicsEffect(self.shadow)
+
+        if self.isSelected():
+            self.shadow.setColor(self.shadow_color)
+            self.setGraphicsEffect(self.shadow)
+
+        node_outline = QPainterPath()
+        node_outline.addRoundedRect(0, 0, self.width, self.height, 5, 5)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(QColor('#dd151515')))
+        painter.drawPath(node_outline.simplified())
+
+        title_outline = QPainterPath()
+        title_outline.setFillRule(Qt.WindingFill)
+        title_outline.addRoundedRect(0, 0, self.width, 30, 5, 5)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(color)
+        painter.drawPath(title_outline.simplified())
+        
+        self.label = "File Input Node"
+        painter.setFont(font)
+        painter.setPen(QPen(Qt.white))
+        painter.setBrush(color)
+        font_metrics = QFontMetrics(font)
+        text_width = font_metrics.horizontalAdvance(self.label)
+        max_text_width = 190
+        if text_width > max_text_width:
+            truncated_text = font_metrics.elidedText(self.label, Qt.ElideRight, max_text_width)
+        else:
+            truncated_text = self.label
+        text_height = font_metrics.height()
+        text_rect = QRectF(5, (30 - text_height) / 2, max_text_width, text_height)
+        painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
+
+    def boundingRect(self):
+        return QRectF(0, 0, self.width, self.height)
+    
+    def add_ports(self):
+        self.output_port = OutputPort(text="Input")
+        self.output_port.setParentItem(self)
+        self.output_port.setPos(100, 30)
+        self.output_port.setParentNode(self, index=0)
+
+    def add_file_drag_area(self):
+        self.file_drag_area = FileDragArea(path=self.node_dict["parameter"][0]["default_value"])
+        self.file_drag_area.setParentItem(self)
+        self.file_drag_area.setPos(0, 50)
+        
+
+if __name__ == "__main__":
+    from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QApplication, QWidget, QVBoxLayout
+    from PySide6.QtGui import QPainter
+    app = QApplication(sys.argv)
+
+    widget = QWidget()
+    from ComfyUI.Editor.component.editor_scene import EditorScene
+    scene = EditorScene()
+    view = QGraphicsView(scene)
+    widget.setFixedSize(1000, 500)
+
+    test_node1 = ModelNode("7_HP2-UVR.pth")
+    scene.addItem(test_node1)
+    test_node1.setPos(50, 50)
+
+    test_node2 = ModelNode("Apollo_LQ_MP3_restoration.ckpt")
+    scene.addItem(test_node2)
+    test_node2.setPos(300, 50)
+
+    test_node3 = InputNode(path="input/")
+    scene.addItem(test_node3)
+    test_node3.setPos(550, 50)
+
+    test_node4 = OutputNode(path="output/")
+    scene.addItem(test_node4)
+    test_node4.setPos(800, 50)
+
+    test_node5 = FileInputNode(path="tmp/input/")
+    scene.addItem(test_node5)
+    test_node5.setPos(300, 300)
+
+    
+    view.setRenderHint(QPainter.Antialiasing)
+    layout = QVBoxLayout()
+    layout.addWidget(view)
+    widget.setLayout(layout)
+    widget.show()
+    sys.exit(app.exec())

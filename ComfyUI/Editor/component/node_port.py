@@ -18,6 +18,8 @@ class InputPort(QGraphicsItem):
         self.height = 20
         self.is_connected = False
         self.text = text
+        self.parent_node = None
+        self.index = -1
 
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
@@ -62,6 +64,12 @@ class InputPort(QGraphicsItem):
         self.is_connected = connected
         self.update() 
 
+    def setParentNode(self, node, index=-1):
+        self.parent_node = node  
+        self.index = index
+        
+
+
 class OutputPort(QGraphicsItem):
     def __init__(self, parent=None, text="just for test"):
         super().__init__(parent)
@@ -69,6 +77,8 @@ class OutputPort(QGraphicsItem):
         self.height = 20
         self.is_connected = False
         self.text = text
+        self.parent_node = None
+        self.index = -1
 
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
@@ -114,6 +124,10 @@ class OutputPort(QGraphicsItem):
         self.is_connected = connected
         self.update() 
 
+    def setParentNode(self, node, index=-1):
+        self.parent_node = node  
+        self.index = index    
+
 
 class ParameterPort(QGraphicsItem):
     def __init__(self, parent=None, parameter="just for test", default_value=None, type=int, max_value=None, min_value=None, current_value=None):
@@ -126,6 +140,8 @@ class ParameterPort(QGraphicsItem):
         self.max_value = max_value
         self.min_value = min_value
         self.current_value = current_value if current_value is not None else default_value
+        self.parent_node = None
+        self.index = -1
 
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
@@ -165,18 +181,25 @@ class ParameterPort(QGraphicsItem):
                         new_value = int(w.LineEdit.text())
                     elif self.parameter_type == float:
                         new_value = float(w.LineEdit.text())
+                    elif self.parameter_type == str:
+                        new_value = str(w.LineEdit.text())    
                     else:
                         return
-                    self.current_value = new_value
-                    self.update()
+                    self.setValue(new_value)
                 except ValueError:
                     pass
             
-        return super().mousePressEvent(event)  
+        super().mousePressEvent(event)  
     
     def setValue(self, value):
         self.current_value = value
+        self.parent_node.node_dict["parameter"][self.index]["current_value"] = value
+        # print(self.parent_node.node_dict["parameter"])
         self.update()
+
+    def setParentNode(self, node, index=-1):
+        self.parent_node = node  
+        self.index = index  
     
     
 class BoolPort(QGraphicsItem):
@@ -190,7 +213,9 @@ class BoolPort(QGraphicsItem):
         self.switch_button = SwitchButton()
         self.switch_button.setPos(2.5, 2.5)
         self.switch_button.setParentItem(self)
-        self.switch_button.stateChanged.connect(self.onStateChanged)
+        self.switch_button.stateChanged.connect(self.setValue)
+        self.parent_node = None
+        self.index = -1
         
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
@@ -213,24 +238,32 @@ class BoolPort(QGraphicsItem):
         text_rect = QRectF(35, (self.height - text_height) / 2, max_text_width, text_height)
         painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
 
-    def onStateChanged(self, state):
-        self.current_value = state
-        print(f"{self.parameter} state changed to {self.current_value}")
-        # self.update()    
+    def setValue(self, value):
+        self.current_value = value
+        self.parent_node.node_dict["bool"][self.index]["current_value"] = value
+        self.switch_button.setToggled(value)
+        # print(self.parent_node.node_dict["bool"])
+        self.update()    
+
+    def setParentNode(self, node, index=-1):
+        self.parent_node = node  
+        self.index = index    
 
 
 class FormatSelector(QGraphicsItem):
-    def __init__(self, options=None, parent=None):
+    def __init__(self, options=None, parent=None, index=0):
         super().__init__(parent)
         self.options = options if options else ["wav", "mp3", "flac"]
-        self.currentIndex = 0  # 默认选中第一个选项
+        self.currentIndex = index  # 默认选中第一个选项
         self.itemRadius = 8    # 单个选项圆圈的半径
         self.spacing = 66      # 每个选项之间的水平间距
         self.width = 200
         self.height = 20
         self.font = font
         self.color = color
+        self.parent_node = None
         self.initItems()
+        
 
     def initItems(self):
         """初始化选择器"""
@@ -238,6 +271,9 @@ class FormatSelector(QGraphicsItem):
 
     def updateSelection(self):
         """更新当前选中的样式"""
+        if self.parent_node is not None:
+            self.parent_node.node_dict["output_format"] = self.options[self.currentIndex]
+            # print(self.parent_node.node_dict["output_format"])
         self.update()
 
     def boundingRect(self) -> QRectF:
@@ -250,20 +286,20 @@ class FormatSelector(QGraphicsItem):
         font_metrics = QFontMetrics(self.font)
 
         for i, option in enumerate(self.options):
-            circle_x = 10 + i * self.spacing
+            circle_x = 2.5 + i * self.spacing
             circle_y = self.height / 2 - self.itemRadius
 
             painter.setPen(QPen(QColor(100, 100, 100), 1))
             if i == self.currentIndex:
                 painter.setBrush(QBrush(self.color))
             else:
-                painter.setBrush(QBrush(Qt.white))
+                painter.setBrush(QBrush(QColor("#282828")))
             painter.drawEllipse(circle_x, circle_y, 2 * self.itemRadius, 2 * self.itemRadius)
 
             text_width = font_metrics.horizontalAdvance(option)
             text_height = font_metrics.height()
 
-            max_text_width = self.spacing - 2 * self.itemRadius - 10
+            max_text_width = self.spacing - 2 * self.itemRadius - 2.5
             if text_width > max_text_width:
                 truncated_text = font_metrics.elidedText(option, Qt.ElideRight, max_text_width)
             else:
@@ -272,7 +308,7 @@ class FormatSelector(QGraphicsItem):
             text_x = circle_x + 2 * self.itemRadius + 5
             text_y = (self.height - text_height) / 2
 
-            painter.setPen(QPen(self.color))
+            painter.setPen(QPen(color if i == self.currentIndex else Qt.white))
             text_rect = QRectF(text_x, text_y, max_text_width, text_height)
             painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
 
@@ -280,7 +316,7 @@ class FormatSelector(QGraphicsItem):
         """处理鼠标点击事件"""
         pos = event.pos()
         for i in range(len(self.options)):
-            circle_x = 10 + i * self.spacing
+            circle_x = 2.5 + i * self.spacing
             circle_y = self.height / 2 - self.itemRadius
             circle_rect = QRectF(circle_x, circle_y, 2 * self.itemRadius, 2 * self.itemRadius)
 
@@ -299,6 +335,9 @@ class FormatSelector(QGraphicsItem):
     def getSelectedValue(self):
         """返回当前选择的值"""
         return self.options[self.currentIndex]
+    
+    def setParentNode(self, node):
+        self.parent_node = node
 
         
 

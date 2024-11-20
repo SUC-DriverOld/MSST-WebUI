@@ -40,12 +40,15 @@ class ParameterMessageBox(MessageBoxBase):
                 value = int(user_input)
             elif self.parameter_type == float:
                 value = float(user_input)
+            elif self.parameter_type == str:
+                value = user_input   
             else:
                 isValid = False  # Unsupported type
-            if isValid and self.min_value is not None and value < self.min_value:
-                isValid = False
-            if isValid and self.max_value is not None and value > self.max_value:
-                isValid = False
+            if self.parameter_type in [int, float]:    
+                if isValid and self.min_value is not None and value < self.min_value:
+                    isValid = False
+                if isValid and self.max_value is not None and value > self.max_value:
+                    isValid = False
         except ValueError:
             # If input is not a valid integer or float, invalid
             isValid = False

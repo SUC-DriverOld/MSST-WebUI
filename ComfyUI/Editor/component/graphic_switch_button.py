@@ -34,15 +34,15 @@ class SwitchButton(QGraphicsItem, QObject):
 
     def paint(self, painter, option, widget=None):
         # 绘制背景
-        bg_color = color if self.is_on else QColor("#e0e0e0")
+        bg_color = color if self.is_on else QColor("#282828")
         painter.setBrush(QBrush(bg_color))
         painter.setPen(Qt.NoPen)
         painter.drawRoundedRect(self.boundingRect(), self.height / 2, self.height / 2)
 
         # 绘制圆形按钮
-        knob_color = QColor("#ffffff")
+        knob_color = QColor("#212121")
         painter.setBrush(QBrush(knob_color))
-        painter.setPen(QPen(QColor("#cccccc"), 1))
+        painter.setPen(QPen(QColor("#808080"), 1))
         painter.drawEllipse(QPointF(self._knob_pos + self.knob_radius, self.height / 2),
                             self.knob_radius, self.knob_radius)
 
@@ -50,6 +50,8 @@ class SwitchButton(QGraphicsItem, QObject):
         """处理鼠标点击事件"""
         if not self.is_animation_running:
             self.toggle()
+
+        super().mousePressEvent(event)    
 
     def toggle(self):
         """切换状态并启动动画"""

@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QGraphicsScene
 from PySide6.QtGui import QBrush, QColor, QPen, QPainter
 from PySide6.QtCore import QLine
 
-class editorScene(QGraphicsScene):
+class EditorScene(QGraphicsScene):
     def __init__(self, parent = None):
         super().__init__(parent)
         self.view = None
