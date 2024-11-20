@@ -22,8 +22,8 @@ from webui.preset import (
     stop_preset
 )
 
-def preset(webui_config, force_cpu):
-    if webui_config['inference']['force_cpu'] or force_cpu:
+def preset(webui_config, force_cpu_flag=False):
+    if webui_config['inference']['force_cpu'] or force_cpu_flag:
         force_cpu_value = True
     else:
         force_cpu_value = False
@@ -52,7 +52,7 @@ def preset(webui_config, force_cpu):
                 force_cpu = gr.Checkbox(
                     label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),
                     value=force_cpu_value,
-                    interactive=False if force_cpu_value else True
+                    interactive=False if force_cpu_flag else True
                 )
                 use_tta = gr.Checkbox(
                     label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),
@@ -207,17 +207,6 @@ def preset(webui_config, force_cpu):
             input_to_next,
             output_to_storage
         ]
-    )
-    add_to_flow.click(
-        fn=add_to_flow_func,
-        inputs=[
-            model_type,
-            model_name,
-            input_to_next,
-            output_to_storage,
-            preset_flow
-        ],
-        outputs=preset_flow
     )
     save_flow.click(
         fn=save_flow_func,

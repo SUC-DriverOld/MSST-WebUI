@@ -97,7 +97,6 @@ def add_to_flow_func(model_type, model_name, input_to_next, output_to_storage, d
         return new_data
 
     updated_df = pd.concat([df, new_data], ignore_index=True)
-    logger.info(f"Add to flow: {model_type}, {model_name}, {input_to_next}, {output_to_storage}")
     return updated_df
 
 def save_flow_func(preset_name, df):
@@ -139,7 +138,7 @@ def load_preset(preset_name):
                 preset_data[step]["model_name"],
                 preset_data[step]["input_to_next"],
                 preset_data[step]["output_to_storage"],
-                preset_flow
+                preset_flow,
             )
         logger.info(f"Load preset: {preset_name}: {preset_data}")
         return preset_flow

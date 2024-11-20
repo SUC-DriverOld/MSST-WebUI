@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.getcwd())
 
 from qfluentwidgets import setTheme, setThemeColor, Theme, FluentTranslator
-from download_manager import DownloadManager
+from ComfyUI.DownloadManager.download_manager import DownloadManager
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QTranslator
 from PySide6.QtGui import QIcon

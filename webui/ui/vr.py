@@ -11,8 +11,8 @@ from webui.vr import (
     load_vr_model_stem
 )
 
-def vr(webui_config, force_cpu):
-    if webui_config['inference']['force_cpu'] or force_cpu:
+def vr(webui_config, force_cpu_flag=False):
+    if webui_config['inference']['force_cpu'] or force_cpu_flag:
         force_cpu_value = True
     else:
         force_cpu_value = False
@@ -52,7 +52,7 @@ def vr(webui_config, force_cpu):
         vr_use_cpu = gr.Checkbox(
             label=i18n("使用CPU"),
             value=force_cpu_value,
-            interactive=False if force_cpu_value else True
+            interactive=False if force_cpu_flag else True
         )
         vr_primary_stem_only = gr.Checkbox(
             label=primary_label,

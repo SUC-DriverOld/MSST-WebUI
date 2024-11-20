@@ -117,7 +117,8 @@ class settingsInterface(QFrame):
         hf_endpoint_line_edit.setFixedWidth(len(hf_endpoint_line_edit.text()) * 8)
         self.hfEndpointCard.hBoxLayout.addWidget(hf_endpoint_line_edit)
         self.hfEndpointCard.hBoxLayout.addSpacerItem(QSpacerItem(20, 20))
-        hf_endpoint_line_edit.textChanged.connect(self.setHfEndpoint)
+        # hf_endpoint_line_edit.textChanged.connect(self.setHfEndpoint)
+        hf_endpoint_line_edit.editingFinished.connect(lambda: self.setHfEndpoint(hf_endpoint_line_edit.text()))
 
         self.connectSignalToSlot()    
 

@@ -20,6 +20,12 @@ def open_model_folder(model_type):
     else:
         open_folder(os.path.join(MODEL_FOLDER, model_type))
 
+def open_download_manager():
+    command = f"{PYTHON} ComfyUI/DownloadManager/main.py"
+    logger.info(f"Opening download manager: {command}")
+    gr.Info(i18n("已打开下载管理器"))
+    os.system(command)
+
 def upgrade_download_model_name(model_type_dropdown):
     if model_type_dropdown == "UVR_VR_Models":
         model_map = load_configs(VR_MODEL)

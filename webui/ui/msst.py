@@ -15,10 +15,10 @@ from webui.msst import (
     change_to_folder_infer
 )
 
-def msst(webui_config, device, force_cpu):
+def msst(webui_config, device, force_cpu_flag=False):
     device = [value for _, value in device.items()]
 
-    if webui_config['inference']['force_cpu'] or force_cpu:
+    if webui_config['inference']['force_cpu'] or force_cpu_flag:
         force_cpu_value = True
     else:
         force_cpu_value = False
@@ -60,7 +60,7 @@ def msst(webui_config, device, force_cpu):
             force_cpu = gr.Checkbox(
                 label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),
                 value=force_cpu_value,
-                interactive=False if force_cpu_value else True
+                interactive=False if force_cpu_flag else True
             )
             use_tta = gr.Checkbox(
                 label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),

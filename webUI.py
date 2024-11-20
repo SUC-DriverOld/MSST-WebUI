@@ -42,7 +42,6 @@ import shutil
 import time
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
-
 from utils.constant import *
 
 
@@ -50,14 +49,9 @@ def copy_folders():
     if os.path.exists("configs"):
         shutil.rmtree("configs")
     shutil.copytree("configs_backup", "configs")
-
     if os.path.exists("data"):
-        shutil.copy(WEBUI_CONFIG_BACKUP, WEBUI_CONFIG)
-        shutil.copy(MSST_MODEL_BACKUP, MSST_MODEL)
-        shutil.copy(VR_MODEL_BACKUP, VR_MODEL)
-        shutil.copy(LANGUAGE_BACKUP, LANGUAGE)
-    else:
-        shutil.copytree("data_backup", "data")
+        shutil.rmtree("data")
+    shutil.copytree("data_backup", "data")
 
 
 def setup_webui():

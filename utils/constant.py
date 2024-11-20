@@ -48,8 +48,8 @@ with open(WEBUI_CONFIG_BACKUP, "r") as f:
     PACKAGE_VERSION = config.get("version", "Unknown version")
 
 # presets data path
-PRESETS = "data/presets"
-PRESETS_BACKUP = "data/presets_backup"
+PRESETS = "presets"
+PRESETS_BACKUP = "presets_backup"
 
 # msst model map path
 MSST_MODEL = "data/msst_model_map.json"

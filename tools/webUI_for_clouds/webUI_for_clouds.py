@@ -497,7 +497,6 @@ def preset():
 
     audio_tab.select(fn=change_to_audio_infer, outputs=[inference_audio, inference_folder])
     folder_tab.select(fn=change_to_folder_infer, outputs=[inference_audio, inference_folder])
-    add_to_flow.click(fn=add_to_flow_func,inputs=[model_type,model_name,input_to_next,output_to_storage,preset_flow],outputs=preset_flow)
     inference_folder.click(fn=cloud_preset_infer_folder,inputs=[input_folder,store_dir_flow,preset_dropdown,force_cpu,output_format_flow,use_tta,extra_output_dir],outputs=output_message_flow)
     inference_audio.click(fn=cloud_preset_infer_audio,inputs=[input_audio,store_dir_flow,preset_dropdown,force_cpu,output_format_flow,use_tta,extra_output_dir],outputs=output_message_flow)
     model_name.change(fn=update_model_stem,inputs=[model_type,model_name],outputs=[input_to_next,output_to_storage])
