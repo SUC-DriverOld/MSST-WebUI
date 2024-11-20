@@ -147,6 +147,8 @@ if __name__ == "__main__":
     import platform
     from torch import cuda, backends
     from webui.utils import load_configs, save_configs, log_level_debug, get_main_link
+    import multiprocessing
+    multiprocessing.set_start_method('spawn')
 
     devices = {}
     force_cpu = False
