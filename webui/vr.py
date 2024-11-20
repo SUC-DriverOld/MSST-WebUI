@@ -1,7 +1,7 @@
 import shutil
 import time
 import gradio as gr
-import multiprocessing
+import torch.multiprocessing as multiprocessing
 import traceback
 
 from utils.constant import *
