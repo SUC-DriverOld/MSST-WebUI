@@ -24,7 +24,10 @@ def open_model_folder(model_type):
         open_folder(os.path.join(MODEL_FOLDER, model_type))
 
 def open_download_manager():
-    command = f"{PYTHON} ComfyUI/DownloadManager/main.py"
+    if os.path.isfile("DownloadManager.exe"):
+        command = "start DownloadManager.exe"
+    else:
+        command = f"{PYTHON} ComfyUI/DownloadManager/main.py"
     logger.info(f"Opening download manager: {command}")
     gr.Info(i18n("已打开下载管理器"))
     os.system(command)
