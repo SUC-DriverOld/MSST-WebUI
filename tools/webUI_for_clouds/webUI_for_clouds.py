@@ -927,7 +927,7 @@ def settings():
     debug_mode.change(fn=log_level_debug,inputs=debug_mode,outputs=setting_output_message)
 
 if __name__ == "__main__":
-    import multiprocessing
+    import torch.multiprocessing as multiprocessing
     multiprocessing.set_start_method('spawn')
 
     debug = webui_config["settings"].get("debug", False)

@@ -1,6 +1,6 @@
 import os.path
 import gradio as gr
-import multiprocessing
+import torch.multiprocessing as multiprocessing
 import subprocess
 
 from utils.constant import *

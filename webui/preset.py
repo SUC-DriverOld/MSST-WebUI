@@ -2,7 +2,7 @@ import gradio as gr
 import pandas as pd
 import shutil
 import time
-import multiprocessing
+import torch.multiprocessing as multiprocessing
 
 from utils.constant import *
 from utils.logger import get_logger
