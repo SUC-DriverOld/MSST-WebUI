@@ -5,9 +5,7 @@ import os
 import shutil
 import sys
 sys.path.append("D:\projects\python\MSST-WebUI")
-from ComfyUI.Editor.common.config import cfg
-color = cfg.get(cfg.themeColor)
-font = QFont("Consolas", 12)
+from ComfyUI.Editor.common.config import color, font
 
 
 class FileDragArea(QGraphicsItem):

@@ -48,9 +48,7 @@ from PySide6.QtCore import Qt, QRectF
 import json
 from ComfyUI.Editor.component.node_port import InputPort, OutputPort, ParameterPort, BoolPort, FormatSelector
 from ComfyUI.Editor.component.file_drag_area import FileDragArea
-from ComfyUI.Editor.common.config import cfg
-color = cfg.get(cfg.themeColor)
-font = QFont("Consolas", 12)
+from ComfyUI.Editor.common.config import color, font
 
 class ModelNode(QGraphicsItem):
     def __init__(self, model_name, parent = None):
@@ -65,6 +63,7 @@ class ModelNode(QGraphicsItem):
         self.output_ports = []
         self.parameter_ports = []
         self.bool_ports = []
+        self.edges = []
         self.add_ports()
         self.init_shadow()
         self.setFlags(QGraphicsItem.ItemIsSelectable | QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemSendsGeometryChanges)
@@ -178,6 +177,16 @@ class ModelNode(QGraphicsItem):
         self.format_selector.setParentNode(self)
         self.format_selector.setPos(0, 30 + (max(self.len[0], self.len[1]) + self.len[2] + self.len[3]) * 20)
 
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange:
+            # 如果节点位置变化，则需要更新端口位置
+            self.updatePortPositions()
+        return super().itemChange(change, value)    
+    
+    def updatePortPositions(self):
+        for edge in self.edges:
+            edge.updatePath()    
+
 
 class InputNode(QGraphicsItem):
     def __init__(self, parent = None, path = "input/"):
@@ -197,6 +206,7 @@ class InputNode(QGraphicsItem):
         }
         self.width = 200
         self.height = 70
+        self.edges = []
         
         self.init_shadow()
         self.add_ports()
@@ -266,6 +276,16 @@ class InputNode(QGraphicsItem):
         self.parameter_port.setPos(0, 50)
         self.parameter_port.setParentNode(self, index=0)
 
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange:
+            # 如果节点位置变化，则需要更新端口位置
+            self.updatePortPositions()
+        return super().itemChange(change, value)    
+    
+    def updatePortPositions(self):
+        for edge in self.edges:
+            edge.updatePath()    
+
         
 class OutputNode(QGraphicsItem):
     def __init__(self, parent = None, path = "output/"):
@@ -285,6 +305,7 @@ class OutputNode(QGraphicsItem):
         }
         self.width = 200
         self.height = 70
+        self.edges = []
         self.init_shadow()
         self.add_ports()
         self.setFlags(QGraphicsItem.ItemIsSelectable | QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemSendsGeometryChanges)
@@ -353,6 +374,16 @@ class OutputNode(QGraphicsItem):
         self.parameter_port.setPos(0, 50)
         self.parameter_port.setParentNode(self, index=0)
 
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange:
+            # 如果节点位置变化，则需要更新端口位置
+            self.updatePortPositions()
+        return super().itemChange(change, value)    
+    
+    def updatePortPositions(self):
+        for edge in self.edges:
+            edge.updatePath()    
+
 
 class FileInputNode(QGraphicsItem):
     def __init__(self, parent = None, path = "input/"):
@@ -372,6 +403,7 @@ class FileInputNode(QGraphicsItem):
         }
         self.width = 200
         self.height = 200
+        self.edges = []
         
         self.init_shadow()
         self.add_ports()
@@ -433,6 +465,16 @@ class FileInputNode(QGraphicsItem):
         self.file_drag_area = FileDragArea(path=self.node_dict["parameter"][0]["default_value"])
         self.file_drag_area.setParentItem(self)
         self.file_drag_area.setPos(0, 50)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange:
+            # 如果节点位置变化，则需要更新端口位置
+            self.updatePortPositions()
+        return super().itemChange(change, value)    
+    
+    def updatePortPositions(self):
+        for edge in self.edges:
+            edge.updatePath()
         
 
 if __name__ == "__main__":

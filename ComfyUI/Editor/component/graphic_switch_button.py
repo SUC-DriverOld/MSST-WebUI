@@ -3,8 +3,7 @@ from PySide6.QtWidgets import QGraphicsItem, QApplication, QGraphicsScene, QGrap
 from PySide6.QtGui import QBrush, QPen, QColor, QPainter
 # import sys
 # sys.path.append("/home/tong/projects/python/MSST-WebUI")
-from ComfyUI.Editor.common.config import cfg
-color = cfg.get(cfg.themeColor)
+from ComfyUI.Editor.common.config import color
 
 class SwitchButton(QGraphicsItem, QObject):
     stateChanged = Signal(bool)

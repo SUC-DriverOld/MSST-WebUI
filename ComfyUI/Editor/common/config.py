@@ -1,5 +1,6 @@
 from qfluentwidgets import QConfig, ConfigItem, qconfig, OptionsConfigItem, OptionsValidator
 from ComfyUI.Editor.common.language import Language, LanguageSerializer
+from PySide6.QtGui import QFont
 
 class EditorConfig(QConfig):
     
@@ -13,3 +14,5 @@ class EditorConfig(QConfig):
     
 cfg = EditorConfig()
 qconfig.load("./ComfyUI/Editor/data/EditorConfig.json", cfg)
+color = cfg.get(cfg.themeColor)
+font = QFont("Consolas", 12)

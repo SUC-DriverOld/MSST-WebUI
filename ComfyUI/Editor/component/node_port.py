@@ -5,11 +5,10 @@ from PySide6.QtGui import QPainter, QBrush, QPen, QPolygonF, QColor, QFont, QFon
 # from PySide6.QtWidgets import QApplication, QHBoxLayout
 # sys.path.append("D:\projects\python\MSST-WebUI")
 # for test
-from ComfyUI.Editor.common.config import cfg
+from ComfyUI.Editor.common.config import color, font
 from ComfyUI.Editor.component.graphic_switch_button import SwitchButton
 from ComfyUI.Editor.component.parameter_message_box import ParameterMessageBox
-color = cfg.get(cfg.themeColor)
-font = QFont("Consolas", 12)
+
 
 class InputPort(QGraphicsItem):
     def __init__(self, parent=None, text="just for test"):
@@ -20,6 +19,7 @@ class InputPort(QGraphicsItem):
         self.text = text
         self.parent_node = None
         self.index = -1
+        self.connected_edges = []
 
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
@@ -67,6 +67,21 @@ class InputPort(QGraphicsItem):
     def setParentNode(self, node, index=-1):
         self.parent_node = node  
         self.index = index
+
+    def getPortPos(self):
+        """获取端口连接边的位置"""
+        return self.scenePos() + QPointF(2.5, self.height / 2)
+    
+    def setPosition(self, x: float, y: float):
+        """更新端口的位置"""
+        self.setPos(QPointF(x, y))  # 更新位置
+        # 更新所有连接到该端口的边
+        for edge in self.connected_edges:
+            edge.updatePath()
+
+    def addConnectedEdge(self, edge):
+        self.connected_edges.append(edge)        
+
         
 
 
@@ -79,6 +94,7 @@ class OutputPort(QGraphicsItem):
         self.text = text
         self.parent_node = None
         self.index = -1
+        self.connected_edges = []
 
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
@@ -127,6 +143,20 @@ class OutputPort(QGraphicsItem):
     def setParentNode(self, node, index=-1):
         self.parent_node = node  
         self.index = index    
+
+    def getPortPos(self):
+        """获取端口连接边的位置"""
+        return self.scenePos() + QPointF(97.5, self.height / 2)    
+    
+    def setPosition(self, x: float, y: float):
+        """更新端口的位置"""
+        self.setPos(QPointF(x, y))  # 更新位置
+        # 更新所有连接到该端口的边
+        for edge in self.connected_edges:
+            edge.updatePath()
+            
+    def addConnectedEdge(self, edge):
+        self.connected_edges.append(edge)
 
 
 class ParameterPort(QGraphicsItem):
