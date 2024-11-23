@@ -50,6 +50,7 @@ from ComfyUI.Editor.component.node_port import InputPort, OutputPort, ParameterP
 from ComfyUI.Editor.component.file_drag_area import FileDragArea
 from ComfyUI.Editor.common.config import color, font
 
+
 class ModelNode(QGraphicsItem):
     def __init__(self, model_name, parent = None):
         super().__init__(parent)
@@ -185,7 +186,21 @@ class ModelNode(QGraphicsItem):
     
     def updatePortPositions(self):
         for edge in self.edges:
-            edge.updatePath()    
+            edge.updatePath()
+
+    def addDownStreamNode(self, target_node_index, output_port):
+        for i, port in enumerate(self.output_ports):
+            if port == output_port:
+                self.node_dict["down_stream_nodes"].append([target_node_index, i])
+                break
+        print(self.node_dict["down_stream_nodes"])
+
+    def removeDownStreamNode(self, target_node_index, output_port):
+        for i, port in enumerate(self.output_ports):
+            if port == output_port:
+                self.node_dict["down_stream_nodes"].remove([target_node_index, i])
+                break
+        print(self.node_dict["down_stream_nodes"])
 
 
 class InputNode(QGraphicsItem):
@@ -202,7 +217,9 @@ class InputNode(QGraphicsItem):
                     "min_value": None,
                     "current_value": f"{path}"
                 }
-            ]
+            ],
+            "down_stream_nodes": [],
+            "scene_pos": [0, 0]
         }
         self.width = 200
         self.height = 70
@@ -284,7 +301,15 @@ class InputNode(QGraphicsItem):
     
     def updatePortPositions(self):
         for edge in self.edges:
-            edge.updatePath()    
+            edge.updatePath() 
+
+    def addDownStreamNode(self, target_node_index, output_port):
+        if output_port == self.output_port:
+            self.node_dict["down_stream_nodes"].append([target_node_index, 0])
+
+    def removeDownStreamNode(self, target_node_index, output_port):
+        if output_port == self.output_port:
+            self.node_dict["down_stream_nodes"].remove([target_node_index, 0])
 
         
 class OutputNode(QGraphicsItem):
@@ -301,7 +326,10 @@ class OutputNode(QGraphicsItem):
                     "min_value": None,
                     "current_value": f"{path}"
                 }
-            ]
+            ],
+            "down_stream_nodes": [],
+            "scene_pos": [0, 0]
+
         }
         self.width = 200
         self.height = 70
@@ -382,7 +410,8 @@ class OutputNode(QGraphicsItem):
     
     def updatePortPositions(self):
         for edge in self.edges:
-            edge.updatePath()    
+            edge.updatePath()  
+            
 
 
 class FileInputNode(QGraphicsItem):
@@ -399,7 +428,9 @@ class FileInputNode(QGraphicsItem):
                     "min_value": None,
                     "current_value": f"{path}"
                 }
-            ]
+            ],
+            "down_stream_nodes": [],
+            "scene_pos": [0, 0]
         }
         self.width = 200
         self.height = 200
@@ -475,6 +506,16 @@ class FileInputNode(QGraphicsItem):
     def updatePortPositions(self):
         for edge in self.edges:
             edge.updatePath()
+
+    def addDownStreamNode(self, target_node_index, output_port):
+        if output_port == self.output_port:
+            self.node_dict["down_stream_nodes"].append([target_node_index, 0])
+           
+
+    def removeDownStreamNode(self, target_node_index, output_port):
+        if output_port == self.output_port:
+            self.node_dict["down_stream_nodes"].remove([target_node_index, 0])
+               
         
 
 if __name__ == "__main__":

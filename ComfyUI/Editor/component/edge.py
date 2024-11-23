@@ -45,23 +45,19 @@ class DraggingEdge(QGraphicsPathItem):
         painter.drawPath(self.path())
 
 class NodeEdge(QGraphicsPathItem):
-    def __init__(self, source_port, des_port, parent=None, scene=None):
+    def __init__(self, upper_port, lower_port, parent=None, scene=None):
         super().__init__(parent, scene)
-        self.source_port = source_port
-        self.des_port = des_port
+        self.upper_port = upper_port
+        self.lower_port = lower_port
         self.source_pos = None
         self.des_pos = None
-        self.setZValue(-1)
+        self.setZValue(0)
         self.updatePath()
-        self.source_port.addConnectedEdge(self)
-        self.des_port.addConnectedEdge(self)
-        self.source_port.parent_node.edges.append(self)
-        self.des_port.parent_node.edges.append(self)
-    
+        self.setFlags(QGraphicsItem.ItemIsSelectable)
 
     def updatePath(self):
-        self.source_pos = self.source_port.getPortPos()
-        self.des_pos = self.des_port.getPortPos()
+        self.source_pos = self.upper_port.getPortPos()
+        self.des_pos = self.lower_port.getPortPos()
         
         control_point1 = QPointF((self.source_pos.x() + self.des_pos.x()) / 2, self.source_pos.y())
         control_point2 = QPointF((self.source_pos.x() + self.des_pos.x()) / 2, self.des_pos.y())

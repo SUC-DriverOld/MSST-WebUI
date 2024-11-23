@@ -82,12 +82,10 @@ class EditorScene(QGraphicsScene):
     def mouseReleaseEvent(self, event):
         if self.dragging_edge_mode:
             item = self.itemAt(event.scenePos(), self.views()[0].transform())
-            print(item)
 
             if isinstance(item, InputPort) or isinstance(item, OutputPort):
                 if self.source_port != item:
-                    node_edge = NodeEdge(self.source_port, item, scene=self)
-                    self.addItem(node_edge)
+                    self.createNodeEdge(self.source_port, item)
 
             self.removeItem(self.dragging_edge)
             self.dragging_edge = None
@@ -96,22 +94,41 @@ class EditorScene(QGraphicsScene):
 
         super().mouseReleaseEvent(event)
 
-    def createNodeEdge(self, source_port, des_port):
-        if isinstance(source_port, InputPort) and isinstance(des_port, OutputPort):
-            upper_port = des_port
-            lower_port = source_port
-            upper_node = des_port.parent_node
-            lower_node = source_port.parent_node
-        elif isinstance(source_port, OutputPort) and isinstance(des_port, InputPort):
-            upper_port = source_port
-            lower_port = des_port
-            upper_node = source_port.parent_node
-            lower_node = des_port.parent_node
+    def createNodeEdge(self, port1, port2):
+        if isinstance(port1, InputPort) and isinstance(port2, OutputPort):
+            upper_port = port2
+            lower_port = port1
+            
+        elif isinstance(port1, OutputPort) and isinstance(port2, InputPort):
+            upper_port = port1
+            lower_port = port2
         else:
             return    
+        upper_node = upper_port.parent_node
+        lower_node = lower_port.parent_node
 
-        node_edge = NodeEdge(source_port, des_port, scene=self)
-
+        node_edge = NodeEdge(upper_port, lower_port, scene=self)
+        upper_port.setConnectionState(True)
+        lower_port.setConnectionState(True)
+        upper_node.addDownStreamNode(lower_node.node_dict["index"], upper_port)
+        upper_node.edges.append(node_edge)
+        lower_node.edges.append(node_edge)
+        upper_port.connected_edges.append(node_edge)
+        lower_port.connected_edges.append(node_edge)
         
         self.addItem(node_edge)
-        return node_edge    
+        
+
+    def removeNodeEdge(self, edge):
+        upper_port = edge.upper_port
+        lower_port = edge.lower_port
+        upper_node = upper_port.parent_node
+        lower_node = lower_port.parent_node
+        upper_port.setConnectionState(False)
+        lower_port.setConnectionState(False)
+        upper_node.removeDownStreamNode(lower_node.node_dict["index"], upper_port)
+        upper_node.edges.remove(edge)
+        lower_node.edges.remove(edge)
+        upper_port.connected_edges.remove(edge)
+        lower_port.connected_edges.remove(edge)
+        self.removeItem(edge)
