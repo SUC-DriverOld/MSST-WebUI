@@ -30,6 +30,8 @@ presets_backup/
 setup.py
 app.c
 go-webui.bat
+DownloadManager.exe
+go-DownloadManager.bat
 
 *.ckpt
 *.pt

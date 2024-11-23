@@ -2,17 +2,20 @@ import shutil
 import requests
 import webbrowser
 import time
+import hashlib
+
 from tqdm import tqdm
 import gradio as gr
 import traceback
 
 from utils.constant import *
-from webui.utils import i18n, load_configs, save_configs, load_vr_model, get_vr_model, load_msst_model, get_msst_model, open_folder, logger
+from webui.utils import (
+    i18n, load_configs, save_configs, load_vr_model, get_vr_model,
+    load_msst_model, get_msst_model, open_folder, logger, load_model_info)
 
 def open_model_folder(model_type):
     if not model_type:
-        gr.Info(i18n("请先选择模型类型"))
-        return
+        open_folder(MODEL_FOLDER)
     if model_type == "UVR_VR_Models":
         config = load_configs(WEBUI_CONFIG)
         uvr_model_folder = config['settings']['uvr_model_dir']
@@ -33,6 +36,46 @@ def upgrade_download_model_name(model_type_dropdown):
     else:
         model_map = load_configs(MSST_MODEL)
         return gr.Dropdown(label=i18n("选择模型"), choices=[model["name"] for model in model_map[model_type_dropdown]])
+
+def caculate_sha256(file_path):
+    sha256 = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        while True:
+            data = f.read(65536)
+            if not data:
+                break
+            sha256.update(data)
+    return sha256.hexdigest()
+
+def show_model_info(model_type, model_name):
+    info = i18n("模型名字") + f": {model_name}\n" + i18n("模型类型") + f": {model_type}\n"
+    if model_type == "UVR_VR_Models":
+        primary_stem, secondary_stem, model_url, path = get_vr_model(model_name)
+        info += i18n("主要提取音轨") + f": {primary_stem}, " + i18n("次要提取音轨") + f": {secondary_stem}\n" + i18n("下载链接") + f": {model_url}\n"
+        model_path = os.path.join(path, model_name)
+    else:
+        model_path, config_path, type, download_link = get_msst_model(model_name)
+        config = load_configs(config_path)
+        instruments = str(config.training.get("instruments", "Unknown"))
+        info += i18n("模型类别") + f": {type}\n" + i18n("可提取音轨") + f": {instruments}\n" + i18n("下载链接") + f": {download_link}\n"
+
+    model_size, sha256 = load_model_info(model_name)
+    info += i18n("模型大小") + f": {model_size} MB\n" + f"sha256: {sha256}\n"
+
+    if os.path.isfile(model_path):
+        info += i18n("模型已安装") + ", "
+        if sha256 != caculate_sha256(model_path):
+            info += i18n("sha256校验失败")
+            gr.Warning(i18n("模型sha256校验失败, 请重新下载"))
+            logger.error(f"Model {model_name} sha256 check failed, please redownload")
+        else:
+            info += i18n("sha256校验成功")
+            logger.info(f"Model {model_name} sha256 check passed")
+    else:
+        info += i18n("模型未安装")
+
+    logger.debug(f"Model info: {info}")
+    return info
 
 def download_model(model_type, model_name):
     if model_type not in MODEL_CHOICES:
@@ -80,11 +123,26 @@ def download_file(url, path, model_name):
                         last_update_time = current_time
                 progress_bar.update(bytes_written)
 
-        logger.info(f"Model {model_name} downloaded successfully")
-
-        return i18n("模型") + model_name + i18n("下载成功")
+        current_sha256 = caculate_sha256(path)
+        _, target_sha256 = load_model_info(model_name)
+        logger.debug(f"Model {model_name} sha256: {current_sha256}, target sha256: {target_sha256}")
+        if target_sha256 != "Unknown":
+            if target_sha256 != current_sha256:
+                logger.error(f"Model {model_name} sha256 check failed")
+                try: os.remove(path)
+                except: pass
+                return i18n("模型") + model_name + i18n("sha256校验失败") + ", " + i18n("请重新下载")
+            else:
+                logger.info(f"Model {model_name} downloaded successfully, sha256 check passed")
+                return i18n("模型") + model_name + i18n("下载成功") + ", " + i18n("sha256校验成功")
+        else:
+            logger.info(f"Model {model_name} downloaded successfully")
+            logger.warning(f"Model {model_name} sha256 is unknown, cannot verify")
+            return i18n("模型") + model_name + i18n("下载成功") + ", " + i18n("sha256校验未知")
     except Exception as e:
         logger.error(f"Failed to download model: {str(e)}\n{traceback.format_exc()}")
+        try: os.remove(path)
+        except: pass
         return i18n("模型") + model_name + i18n("下载失败") + str(e)
 
 def manual_download_model(model_type, model_name):

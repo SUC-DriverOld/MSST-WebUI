@@ -2,44 +2,40 @@
 # Use command: pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 # torch>=2.0.1
 
-numpy
-pandas
-scipy
-soundfile
-ml_collections
-tqdm
-segmentation_models_pytorch==0.3.3
-timm==0.9.2
+accelerate
+asteroid==0.7.0
 audiomentations==0.24.0
-pedalboard~=0.8.1
-omegaconf==2.2.3
+auraloss
 beartype==0.14.1
-rotary_embedding_torch==0.3.5
+bitsandbytes
+colorama
+demucs==4.0.0
 einops==0.6.1
-mido
+fastapi==0.111.0
+gradio==4.38.1
+huggingface-hub>=0.23.0
 librosa==0.9.2
 lightning>=2.0.0
-demucs==4.0.0
-transformers~=4.35.0
-torchmetrics==0.11.4
-spafe==0.3.2
-protobuf==3.20.3
-torch_audiomentations
-asteroid==0.7.0
-samplerate
-auraloss
-torchseg
-bitsandbytes
-gradio==4.38.1
-psutil
-accelerate
-huggingface-hub>=0.23.0
+ml_collections
+mido
+omegaconf==2.2.3
+pedalboard~=0.8.1
 prodigyopt
+protobuf==3.20.3
+psutil
+rotary_embedding_torch==0.3.5
+samplerate
+scipy
+segmentation_models_pytorch==0.3.3
+soundfile
+spafe==0.3.2
+timm==0.9.2
+torch_audiomentations
 torch_log_wmse
-colorama
-
-# Sep 7, 2024: fastapi updated to 0.114.0, which may cause issues. Please use fastapi==0.111.0 instead.
-fastapi==0.111.0
+torchmetrics==0.11.4
+torchseg
+transformers~=4.35.0
+tqdm
 
 # After installing the requirements, go to site-packages folder, open "\librosa\util\utils.py" and go to line 2185
 # Change the line from "np.dtype(complex): np.dtype(np.float).type," to "np.dtype(complex): np.dtype(float).type,"\

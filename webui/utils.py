@@ -165,6 +165,18 @@ def get_vr_model(model):
                 return primary_stem, secondary_stem, model_url, model_path
     raise gr.Error(i18n("模型不存在!"))
 
+def load_model_info(model_name):
+    model_info = load_configs(MODELS_INFO)
+    if model_name in model_info.keys():
+        model_size = model_info[model_name].get("model_size", "Unknown")
+        share256 = model_info[model_name].get("sha256", "Unknown")
+        if model_size != "Unknown":
+            model_size = round(int(model_size) / 1024 / 1024, 2)
+    else:
+        model_size = "Unknown"
+        share256 = "Unknown"
+    return model_size, share256
+
 
 def select_folder():
     root = tk.Tk()

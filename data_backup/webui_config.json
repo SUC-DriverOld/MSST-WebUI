@@ -1,5 +1,5 @@
 {
-    "version": "1.7 preview.1",
+    "version": "1.7 preview.3",
     "inference": {
         "model_type": null,
         "selected_model": null,

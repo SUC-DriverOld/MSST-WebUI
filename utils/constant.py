@@ -63,6 +63,9 @@ VR_MODEL_BACKUP = "data_backup/vr_model_map.json"
 LANGUAGE = "data/language.json"
 LANGUAGE_BACKUP = "data_backup/language.json"
 
+# path to models information config
+MODELS_INFO = "data/models_info.json"
+
 # path to pretrain folder
 MODEL_FOLDER = "pretrain"
 

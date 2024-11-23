@@ -106,7 +106,6 @@ def settings(webui_config, language_dict, platform, device):
                         reset_seetings = gr.Button(i18n("重置WebUI设置"), variant="primary")
                     setting_output_message = gr.Textbox(label="Output Message")
                 with gr.Column(scale=1):
-                    gr.Markdown(i18n("### 设置说明"))
                     gr.Markdown(i18n("### 选择UVR模型目录"))
                     gr.Markdown(i18n("如果你的电脑中有安装UVR5, 你不必重新下载一遍UVR5模型, 只需在下方“选择UVR模型目录”中选择你的UVR5模型目录, 定位到models/VR_Models文件夹。<br>例如: E:/Program Files/Ultimate Vocal Remover/models/VR_Models 点击保存设置或重置设置后, 需要重启WebUI以更新。"))
                     gr.Markdown(i18n("### 检查更新"))
@@ -117,6 +116,7 @@ def settings(webui_config, language_dict, platform, device):
                     gr.Markdown(i18n("仅重置WebUI设置, 例如UVR模型路径, WebUI端口等。重置WebUI设置后, 需要重启WebUI。"))
                     gr.Markdown(i18n("### 重启WebUI"))
                     gr.Markdown(i18n("点击 “重启WebUI” 按钮后, 会短暂性的失去连接, 随后会自动开启一个新网页。"))
+                    restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
         with gr.TabItem(label=i18n("模型改名")):
             gr.Markdown(i18n("此页面支持用户自定义修改模型名字, 以便记忆和使用。修改完成后, 需要重启WebUI以刷新模型列表。<br>【注意】此操作不可逆 (无法恢复至默认命名), 请谨慎命名。输入新模型名字时, 需保留后缀!"))
             with gr.Row():
@@ -141,7 +141,6 @@ def settings(webui_config, language_dict, platform, device):
             )
             rename_model = gr.Button(i18n("确认修改"), variant="primary")
             rename_output_message = gr.Textbox(label="Output Message")
-    restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
 
     restart_webui.click(fn=webui_restart, outputs=setting_output_message)
     check_update.click(fn=check_webui_update, outputs=update_message)
