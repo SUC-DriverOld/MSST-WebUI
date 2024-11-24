@@ -42,6 +42,7 @@
         }
     ],
     "down_stream_nodes": [],
+    "up_stream_node": -1,
     "output_format": "wav",
     "scene_pos": [
         0,

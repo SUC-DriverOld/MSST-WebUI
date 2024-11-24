@@ -1,13 +1,14 @@
-from ComfyUI.Editor.component.editor_scene import editorScene
+from ComfyUI.Editor.component.editor_scene import EditorScene
 from ComfyUI.Editor.common.config import cfg
 from PySide6.QtWidgets import QGraphicsView, QSizePolicy
 from PySide6.QtGui import QPainter, QMouseEvent
 from PySide6.QtCore import Qt
+from ComfyUI.Editor.component.node_port import InputPort, OutputPort
 
-class editorView(QGraphicsView):
+class EditorView(QGraphicsView):
     def __init__(self, parent = None):
         super().__init__(parent)
-        self.scene = editorScene(self)
+        self.scene = EditorScene(self)
         self.setScene(self.scene)
         self.setupParameters()
         self.setupPolicy()
@@ -16,6 +17,7 @@ class editorView(QGraphicsView):
         #     border-radius: 20px;
         # """)
         self._last_mouse_pos = None
+        self.setAcceptDrops(True)
 
     def setupParameters(self):
         self._zoom_clamp = [0.2, 2]
@@ -75,3 +77,25 @@ class editorView(QGraphicsView):
             self._last_mouse_pos = event.pos()
         else:
             super().mouseMoveEvent(event)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+            text = event.mimeData().text()
+            pos = self.mapToScene(event.pos())
+            self.scene.addNodeFromText(text, pos)
+        else:
+            event.ignore()
+

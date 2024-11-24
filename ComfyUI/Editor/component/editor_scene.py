@@ -1,16 +1,18 @@
 import sys
 import math
-from PySide6.QtWidgets import QGraphicsScene
+from PySide6.QtWidgets import QGraphicsScene, QGraphicsView
 from PySide6.QtGui import QBrush, QColor, QPen, QPainter
-from PySide6.QtCore import QLine
+from PySide6.QtCore import QLine, Qt
 from ComfyUI.Editor.component.edge import NodeEdge, DraggingEdge
 from ComfyUI.Editor.component.node_port import InputPort, OutputPort
+from ComfyUI.Editor.component.node import InputNode, OutputNode, FileInputNode, ModelNode
 
 class EditorScene(QGraphicsScene):
     def __init__(self, parent = None):
         super().__init__(parent)
         self.view = None
         self.dragging_edge_mode = False
+        self.nodes = []
 
     def drawBackground(self, painter: QPainter, rect) -> None:
         self.setBackgroundBrush(QBrush(QColor('#212121')))
@@ -69,6 +71,7 @@ class EditorScene(QGraphicsScene):
             self.dragging_edge = DraggingEdge(scene=self)  # 创建拖拽连接线
             self.dragging_edge.setSourcePos(self.source_port.getPortPos())  # 设置起始位置
             self.addItem(self.dragging_edge)  # 将拖拽连接线添加到场景中
+            self.views()[0].setDragMode(QGraphicsView.NoDrag)
         else:    
             super().mousePressEvent(event)
 
@@ -91,8 +94,30 @@ class EditorScene(QGraphicsScene):
             self.dragging_edge = None
             self.source_port = None
             self.dragging_edge_mode = False
+            self.views()[0].setDragMode(QGraphicsView.RubberBandDrag)
 
         super().mouseReleaseEvent(event)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
+            for item in self.selectedItems():
+                if isinstance(item, NodeEdge):
+                    self.removeNodeEdge(item)
+                else:
+                    self.removeNode(item)
+            super().keyPressEvent(event)
+
+    def addNodeFromText(self, text, pos):
+        if text == "Input Node":
+            node = InputNode(path="input/")
+        elif text == "Output Node":
+            node = OutputNode(path="output/")
+        elif text == "File Input Node":
+            node = FileInputNode(path="tmp/input/")
+        else:
+            node = ModelNode(text)
+        node.setPos(pos)
+        self.addNode(node)
 
     def createNodeEdge(self, port1, port2):
         if isinstance(port1, InputPort) and isinstance(port2, OutputPort):
@@ -108,27 +133,41 @@ class EditorScene(QGraphicsScene):
         lower_node = lower_port.parent_node
 
         node_edge = NodeEdge(upper_port, lower_port, scene=self)
-        upper_port.setConnectionState(True)
-        lower_port.setConnectionState(True)
+        
         upper_node.addDownStreamNode(lower_node.node_dict["index"], upper_port)
+        lower_node.addUpStreamNode(upper_node.node_dict["index"])
         upper_node.edges.append(node_edge)
         lower_node.edges.append(node_edge)
         upper_port.connected_edges.append(node_edge)
         lower_port.connected_edges.append(node_edge)
-        
         self.addItem(node_edge)
-        
+        upper_port.updateConnectionState()
+        lower_port.updateConnectionState()
 
     def removeNodeEdge(self, edge):
         upper_port = edge.upper_port
         lower_port = edge.lower_port
         upper_node = upper_port.parent_node
         lower_node = lower_port.parent_node
-        upper_port.setConnectionState(False)
-        lower_port.setConnectionState(False)
         upper_node.removeDownStreamNode(lower_node.node_dict["index"], upper_port)
+        lower_node.removeUpStreamNode(upper_node.node_dict["index"])
         upper_node.edges.remove(edge)
         lower_node.edges.remove(edge)
         upper_port.connected_edges.remove(edge)
         lower_port.connected_edges.remove(edge)
         self.removeItem(edge)
+        upper_port.updateConnectionState()
+        lower_port.updateConnectionState()
+
+    def addNode(self, node):
+        self.addItem(node)
+        node.node_dict["index"] = len(self.nodes)
+        self.nodes.append(node)
+
+    def removeNode(self, node):
+        self.removeItem(node)
+        self.nodes.remove(node)
+        edges_to_remove = node.edges.copy()
+        for edge in edges_to_remove:
+            self.removeNodeEdge(edge)
+

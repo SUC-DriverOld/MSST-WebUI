@@ -59,8 +59,12 @@ class InputPort(QGraphicsItem):
         text_rect = QRectF(22.5, (self.height - text_height) / 2, max_text_width, text_height)
         painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
 
-    def setConnectionState(self, connected):
+    def updateConnectionState(self):
         """设置连接状态，并触发重绘"""
+        if len(self.connected_edges) > 0:
+            connected = True
+        else:
+            connected = False
         self.is_connected = connected
         self.update() 
 
@@ -135,10 +139,14 @@ class OutputPort(QGraphicsItem):
         text_rect = QRectF(77.5 - min(max_text_width, text_width), (self.height - text_height) / 2, max_text_width, text_height)
         painter.drawText(text_rect, Qt.AlignVCenter, truncated_text)
 
-    def setConnectionState(self, connected):
+    def updateConnectionState(self):
         """设置连接状态，并触发重绘"""
+        if len(self.connected_edges) > 0:
+            connected = True
+        else:
+            connected = False
         self.is_connected = connected
-        self.update() 
+        self.update()
 
     def setParentNode(self, node, index=-1):
         self.parent_node = node  

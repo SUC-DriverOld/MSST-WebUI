@@ -34,6 +34,7 @@ example of a node_dict:
         }
     ],
     down_stream_nodes: [[1, 0], [2, 1]], # list of downstream nodes, each element is a list of [index, output_port_index], default is []
+    up_stream_node: -1, # index of the upstream node, default is -1, note that there is only one upstream node
     output_format: "wav", # output format of the node, in ["wav", "mp3", "flac"]
     scene_pos: [0, 0], # position of the node in the scene, default is [0, 0]
 }
@@ -202,6 +203,18 @@ class ModelNode(QGraphicsItem):
                 break
         print(self.node_dict["down_stream_nodes"])
 
+    def addUpStreamNode(self, target_node_index):
+        if self.node_dict["up_stream_node"] == -1:
+            self.node_dict["up_stream_node"] = target_node_index
+        else:
+            print("There is already an upstream node.")
+
+    def removeUpStreamNode(self, target_node_index):
+        if self.node_dict["up_stream_node"] == target_node_index:
+            self.node_dict["up_stream_node"] = -1
+        else:
+            print("The target node is not the upstream node.")
+
 
 class InputNode(QGraphicsItem):
     def __init__(self, parent = None, path = "input/"):
@@ -219,6 +232,7 @@ class InputNode(QGraphicsItem):
                 }
             ],
             "down_stream_nodes": [],
+            "up_stream_node": -1,
             "scene_pos": [0, 0]
         }
         self.width = 200
@@ -328,6 +342,7 @@ class OutputNode(QGraphicsItem):
                 }
             ],
             "down_stream_nodes": [],
+            "up_stream_node": -1,
             "scene_pos": [0, 0]
 
         }
@@ -365,7 +380,7 @@ class OutputNode(QGraphicsItem):
         painter.setBrush(color)
         painter.drawPath(title_outline.simplified())
         
-        self.label = "Input Node"
+        self.label = "Output Node"
         painter.setFont(font)
         painter.setPen(QPen(Qt.white))
         painter.setBrush(color)
@@ -411,6 +426,18 @@ class OutputNode(QGraphicsItem):
     def updatePortPositions(self):
         for edge in self.edges:
             edge.updatePath()  
+
+    def addUpStreamNode(self, target_node_index):
+        if self.node_dict["up_stream_node"] == -1:
+            self.node_dict["up_stream_node"] = target_node_index
+        else:
+            print("There is already an upstream node.")
+
+    def removeUpStreamNode(self, target_node_index):
+        if self.node_dict["up_stream_node"] == target_node_index:
+            self.node_dict["up_stream_node"] = -1
+        else:
+            print("The target node is not the upstream node.")        
             
 
 
@@ -430,6 +457,7 @@ class FileInputNode(QGraphicsItem):
                 }
             ],
             "down_stream_nodes": [],
+            "up_stream_node": -1,
             "scene_pos": [0, 0]
         }
         self.width = 200
@@ -510,7 +538,6 @@ class FileInputNode(QGraphicsItem):
     def addDownStreamNode(self, target_node_index, output_port):
         if output_port == self.output_port:
             self.node_dict["down_stream_nodes"].append([target_node_index, 0])
-           
 
     def removeDownStreamNode(self, target_node_index, output_port):
         if output_port == self.output_port:
@@ -519,7 +546,7 @@ class FileInputNode(QGraphicsItem):
         
 
 if __name__ == "__main__":
-    from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QApplication, QWidget, QVBoxLayout
+    from PySide6.QtWidgets import QGraphicsView, QApplication, QWidget, QVBoxLayout
     from PySide6.QtGui import QPainter
     app = QApplication(sys.argv)
 
@@ -530,23 +557,23 @@ if __name__ == "__main__":
     widget.setFixedSize(1000, 500)
 
     test_node1 = ModelNode("7_HP2-UVR.pth")
-    scene.addItem(test_node1)
+    scene.addNode(test_node1)
     test_node1.setPos(50, 50)
 
     test_node2 = ModelNode("Apollo_LQ_MP3_restoration.ckpt")
-    scene.addItem(test_node2)
+    scene.addNode(test_node2)
     test_node2.setPos(300, 50)
 
     test_node3 = InputNode(path="input/")
-    scene.addItem(test_node3)
+    scene.addNode(test_node3)
     test_node3.setPos(550, 50)
 
     test_node4 = OutputNode(path="output/")
-    scene.addItem(test_node4)
+    scene.addNode(test_node4)
     test_node4.setPos(800, 50)
 
     test_node5 = FileInputNode(path="tmp/input/")
-    scene.addItem(test_node5)
+    scene.addNode(test_node5)
     test_node5.setPos(300, 300)
 
     
