@@ -10,6 +10,7 @@ parrent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parrent_dir)
 import glob
 import torch
+import librosa
 import soundfile as sf
 import numpy as np
 
@@ -59,6 +60,13 @@ def proc_list_of_files(
         start_time = time.time()
         mix, sr = sf.read(path)
         mix_orig = mix.copy()
+
+        if 'sample_rate' in config.audio:
+            if sr != config.audio['sample_rate']:
+                orig_length = mix.shape[0]
+                if verbose:
+                    logger.warning('Sample rate is different. In config: {} in file {}: {}, resample to {}'.format(config.audio['sample_rate'], path, sr, config.audio['sample_rate']))
+                mix = librosa.resample(mix, orig_sr=sr, target_sr=config.audio['sample_rate'], res_type='kaiser_best')
 
         # Fix for mono
         if len(mix.shape) == 1:
@@ -122,7 +130,13 @@ def proc_list_of_files(
                 track, sr1 = sf.read(folder + '/{}.{}'.format('vocals', extension))
                 track = mix_orig - track
 
-            estimates = waveforms[instr].T
+            estimates = waveforms[instr]
+
+            if 'sample_rate' in config.audio:
+                if sr != config.audio['sample_rate']:
+                    estimates = librosa.resample(estimates, orig_sr=config.audio['sample_rate'], target_sr=sr, res_type='kaiser_best')
+                    estimates = librosa.util.fix_length(estimates, size=orig_length)
+
             # logger.info(estimates.shape)
             if 'normalize' in config.inference:
                 if config.inference['normalize'] is True:
@@ -130,12 +144,12 @@ def proc_list_of_files(
 
             if store_dir != "":
                 out_wav_name = "{}/{}_{}.wav".format(store_dir, os.path.basename(folder), instr)
-                sf.write(out_wav_name, estimates, sr, subtype='FLOAT')
+                sf.write(out_wav_name, estimates.T, sr, subtype='FLOAT')
 
             track_metrics = get_metrics(
                 args.metrics,
                 track.T,
-                estimates.T,
+                estimates,
                 mix_orig.T,
                 device=device,
             )

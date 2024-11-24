@@ -110,10 +110,12 @@ class MSSeparator:
         self.logger.info(f"Model params: instruments: {config.training.instruments}, target_instrument: {config.training.target_instrument}")
         self.logger.debug(f"Model params: batch_size: {config.inference.get('batch_size', None)}, num_overlap: {config.inference.get('num_overlap', None)}, dim_t: {config.inference.get('dim_t', None)}, normalize: {config.inference.get('normalize', None)}, use_tta: {self.use_tta}")
 
-        if self.model_type == 'htdemucs':
+        if self.model_type in ['htdemucs', 'apollo']:
             state_dict = torch.load(self.model_path, map_location=self.device, weights_only=False)
             if 'state' in state_dict:
                 state_dict = state_dict['state']
+            if 'state_dict' in state_dict:
+                state_dict = state_dict['state_dict']
         else:
             state_dict = torch.load(self.model_path, map_location=self.device, weights_only=True)
         model.load_state_dict(state_dict)
@@ -131,7 +133,10 @@ class MSSeparator:
 
         all_mixtures_path = [os.path.join(input_folder, f) for f in os.listdir(input_folder)]
 
-        self.logger.info(f"Input_folder: {input_folder}, Total files found: {len(all_mixtures_path)}")
+        sample_rate = 44100
+        if 'sample_rate' in self.config.audio:
+            sample_rate = self.config.audio['sample_rate']
+        self.logger.info(f"Input_folder: {input_folder}, Total files found: {len(all_mixtures_path)}, Use sample rate: {sample_rate}")
 
         if not self.debug:
             all_mixtures_path = tqdm(all_mixtures_path, desc="Total progress")
@@ -140,9 +145,8 @@ class MSSeparator:
         for path in all_mixtures_path:
             if not self.debug:
                 all_mixtures_path.set_postfix({'track': os.path.basename(path)})
-
             try:
-                mix, sr = librosa.load(path, sr=44100, mono=False)
+                mix, sr = librosa.load(path, sr=sample_rate, mono=False)
             except Exception as e:
                 self.logger.warning(f'Cannot process track: {path}, error: {str(e)}')
                 continue
