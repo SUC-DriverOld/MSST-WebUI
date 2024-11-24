@@ -44,7 +44,7 @@ def caculate_sha256(file_path):
     sha256 = hashlib.sha256()
     with open(file_path, "rb") as f:
         while True:
-            data = f.read(65536)
+            data = f.read(1048576)
             if not data:
                 break
             sha256.update(data)
@@ -77,7 +77,6 @@ def show_model_info(model_type, model_name):
     else:
         info += i18n("模型未安装")
 
-    logger.debug(f"Model info: {info}")
     return info
 
 def download_model(model_type, model_name):
@@ -132,8 +131,6 @@ def download_file(url, path, model_name):
         if target_sha256 != "Unknown":
             if target_sha256 != current_sha256:
                 logger.error(f"Model {model_name} sha256 check failed")
-                try: os.remove(path)
-                except: pass
                 return i18n("模型") + model_name + i18n("sha256校验失败") + ", " + i18n("请重新下载")
             else:
                 logger.info(f"Model {model_name} downloaded successfully, sha256 check passed")
@@ -144,8 +141,6 @@ def download_file(url, path, model_name):
             return i18n("模型") + model_name + i18n("下载成功") + ", " + i18n("sha256校验未知")
     except Exception as e:
         logger.error(f"Failed to download model: {str(e)}\n{traceback.format_exc()}")
-        try: os.remove(path)
-        except: pass
         return i18n("模型") + model_name + i18n("下载失败") + str(e)
 
 def manual_download_model(model_type, model_name):
