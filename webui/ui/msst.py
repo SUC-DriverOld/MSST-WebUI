@@ -51,7 +51,7 @@ def msst(webui_config, device, force_cpu_flag=False):
         )
         output_format = gr.Radio(
             label=i18n("输出格式"),
-            choices=["wav", "mp3", "flac"],
+            choices=["wav", "flac", "mp3"],
             value=webui_config['inference']['output_format'] if webui_config['inference']['output_format'] else "wav",
             interactive=True
         )

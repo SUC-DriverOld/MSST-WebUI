@@ -27,6 +27,7 @@ class Separator:
         invert_using_spec=False,
         use_cpu=False,
         vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
+        audio_params={"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"}
     ):
         if debug:
             set_log_level(logger, logging.DEBUG)
@@ -52,6 +53,7 @@ class Separator:
         self.torch_device_cpu = None
         self.torch_device_mps = None
         self.model_instance = None
+        self.audio_params = audio_params
 
         self.setup_accelerated_inferencing_device()
         self.load_model(self.model_file)
@@ -237,7 +239,7 @@ class Separator:
     def save_audio(self, audio, sr, file_name, store_dir):
         if self.output_format.lower() == 'flac':
             file = os.path.join(store_dir, file_name + '.flac')
-            sf.write(file, audio, sr, subtype='PCM_24')
+            sf.write(file, audio, sr, subtype=self.audio_params["flac_bit_depth"])
 
         elif self.output_format.lower() == 'mp3':
             file = os.path.join(store_dir, file_name + '.mp3')
@@ -252,11 +254,11 @@ class Separator:
                 channels=2
                 )
 
-            audio_segment.export(file, format='mp3', bitrate='320k')
+            audio_segment.export(file, format='mp3', bitrate=self.audio_params["mp3_bit_rate"])
 
         else:
             file = os.path.join(store_dir, file_name + '.wav')
-            sf.write(file, audio, sr, subtype='FLOAT')
+            sf.write(file, audio, sr, subtype=self.audio_params["wav_bit_depth"])
 
     def del_cache(self):
         self.logger.debug("Running garbage collection...")

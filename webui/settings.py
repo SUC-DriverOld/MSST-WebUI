@@ -143,6 +143,14 @@ def change_theme(theme):
     logger.info(f"Change theme to: {theme}")
     return i18n("主题已更改, 重启WebUI生效")
 
+def save_audio_setting_fn(wav_bit_depth, flac_bit_depth, mp3_bit_rate):
+    config = load_configs(WEBUI_CONFIG)
+    config['settings']['wav_bit_depth'] = wav_bit_depth
+    config['settings']['flac_bit_depth'] = flac_bit_depth
+    config['settings']['mp3_bit_rate'] = mp3_bit_rate
+    save_configs(config, WEBUI_CONFIG)
+    return i18n("音频设置已保存")
+
 def update_rename_model_name(model_type):
     if model_type == "UVR_VR_Models":
         downloaded_model = load_vr_model()

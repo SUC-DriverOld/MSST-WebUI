@@ -141,6 +141,9 @@ def start_inference(selected_model, input_folder, store_dir, extract_instrumenta
     model_path, config_path, model_type, _ = get_msst_model(selected_model)
     webui_config = load_configs(WEBUI_CONFIG)
     debug = webui_config["settings"].get("debug", False)
+    wav_bit_depth = webui_config["settings"].get("wav_bit_depth", "FLOAT")
+    flac_bit_depth = webui_config["settings"].get("flac_bit_depth", "PCM_24")
+    mp3_bit_rate = webui_config["settings"].get("mp3_bit_rate", "320k")
 
     if type(store_dir) == str:
         store_dict = {}
@@ -160,7 +163,7 @@ def start_inference(selected_model, input_folder, store_dir, extract_instrumenta
     result_queue = multiprocessing.Queue()
     msst_inference = multiprocessing.Process(
         target=run_inference,
-        args=(model_type, config_path, model_path, device, gpu_ids, output_format, use_tta, store_dict, debug, input_folder, result_queue),
+        args=(model_type, config_path, model_path, device, gpu_ids, output_format, use_tta, store_dict, debug, wav_bit_depth, flac_bit_depth, mp3_bit_rate, input_folder, result_queue),
         name="msst_inference"
     )
 
@@ -178,8 +181,8 @@ def start_inference(selected_model, input_folder, store_dir, extract_instrumenta
     else:
         return i18n("用户强制终止")
 
-def run_inference(model_type, config_path, model_path, device, gpu_ids, output_format, use_tta, store_dict, debug, input_folder, result_queue):
-    logger.debug(f"Start MSST inference process with parameters: model_type={model_type}, config_path={config_path}, model_path={model_path}, device={device}, gpu_ids={gpu_ids}, output_format={output_format}, use_tta={use_tta}, store_dict={store_dict}, debug={debug}, input_folder={input_folder}")
+def run_inference(model_type, config_path, model_path, device, gpu_ids, output_format, use_tta, store_dict, debug, wav_bit_depth, flac_bit_depth, mp3_bit_rate, input_folder, result_queue):
+    logger.debug(f"Start MSST inference process with parameters: model_type={model_type}, config_path={config_path}, model_path={model_path}, device={device}, gpu_ids={gpu_ids}, output_format={output_format}, use_tta={use_tta}, store_dict={store_dict}, debug={debug}, wav_bit_depth={wav_bit_depth}, flac_bit_depth={flac_bit_depth}, mp3_bit_rate={mp3_bit_rate}, input_folder={input_folder}")
 
     try:
         separator = MSSeparator(
@@ -191,6 +194,11 @@ def run_inference(model_type, config_path, model_path, device, gpu_ids, output_f
             output_format=output_format,
             use_tta=use_tta,
             store_dirs=store_dict,
+            audio_params = {
+                "wav_bit_depth": wav_bit_depth, 
+                "flac_bit_depth": flac_bit_depth, 
+                "mp3_bit_rate": mp3_bit_rate
+            },
             logger=logger,
             debug=debug
         )

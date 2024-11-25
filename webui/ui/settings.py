@@ -15,6 +15,7 @@ from webui.settings import (
     save_port_to_config,
     save_auto_clean_cache,
     rename_name,
+    save_audio_setting_fn,
     update_rename_model_name,
     change_theme
 )
@@ -117,6 +118,28 @@ def settings(webui_config, language_dict, platform, device):
                     gr.Markdown(i18n("### 重启WebUI"))
                     gr.Markdown(i18n("点击 “重启WebUI” 按钮后, 会短暂性的失去连接, 随后会自动开启一个新网页。"))
                     restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
+        with gr.TabItem(label=i18n("音频输出设置")):
+            gr.Markdown(i18n("此页面支持用户自定义修改MSST/VR推理后输出音频的质量。输出音频的**采样率, 声道数与模型支持的参数有关, 无法更改**。<br>修改完成后点击保存设置即可生效。"))
+            wav_bit_depth = gr.Radio(
+                label=i18n("输出wav位深度"),
+                choices=["PCM_16", "PCM_24", "PCM_32", "FLOAT"],
+                value=webui_config['settings']['wav_bit_depth'] if webui_config['settings']['wav_bit_depth'] else "FLOAT",
+                interactive=True
+            )
+            flac_bit_depth = gr.Radio(
+                label=i18n("输出flac位深度"),
+                choices=["PCM_16", "PCM_24"],
+                value=webui_config['settings']['flac_bit_depth'] if webui_config['settings']['flac_bit_depth'] else "PCM_24",
+                interactive=True
+            )
+            mp3_bit_rate = gr.Radio(
+                label=i18n("输出mp3比特率(bps)"),
+                choices=['96k', '128k', '192k', '256k', '320k'],
+                value=webui_config['settings']['mp3_bit_rate'] if webui_config['settings']['mp3_bit_rate'] else "320k",
+                interactive=True
+            )
+            save_audio_setting = gr.Button(i18n("保存设置"), variant="primary")
+            audio_setting_output_message = gr.Textbox(label="Output Message")
         with gr.TabItem(label=i18n("模型改名")):
             gr.Markdown(i18n("此页面支持用户自定义修改模型名字, 以便记忆和使用。修改完成后, 需要重启WebUI以刷新模型列表。<br>【注意】此操作不可逆 (无法恢复至默认命名), 请谨慎命名。输入新模型名字时, 需保留后缀!"))
             with gr.Row():
@@ -197,6 +220,15 @@ def settings(webui_config, language_dict, platform, device):
         fn=change_theme,
         inputs=set_theme,
         outputs=setting_output_message
+    )
+    save_audio_setting.click(
+        fn=save_audio_setting_fn,
+        inputs=[
+            wav_bit_depth,
+            flac_bit_depth,
+            mp3_bit_rate
+        ], 
+        outputs=audio_setting_output_message
     )
     rename_model.click(
         fn=rename_name,

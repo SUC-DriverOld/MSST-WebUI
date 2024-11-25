@@ -216,6 +216,9 @@ class Presets:
         self.enable_post_process = webui_config['inference']['vr_enable_post_process']
         self.post_process_threshold = float(webui_config['inference']['vr_post_process_threshold'])
         self.high_end_process = webui_config['inference']['vr_high_end_process']
+        self.wav_bit_depth = webui_config["settings"].get("wav_bit_depth", "FLOAT")
+        self.flac_bit_depth = webui_config["settings"].get("flac_bit_depth", "PCM_24")
+        self.mp3_bit_rate = webui_config["settings"].get("mp3_bit_rate", "320k")
         
         gpu_id = webui_config["inference"].get("device", None)
         self.gpu_ids = []
@@ -246,7 +249,8 @@ class Presets:
             target=run_inference,
             args=(
                 model_type, config_path, model_path, self.device, self.gpu_ids, output_format,
-                self.use_tta, store_dict, self.debug, input_folder, result_queue
+                self.use_tta, store_dict, self.debug, self.wav_bit_depth, self.flac_bit_depth,
+                self.mp3_bit_rate, input_folder, result_queue
             ),
             name="msst_preset_inference"
         )
@@ -271,7 +275,8 @@ class Presets:
             args=(
                 self.debug, model_file, output_dir, output_format, self.invert_using_spec, self.force_cpu,
                 self.batch_size, self.window_size, self.aggression, self.use_tta, self.enable_post_process,
-                self.post_process_threshold, self.high_end_process, input_folder, result_queue
+                self.post_process_threshold, self.high_end_process, self.wav_bit_depth, self.flac_bit_depth,
+                self.mp3_bit_rate, input_folder, result_queue
             ),
             name="vr_preset_inference"
         )

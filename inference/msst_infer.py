@@ -25,6 +25,7 @@ class MSSeparator:
             output_format = 'wav',
             use_tta = False,
             store_dirs = 'results', # str for single folder, dict with instrument keys for multiple folders
+            audio_params = {"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
             logger = get_logger(),
             debug = False
     ):
@@ -42,6 +43,7 @@ class MSSeparator:
         self.output_format = output_format
         self.use_tta = use_tta
         self.store_dirs = store_dirs
+        self.audio_params = audio_params
         self.logger = logger
         self.debug = debug
 
@@ -253,7 +255,7 @@ class MSSeparator:
     def save_audio(self, audio, sr, file_name, store_dir):
         if self.output_format.lower() == 'flac':
             file = os.path.join(store_dir, file_name + '.flac')
-            sf.write(file, audio, sr, subtype='PCM_24')
+            sf.write(file, audio, sr, subtype=self.audio_params['flac_bit_depth'])
 
         elif self.output_format.lower() == 'mp3':
             file = os.path.join(store_dir, file_name + '.mp3')
@@ -268,11 +270,11 @@ class MSSeparator:
                 channels=2
                 )
 
-            audio_segment.export(file, format='mp3', bitrate='320k')
+            audio_segment.export(file, format='mp3', bitrate=self.audio_params['mp3_bit_rate'])
 
         else:
             file = os.path.join(store_dir, file_name + '.wav')
-            sf.write(file, audio, sr, subtype='FLOAT')
+            sf.write(file, audio, sr, subtype=self.audio_params['wav_bit_depth'])
 
     def del_cache(self):
         self.logger.debug("Running garbage collection...")

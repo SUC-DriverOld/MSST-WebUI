@@ -65,6 +65,9 @@
         "share_link": false,
         "auto_clean_cache": false,
         "debug": false,
-        "theme": "theme_blue.json"
+        "theme": "theme_blue.json",
+        "wav_bit_depth": "FLOAT",
+        "flac_bit_depth": "PCM_24",
+        "mp3_bit_rate": "320k"
     }
 }
