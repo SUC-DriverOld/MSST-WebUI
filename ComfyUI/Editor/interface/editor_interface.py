@@ -1,22 +1,24 @@
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QWidget
-from PySide6.QtCore import QRect, QPropertyAnimation, Qt
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QFileDialog
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QDesktopServices
 
-from qfluentwidgets import CommandBar, TitleLabel, ScrollArea, PushButton, Action, FluentIcon, Flyout, FlyoutAnimationType
+from qfluentwidgets import CommandBar, TitleLabel, Action, FluentIcon, InfoBar, InfoBarPosition
 from ComfyUI.Editor.component.editor_view import EditorView
-from ComfyUI.Editor.component.model_selector import modelSelectorView
+# from ComfyUI.Editor.component.model_selector import modelSelectorView
 
 
 class EditorInterface(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName('EditorInterface')
+        self.scene = None
         self.setupUI()
 
     def setupUI(self):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(10, 10, 10, 10)
-        self.setupCommandBar()
         self.setMainView()
+        self.setupCommandBar()
 
     def setupCommandBar(self):
         self.label = TitleLabel(self.tr("Editor"))
@@ -25,21 +27,61 @@ class EditorInterface(QFrame):
         self.command_bar.addSeparator()
         self.command_bar.setButtonTight(True)
         self.command_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        self.command_bar.addAction(Action(FluentIcon.ADD, self.tr("Add"), triggered=self.showModelSelector))
-        self.layout.addWidget(self.command_bar)
+        # self.command_bar.addAction(Action(FluentIcon.ADD, self.tr("Add"), triggered=self.showModelSelector))
+        self.command_bar.addAction(Action(FluentIcon.FOLDER, self.tr("Open Preset Folder"), triggered=self.openPresetFolder))
+        self.command_bar.addAction(Action(FluentIcon.SAVE, self.tr("Save"), triggered=self.savePreset))
+        self.command_bar.addAction(Action(FluentIcon.PASTE, self.tr("Load"), triggered=self.loadPreset))
+        self.layout.insertWidget(0, self.command_bar)
 
     def setMainView(self): 
         self.editor_view = EditorView(self)
+        self.scene = self.editor_view.scene
         self.layout.addWidget(self.editor_view)
         self.layout.setStretch(0, 0)
         self.layout.setStretch(1, 1)
 
-    def showModelSelector(self):
-        self.model_selector_view = modelSelectorView(self)
-        Flyout.make(
-            view = self.model_selector_view,
-            target = self.command_bar,
-            parent = self,
-            aniType = FlyoutAnimationType.DROP_DOWN
-        )
+    # def showModelSelector(self):
+    #     self.model_selector_view = modelSelectorView(self)
+    #     Flyout.make(
+    #         view = self.model_selector_view,
+    #         target = self.command_bar,
+    #         parent = self,
+    #         aniType = FlyoutAnimationType.DROP_DOWN
+    #     )
+
+    def openPresetFolder(self):
+        defalut_path = "./ComfyUI/Editor/data/presets"
+        QDesktopServices.openUrl(QUrl.fromLocalFile(defalut_path))
+
+    def savePreset(self):
+        defalut_path = "./ComfyUI/Editor/data/presets"
+        file_path, _ = QFileDialog.getSaveFileName(self, self.tr("save preset"), defalut_path, "Preset Files (*.preset)")
+        if file_path:
+            self.scene.saveToJson(file_path)
+            InfoBar.success(
+                title=self.tr("Save Preset Success"),
+                content=self.tr(f"Preset saved to {file_path}"),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+
+    def loadPreset(self):
+        defalut_path = "./ComfyUI/Editor/data/presets"
+        file_path, _ = QFileDialog.getOpenFileName(self, self.tr("load preset"), defalut_path, "Preset Files (*.preset)")
+        if file_path:
+            self.scene.loadFromJson(file_path)
+            InfoBar.success(
+                title=self.tr("Load Preset Success"),
+                content=self.tr(f"Preset loaded from {file_path}"),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+            
+
         

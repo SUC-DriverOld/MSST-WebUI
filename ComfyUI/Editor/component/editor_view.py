@@ -3,7 +3,7 @@ from ComfyUI.Editor.common.config import cfg
 from PySide6.QtWidgets import QGraphicsView, QSizePolicy
 from PySide6.QtGui import QPainter, QMouseEvent
 from PySide6.QtCore import Qt
-from ComfyUI.Editor.component.node_port import InputPort, OutputPort
+from ComfyUI.Editor.component.view_menu import ViewMenu
 
 class EditorView(QGraphicsView):
     def __init__(self, parent = None):
@@ -17,13 +17,13 @@ class EditorView(QGraphicsView):
         #     border-radius: 20px;
         # """)
         self._last_mouse_pos = None
+        self.view_menu = None
         self.setAcceptDrops(True)
 
     def setupParameters(self):
         self._zoom_clamp = [0.2, 2]
         self._view_scale = 1.0
         self._pan_sensitivity = cfg.get(cfg.pan_sensitivity)
-        print(self._pan_sensitivity)
 
     def setupPolicy(self):
         self.setRenderHints(QPainter.Antialiasing |
@@ -78,24 +78,35 @@ class EditorView(QGraphicsView):
         else:
             super().mouseMoveEvent(event)
 
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasText():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
+    # def dragEnterEvent(self, event):
+    #     if event.mimeData().hasText():
+    #         event.acceptProposedAction()
+    #     else:
+    #         event.ignore()
 
-    def dragMoveEvent(self, event):
-        if event.mimeData().hasText():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
+    # def dragMoveEvent(self, event):
+    #     if event.mimeData().hasText():
+    #         event.acceptProposedAction()
+    #     else:
+    #         event.ignore()
 
-    def dropEvent(self, event):
-        if event.mimeData().hasText():
-            event.acceptProposedAction()
-            text = event.mimeData().text()
-            pos = self.mapToScene(event.pos())
-            self.scene.addNodeFromText(text, pos)
-        else:
-            event.ignore()
+    # def dropEvent(self, event):
+    #     if event.mimeData().hasText():
+    #         event.acceptProposedAction()
+    #         text = event.mimeData().text()
+    #         pos = self.mapToScene(event.pos())
+    #         self.scene.addNodeFromText(text, pos)
+    #     else:
+    #         event.ignore()
 
+    def contextMenuEvent(self, event):
+        global_pos = event.globalPos()
+        view_pos = self.mapToGlobal(global_pos)
+        scene_pos = self.mapToScene(view_pos)
+
+        if not self.view_menu: 
+            self.view_menu = ViewMenu(self, scene_pos, self.scene)
+        else:
+            self.view_menu.scene_pos = scene_pos
+
+        self.view_menu.exec(event.globalPos())

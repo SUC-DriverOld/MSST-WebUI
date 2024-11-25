@@ -15,7 +15,6 @@ class ModelLibraryTree(TreeWidget):
         self.buildTree()
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setDragEnabled(True)
-        self.startDrag
 
     def buildTree(self):
         self.addTopLevelItems([

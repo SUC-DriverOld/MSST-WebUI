@@ -40,3 +40,4 @@ build/
 *.chpt
 *.pyd
 *.exe
+*.preset

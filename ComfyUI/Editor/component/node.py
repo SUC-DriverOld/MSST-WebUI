@@ -33,10 +33,10 @@ example of a node_dict:
             "current_value": False
         }
     ],
-    down_stream_nodes: [[1, 0], [2, 1]], # list of downstream nodes, each element is a list of [index, output_port_index], default is []
-    up_stream_node: -1, # index of the upstream node, default is -1, note that there is only one upstream node
-    output_format: "wav", # output format of the node, in ["wav", "mp3", "flac"]
-    scene_pos: [0, 0], # position of the node in the scene, default is [0, 0]
+    "down_stream_nodes": [[1, 0], [2, 1]], # list of downstream nodes, each element is a list of [index, output_port_index], default is []
+    "up_stream_node": -1, # index of the upstream node, default is -1, note that there is only one upstream node
+    "output_format": "wav", # output format of the node, in ["wav", "mp3", "flac"]
+    "scene_pos": [0, 0], # position of the node in the scene, default is [0, 0]
 }
 """
 
@@ -194,14 +194,14 @@ class ModelNode(QGraphicsItem):
             if port == output_port:
                 self.node_dict["down_stream_nodes"].append([target_node_index, i])
                 break
-        print(self.node_dict["down_stream_nodes"])
+        # print(self.node_dict["down_stream_nodes"])
 
     def removeDownStreamNode(self, target_node_index, output_port):
         for i, port in enumerate(self.output_ports):
             if port == output_port:
                 self.node_dict["down_stream_nodes"].remove([target_node_index, i])
                 break
-        print(self.node_dict["down_stream_nodes"])
+        # print(self.node_dict["down_stream_nodes"])
 
     def addUpStreamNode(self, target_node_index):
         if self.node_dict["up_stream_node"] == -1:
@@ -221,6 +221,7 @@ class InputNode(QGraphicsItem):
         super().__init__(parent)
         self.node_dict = {
             "index": -1, # index of the node, default is -1
+            "model_name": "Input Node",
             "parameter": [
                 {
                     "parameter": "folder_path",
@@ -293,6 +294,7 @@ class InputNode(QGraphicsItem):
         self.output_port.setParentItem(self)
         self.output_port.setPos(100, 30)
         self.output_port.setParentNode(self, index=0)
+        self.output_ports = [self.output_port]
 
         self.parameter_port = ParameterPort(
             parameter="folder_path",
@@ -331,6 +333,7 @@ class OutputNode(QGraphicsItem):
         super().__init__(parent)
         self.node_dict = {
             "index": -1, # index of the node, default is -1
+            "model_name": "Output Node",
             "parameter": [
                 {
                     "parameter": "folder_path",
@@ -403,6 +406,7 @@ class OutputNode(QGraphicsItem):
         self.input_port.setParentItem(self)
         self.input_port.setPos(0, 30)
         self.input_port.setParentNode(self, index=0)
+        self.input_ports = [self.input_port]
 
         self.parameter_port = ParameterPort(
             parameter="folder_path",
@@ -446,6 +450,7 @@ class FileInputNode(QGraphicsItem):
         super().__init__(parent)
         self.node_dict = {
             "index": -1, # index of the node, default is -1
+            "model_name": "File Input Node",
             "parameter": [
                 {
                     "parameter": "file_path",
@@ -519,6 +524,7 @@ class FileInputNode(QGraphicsItem):
         self.output_port.setParentItem(self)
         self.output_port.setPos(100, 30)
         self.output_port.setParentNode(self, index=0)
+        self.output_ports = [self.output_port]
 
     def add_file_drag_area(self):
         self.file_drag_area = FileDragArea(path=self.node_dict["parameter"][0]["default_value"])

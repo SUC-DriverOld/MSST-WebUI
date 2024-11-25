@@ -1,5 +1,6 @@
-import sys
+import json
 import math
+from qfluentwidgets import InfoBar, InfoBarPosition
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView
 from PySide6.QtGui import QBrush, QColor, QPen, QPainter
 from PySide6.QtCore import QLine, Qt
@@ -12,6 +13,7 @@ class EditorScene(QGraphicsScene):
         super().__init__(parent)
         self.view = None
         self.dragging_edge_mode = False
+        self.input_node = None
         self.nodes = []
 
     def drawBackground(self, painter: QPainter, rect) -> None:
@@ -109,17 +111,41 @@ class EditorScene(QGraphicsScene):
 
     def addNodeFromText(self, text, pos):
         if text == "Input Node":
+            if self.input_node:
+                InfoBar.error(
+                    title='Error',
+                    content="Only one Input Node is allowed",
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=-1,
+                    parent=self.views()[0]
+                )
+                return
             node = InputNode(path="input/")
+            self.input_node = node
         elif text == "Output Node":
             node = OutputNode(path="output/")
         elif text == "File Input Node":
+            if self.input_node:
+                InfoBar.error(
+                    title='Error',
+                    content="Only one Input Node is allowed",
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=-1,
+                    parent=self.views()[0]
+                )
+                return
             node = FileInputNode(path="tmp/input/")
+            self.input_node = node
         else:
             node = ModelNode(text)
         node.setPos(pos)
         self.addNode(node)
 
-    def createNodeEdge(self, port1, port2):
+    def createNodeEdge(self, port1, port2, from_load=False):
         if isinstance(port1, InputPort) and isinstance(port2, OutputPort):
             upper_port = port2
             lower_port = port1
@@ -134,8 +160,10 @@ class EditorScene(QGraphicsScene):
 
         node_edge = NodeEdge(upper_port, lower_port, scene=self)
         
-        upper_node.addDownStreamNode(lower_node.node_dict["index"], upper_port)
-        lower_node.addUpStreamNode(upper_node.node_dict["index"])
+        if not from_load:
+            upper_node.addDownStreamNode(lower_node.node_dict["index"], upper_port)
+            lower_node.addUpStreamNode(upper_node.node_dict["index"])
+
         upper_node.edges.append(node_edge)
         lower_node.edges.append(node_edge)
         upper_port.connected_edges.append(node_edge)
@@ -159,9 +187,12 @@ class EditorScene(QGraphicsScene):
         upper_port.updateConnectionState()
         lower_port.updateConnectionState()
 
-    def addNode(self, node):
+    def addNode(self, node, index=None):
         self.addItem(node)
-        node.node_dict["index"] = len(self.nodes)
+        if index is not None:
+            node.node_dict["index"] = index
+        else:
+            node.node_dict["index"] = len(self.nodes)
         self.nodes.append(node)
 
     def removeNode(self, node):
@@ -170,4 +201,44 @@ class EditorScene(QGraphicsScene):
         edges_to_remove = node.edges.copy()
         for edge in edges_to_remove:
             self.removeNodeEdge(edge)
+        if isinstance(node, InputNode) or isinstance(node, FileInputNode):
+            self.input_node = None
 
+    def saveToJson(self, save_path):
+        data = {}
+        for node in self.nodes:
+            node.node_dict["scene_pos"] = [node.scenePos().x(), node.scenePos().y()]
+            # print(node.node_dict)
+            data[node.node_dict["index"]] = node.node_dict
+        with open(save_path, 'w') as file:
+            json.dump(data, file, indent=4)
+
+    def loadFromJson(self, load_path):
+        data = json.load(open(load_path, 'r'))
+        for index in data:
+            node_data = data[index]
+            if node_data["model_name"] == "Input Node":
+                node = InputNode(path=node_data["parameter"][0]["current_value"])
+            elif node_data["model_name"] == "Output Node":
+                node = OutputNode(path=node_data["parameter"][0]["current_value"])
+            elif node_data["model_name"] == "File Input Node":
+                node = FileInputNode(path=node_data["parameter"][0]["current_value"])
+            else:
+                node = ModelNode(node_data["model_name"])
+
+            node.node_dict = node_data
+            # print(node.node_dict)
+            node.setPos(node_data["scene_pos"][0], node_data["scene_pos"][1])
+            self.addNode(node, index)
+
+        for index in data:
+            node_data = data[index]
+            if node_data["down_stream_nodes"]:
+                for item in node_data["down_stream_nodes"]:
+                    downstream_node_index, port_index = item
+                    # print(index, downstream_node_index, port_index)
+                    upper_node = self.nodes[int(index)]
+                    lower_node = self.nodes[int(downstream_node_index)]
+                    upper_port = upper_node.output_ports[port_index]
+                    lower_port = lower_node.input_ports[0]
+                    self.createNodeEdge(upper_port, lower_port, from_load=True)
