@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "Apollo_LQ_MP3_restoration.ckpt",
     "model_type": "apollo",
     "path": "./pretrain/single_stem_models/Apollo_LQ_MP3_restoration.ckpt",

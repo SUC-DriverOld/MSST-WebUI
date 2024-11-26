@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "model_mdx23c_ep_168_sdr_7.0207.ckpt",
     "model_type": "mdx23c",
     "path": "./pretrain/multi_stem_models/model_mdx23c_ep_168_sdr_7.0207.ckpt",

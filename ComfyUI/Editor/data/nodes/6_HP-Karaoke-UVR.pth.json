@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "6_HP-Karaoke-UVR.pth",
     "model_type": null,
     "path": "./pretrain/VR_Models/6_HP-Karaoke-UVR.pth",

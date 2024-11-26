@@ -1,0 +1,134 @@
+{
+    "d86ca1b1-7d60-4d68-9340-1d026e0299d0": {
+        "uid": "d86ca1b1-7d60-4d68-9340-1d026e0299d0",
+        "model_name": "Input Node",
+        "parameter": [
+            {
+                "parameter": "folder_path",
+                "type": "str",
+                "default_value": "input/",
+                "max_value": null,
+                "min_value": null,
+                "current_value": "input/"
+            }
+        ],
+        "down_stream_nodes": [
+            [
+                "4e0c3f72-97ea-46b5-93bc-344baf8bf2c9",
+                0
+            ]
+        ],
+        "up_stream_node": null,
+        "scene_pos": [
+            -631.0,
+            -292.0
+        ]
+    },
+    "994051c6-5d8e-4b12-9a3e-af9d3cb72fdb": {
+        "uid": "994051c6-5d8e-4b12-9a3e-af9d3cb72fdb",
+        "model_name": "Output Node",
+        "parameter": [
+            {
+                "parameter": "folder_path",
+                "type": "str",
+                "default_value": "output/",
+                "max_value": null,
+                "min_value": null,
+                "current_value": "output/"
+            }
+        ],
+        "down_stream_nodes": [],
+        "up_stream_node": null,
+        "scene_pos": [
+            1.0,
+            -304.0
+        ]
+    },
+    "4e0c3f72-97ea-46b5-93bc-344baf8bf2c9": {
+        "uid": "4e0c3f72-97ea-46b5-93bc-344baf8bf2c9",
+        "model_name": "10_SP-UVR-2B-32000-1.pth",
+        "model_type": null,
+        "path": "./pretrain/VR_Models/10_SP-UVR-2B-32000-1.pth",
+        "config_path": null,
+        "input": [
+            "input"
+        ],
+        "output": [
+            "Instrumental",
+            "Vocals"
+        ],
+        "parameter": [
+            {
+                "parameter": "batch_size",
+                "type": "int",
+                "default_value": 2,
+                "max_value": 100,
+                "min_value": 1,
+                "current_value": 2
+            },
+            {
+                "parameter": "window_size",
+                "type": "int",
+                "default_value": 512,
+                "max_value": 10000,
+                "min_value": 1,
+                "current_value": 512
+            },
+            {
+                "parameter": "aggression",
+                "type": "int",
+                "default_value": 5,
+                "max_value": 100,
+                "min_value": -100,
+                "current_value": 5
+            },
+            {
+                "parameter": "post_process_threshold",
+                "type": "float",
+                "default_value": 0.2,
+                "max_value": 0.3,
+                "min_value": 0.1,
+                "current_value": 0.2
+            }
+        ],
+        "bool": [
+            {
+                "parameter": "use_cpu",
+                "default_value": false,
+                "current_value": false
+            },
+            {
+                "parameter": "invert_spect",
+                "default_value": false,
+                "current_value": false
+            },
+            {
+                "parameter": "enable_tta",
+                "default_value": false,
+                "current_value": false
+            },
+            {
+                "parameter": "high_end_process",
+                "default_value": false,
+                "current_value": false
+            },
+            {
+                "parameter": "enable_post_process",
+                "default_value": false,
+                "current_value": false
+            }
+        ],
+        "down_stream_nodes": [
+            [
+                "994051c6-5d8e-4b12-9a3e-af9d3cb72fdb",
+                1
+            ]
+        ],
+        "up_stream_node": "d86ca1b1-7d60-4d68-9340-1d026e0299d0",
+        "output_format": "wav",
+        "scene_pos": [
+            -233.0,
+            -317.0
+        ]
+    }
+}

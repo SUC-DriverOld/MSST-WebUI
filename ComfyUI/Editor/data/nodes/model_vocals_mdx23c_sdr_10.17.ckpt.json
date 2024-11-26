@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "model_vocals_mdx23c_sdr_10.17.ckpt",
     "model_type": "mdx23c",
     "path": "./pretrain/vocal_models/model_vocals_mdx23c_sdr_10.17.ckpt",

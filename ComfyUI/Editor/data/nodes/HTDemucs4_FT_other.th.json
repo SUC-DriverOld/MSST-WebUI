@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "HTDemucs4_FT_other.th",
     "model_type": "htdemucs",
     "path": "./pretrain/single_stem_models/HTDemucs4_FT_other.th",

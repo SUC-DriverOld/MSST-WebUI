@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "dereverb_mdx23c_sdr_6.9096.ckpt",
     "model_type": "mdx23c",
     "path": "./pretrain/single_stem_models/dereverb_mdx23c_sdr_6.9096.ckpt",

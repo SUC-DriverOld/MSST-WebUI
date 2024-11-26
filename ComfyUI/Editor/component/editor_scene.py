@@ -1,5 +1,6 @@
 import json
 import math
+import uuid
 from qfluentwidgets import InfoBar, InfoBarPosition
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView
 from PySide6.QtGui import QBrush, QColor, QPen, QPainter
@@ -14,7 +15,7 @@ class EditorScene(QGraphicsScene):
         self.view = None
         self.dragging_edge_mode = False
         self.input_node = None
-        self.nodes = []
+        self.nodes = {}
 
     def drawBackground(self, painter: QPainter, rect) -> None:
         self.setBackgroundBrush(QBrush(QColor('#212121')))
@@ -161,8 +162,8 @@ class EditorScene(QGraphicsScene):
         node_edge = NodeEdge(upper_port, lower_port, scene=self)
         
         if not from_load:
-            upper_node.addDownStreamNode(lower_node.node_dict["index"], upper_port)
-            lower_node.addUpStreamNode(upper_node.node_dict["index"])
+            upper_node.addDownStreamNode(lower_node.node_dict["uid"], upper_port)
+            lower_node.addUpStreamNode(upper_node.node_dict["uid"])
 
         upper_node.edges.append(node_edge)
         lower_node.edges.append(node_edge)
@@ -177,8 +178,8 @@ class EditorScene(QGraphicsScene):
         lower_port = edge.lower_port
         upper_node = upper_port.parent_node
         lower_node = lower_port.parent_node
-        upper_node.removeDownStreamNode(lower_node.node_dict["index"], upper_port)
-        lower_node.removeUpStreamNode(upper_node.node_dict["index"])
+        upper_node.removeDownStreamNode(lower_node.node_dict["uid"], upper_port)
+        lower_node.removeUpStreamNode(upper_node.node_dict["uid"])
         upper_node.edges.remove(edge)
         lower_node.edges.remove(edge)
         upper_port.connected_edges.remove(edge)
@@ -187,17 +188,17 @@ class EditorScene(QGraphicsScene):
         upper_port.updateConnectionState()
         lower_port.updateConnectionState()
 
-    def addNode(self, node, index=None):
+    def addNode(self, node, uid=None):
         self.addItem(node)
-        if index is not None:
-            node.node_dict["index"] = index
+        if uid is not None:
+            node.node_dict["uid"] = uid
         else:
-            node.node_dict["index"] = len(self.nodes)
-        self.nodes.append(node)
+            node.node_dict["uid"] = str(uuid.uuid4())
+        self.nodes[node.node_dict["uid"]] = node
 
     def removeNode(self, node):
         self.removeItem(node)
-        self.nodes.remove(node)
+        self.nodes.pop(node.node_dict["uid"])
         edges_to_remove = node.edges.copy()
         for edge in edges_to_remove:
             self.removeNodeEdge(edge)
@@ -206,10 +207,11 @@ class EditorScene(QGraphicsScene):
 
     def saveToJson(self, save_path):
         data = {}
-        for node in self.nodes:
+        for uid in self.nodes:
+            node = self.nodes[uid]
             node.node_dict["scene_pos"] = [node.scenePos().x(), node.scenePos().y()]
             # print(node.node_dict)
-            data[node.node_dict["index"]] = node.node_dict
+            data[node.node_dict["uid"]] = node.node_dict
         with open(save_path, 'w') as file:
             json.dump(data, file, indent=4)
 
@@ -229,16 +231,16 @@ class EditorScene(QGraphicsScene):
             node.node_dict = node_data
             # print(node.node_dict)
             node.setPos(node_data["scene_pos"][0], node_data["scene_pos"][1])
-            self.addNode(node, index)
+            self.addNode(node, uid=node_data["uid"])
 
         for index in data:
             node_data = data[index]
             if node_data["down_stream_nodes"]:
                 for item in node_data["down_stream_nodes"]:
-                    downstream_node_index, port_index = item
+                    downstream_node_uid, port_index = item
                     # print(index, downstream_node_index, port_index)
-                    upper_node = self.nodes[int(index)]
-                    lower_node = self.nodes[int(downstream_node_index)]
+                    upper_node = self.nodes[node_data["uid"]]
+                    lower_node = self.nodes[downstream_node_uid]
                     upper_port = upper_node.output_ports[port_index]
                     lower_port = lower_node.input_ports[0]
                     self.createNodeEdge(upper_port, lower_port, from_load=True)

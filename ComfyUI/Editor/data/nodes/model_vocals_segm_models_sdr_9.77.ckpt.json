@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "model_vocals_segm_models_sdr_9.77.ckpt",
     "model_type": "segm_models",
     "path": "./pretrain/vocal_models/model_vocals_segm_models_sdr_9.77.ckpt",

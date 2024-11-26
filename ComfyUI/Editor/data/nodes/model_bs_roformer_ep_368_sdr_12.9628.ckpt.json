@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "model_bs_roformer_ep_368_sdr_12.9628.ckpt",
     "model_type": "bs_roformer",
     "path": "./pretrain/vocal_models/model_bs_roformer_ep_368_sdr_12.9628.ckpt",

@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "model_bs_roformer_ep_937_sdr_10.5309.ckpt",
     "model_type": "bs_roformer",
     "path": "./pretrain/single_stem_models/model_bs_roformer_ep_937_sdr_10.5309.ckpt",

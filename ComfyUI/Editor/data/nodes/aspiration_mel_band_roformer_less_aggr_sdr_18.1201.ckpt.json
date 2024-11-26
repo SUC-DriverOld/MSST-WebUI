@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt",
     "model_type": "mel_band_roformer",
     "path": "./pretrain/single_stem_models/aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt",

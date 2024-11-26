@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt",
     "model_type": "mel_band_roformer",
     "path": "./pretrain/single_stem_models/denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt",

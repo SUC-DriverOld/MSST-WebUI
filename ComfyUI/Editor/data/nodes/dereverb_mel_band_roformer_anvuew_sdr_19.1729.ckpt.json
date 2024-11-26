@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt",
     "model_type": "mel_band_roformer",
     "path": "./pretrain/single_stem_models/dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt",

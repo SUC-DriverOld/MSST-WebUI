@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "13_SP-UVR-4B-44100-1.pth",
     "model_type": null,
     "path": "./pretrain/VR_Models/13_SP-UVR-4B-44100-1.pth",

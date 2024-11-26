@@ -1,7 +1,7 @@
 """
 example of a node_dict:
 {   
-    "index": 0, # index of the node, default is -1
+    "uid": None # unique id of the node, default is None
     "model_name": "model_bs_roformer_ep_317_sdr_12.9755.ckpt", # name of the model
     "model_type": "bs_roformer", # type of the model
     "path": "./pretrain/vocal_models/model_bs_roformer_ep_317_sdr_12.9755.ckpt",
@@ -33,8 +33,8 @@ example of a node_dict:
             "current_value": False
         }
     ],
-    "down_stream_nodes": [[1, 0], [2, 1]], # list of downstream nodes, each element is a list of [index, output_port_index], default is []
-    "up_stream_node": -1, # index of the upstream node, default is -1, note that there is only one upstream node
+    "down_stream_nodes": [["example-uid1", 0], ["example-uid2", 1]], # list of downstream nodes, each element is a list of [uid, output_port_index], default is []
+    "up_stream_node": "example-uid3", # uid of the upstream node, default is None, note that there is only one upstream node
     "output_format": "wav", # output format of the node, in ["wav", "mp3", "flac"]
     "scene_pos": [0, 0], # position of the node in the scene, default is [0, 0]
 }
@@ -189,28 +189,28 @@ class ModelNode(QGraphicsItem):
         for edge in self.edges:
             edge.updatePath()
 
-    def addDownStreamNode(self, target_node_index, output_port):
+    def addDownStreamNode(self, target_node_uid, output_port):
         for i, port in enumerate(self.output_ports):
             if port == output_port:
-                self.node_dict["down_stream_nodes"].append([target_node_index, i])
+                self.node_dict["down_stream_nodes"].append([target_node_uid, i])
                 break
         # print(self.node_dict["down_stream_nodes"])
 
-    def removeDownStreamNode(self, target_node_index, output_port):
+    def removeDownStreamNode(self, target_node_uid, output_port):
         for i, port in enumerate(self.output_ports):
             if port == output_port:
-                self.node_dict["down_stream_nodes"].remove([target_node_index, i])
+                self.node_dict["down_stream_nodes"].remove([target_node_uid, i])
                 break
         # print(self.node_dict["down_stream_nodes"])
 
-    def addUpStreamNode(self, target_node_index):
+    def addUpStreamNode(self, target_node_uid):
         if self.node_dict["up_stream_node"] == -1:
-            self.node_dict["up_stream_node"] = target_node_index
+            self.node_dict["up_stream_node"] = target_node_uid
         else:
             print("There is already an upstream node.")
 
-    def removeUpStreamNode(self, target_node_index):
-        if self.node_dict["up_stream_node"] == target_node_index:
+    def removeUpStreamNode(self, target_node_uid):
+        if self.node_dict["up_stream_node"] == target_node_uid:
             self.node_dict["up_stream_node"] = -1
         else:
             print("The target node is not the upstream node.")
@@ -220,7 +220,7 @@ class InputNode(QGraphicsItem):
     def __init__(self, parent = None, path = "input/"):
         super().__init__(parent)
         self.node_dict = {
-            "index": -1, # index of the node, default is -1
+            "uid": None,
             "model_name": "Input Node",
             "parameter": [
                 {
@@ -233,7 +233,7 @@ class InputNode(QGraphicsItem):
                 }
             ],
             "down_stream_nodes": [],
-            "up_stream_node": -1,
+            "up_stream_node": None,
             "scene_pos": [0, 0]
         }
         self.width = 200
@@ -332,7 +332,7 @@ class OutputNode(QGraphicsItem):
     def __init__(self, parent = None, path = "output/"):
         super().__init__(parent)
         self.node_dict = {
-            "index": -1, # index of the node, default is -1
+            "uid": None,
             "model_name": "Output Node",
             "parameter": [
                 {
@@ -345,7 +345,7 @@ class OutputNode(QGraphicsItem):
                 }
             ],
             "down_stream_nodes": [],
-            "up_stream_node": -1,
+            "up_stream_node": None,
             "scene_pos": [0, 0]
 
         }
@@ -431,14 +431,14 @@ class OutputNode(QGraphicsItem):
         for edge in self.edges:
             edge.updatePath()  
 
-    def addUpStreamNode(self, target_node_index):
+    def addUpStreamNode(self, target_node_uid):
         if self.node_dict["up_stream_node"] == -1:
-            self.node_dict["up_stream_node"] = target_node_index
+            self.node_dict["up_stream_node"] = target_node_uid
         else:
             print("There is already an upstream node.")
 
-    def removeUpStreamNode(self, target_node_index):
-        if self.node_dict["up_stream_node"] == target_node_index:
+    def removeUpStreamNode(self, target_node_uid):
+        if self.node_dict["up_stream_node"] == target_node_uid:
             self.node_dict["up_stream_node"] = -1
         else:
             print("The target node is not the upstream node.")        
@@ -449,7 +449,7 @@ class FileInputNode(QGraphicsItem):
     def __init__(self, parent = None, path = "input/"):
         super().__init__(parent)
         self.node_dict = {
-            "index": -1, # index of the node, default is -1
+            "uid": None,
             "model_name": "File Input Node",
             "parameter": [
                 {
@@ -462,7 +462,7 @@ class FileInputNode(QGraphicsItem):
                 }
             ],
             "down_stream_nodes": [],
-            "up_stream_node": -1,
+            "up_stream_node": None,
             "scene_pos": [0, 0]
         }
         self.width = 200
@@ -541,14 +541,13 @@ class FileInputNode(QGraphicsItem):
         for edge in self.edges:
             edge.updatePath()
 
-    def addDownStreamNode(self, target_node_index, output_port):
+    def addDownStreamNode(self, target_node_uid, output_port):
         if output_port == self.output_port:
-            self.node_dict["down_stream_nodes"].append([target_node_index, 0])
+            self.node_dict["down_stream_nodes"].append([target_node_uid, 0])
 
-    def removeDownStreamNode(self, target_node_index, output_port):
+    def removeDownStreamNode(self, target_node_uid, output_port):
         if output_port == self.output_port:
-            self.node_dict["down_stream_nodes"].remove([target_node_index, 0])
-               
+            self.node_dict["down_stream_nodes"].remove([target_node_uid, 0])
         
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "model_mdx23c_ep_271_l1_freq_72.2383.ckpt",
     "model_type": "mdx23c",
     "path": "./pretrain/single_stem_models/model_mdx23c_ep_271_l1_freq_72.2383.ckpt",

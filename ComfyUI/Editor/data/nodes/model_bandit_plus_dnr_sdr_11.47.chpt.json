@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "model_bandit_plus_dnr_sdr_11.47.chpt",
     "model_type": "bandit",
     "path": "./pretrain/multi_stem_models/model_bandit_plus_dnr_sdr_11.47.chpt",

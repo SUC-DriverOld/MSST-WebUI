@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "MGM_LOWEND_A_v4.pth",
     "model_type": null,
     "path": "./pretrain/VR_Models/MGM_LOWEND_A_v4.pth",

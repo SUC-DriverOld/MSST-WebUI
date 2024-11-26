@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "UVR-De-Echo-Aggressive.pth",
     "model_type": null,
     "path": "./pretrain/VR_Models/UVR-De-Echo-Aggressive.pth",

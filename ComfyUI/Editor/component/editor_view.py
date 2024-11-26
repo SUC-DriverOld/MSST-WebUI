@@ -100,9 +100,7 @@ class EditorView(QGraphicsView):
     #         event.ignore()
 
     def contextMenuEvent(self, event):
-        global_pos = event.globalPos()
-        view_pos = self.mapToGlobal(global_pos)
-        scene_pos = self.mapToScene(view_pos)
+        scene_pos = self.mapToScene(event.pos())
 
         if not self.view_menu: 
             self.view_menu = ViewMenu(self, scene_pos, self.scene)

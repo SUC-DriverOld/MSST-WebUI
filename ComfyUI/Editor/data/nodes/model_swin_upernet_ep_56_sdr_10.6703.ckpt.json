@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "model_swin_upernet_ep_56_sdr_10.6703.ckpt",
     "model_type": "swin_upernet",
     "path": "./pretrain/vocal_models/model_swin_upernet_ep_56_sdr_10.6703.ckpt",

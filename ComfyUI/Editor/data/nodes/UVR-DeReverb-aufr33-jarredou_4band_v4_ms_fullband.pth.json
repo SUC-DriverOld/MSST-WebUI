@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "UVR-DeReverb-aufr33-jarredou_4band_v4_ms_fullband.pth",
     "model_type": null,
     "path": "./pretrain/VR_Models/UVR-DeReverb-aufr33-jarredou_4band_v4_ms_fullband.pth",

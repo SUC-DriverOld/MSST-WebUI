@@ -4,16 +4,16 @@ import yaml
 from ml_collections import ConfigDict
 from omegaconf import OmegaConf
 
-model_info_path = "D:\projects\python\MSST-WebUI\data\models_info.json"
+model_info_path = "./data/models_info.json"
 
 def generate_cfg():
     with open(model_info_path, "r") as f:
         model_info = json.load(f)
 
-    with open("D:\\projects\\python\\MSST-WebUI\\data\\msst_model_map.json", "r") as f:
+    with open("./data/msst_model_map.json", "r") as f:
         msst_model_map = json.load(f)
 
-    with open("D:\\projects\\python\\MSST-WebUI\\data\\vr_model_map.json", "r") as f:
+    with open("./data/vr_model_map.json", "r") as f:
         vr_model_map = json.load(f)
 
     for model in model_info:
@@ -22,7 +22,7 @@ def generate_cfg():
         model_class = row["model_class"]
         target_position = row["target_position"]
         model_dict = {
-            "index": -1,
+            "uid": None,
             "model_name": model_name,
         }
         if model_class == "VR_Models":

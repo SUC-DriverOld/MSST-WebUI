@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "model_vocals_htdemucs_sdr_8.78.ckpt",
     "model_type": "htdemucs",
     "path": "./pretrain/vocal_models/model_vocals_htdemucs_sdr_8.78.ckpt",

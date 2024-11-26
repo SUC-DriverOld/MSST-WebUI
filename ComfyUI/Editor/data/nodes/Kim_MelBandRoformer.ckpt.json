@@ -1,5 +1,5 @@
 {
-    "index": -1,
+    "uid": null,
     "model_name": "Kim_MelBandRoformer.ckpt",
     "model_type": "mel_band_roformer",
     "path": "./pretrain/vocal_models/Kim_MelBandRoformer.ckpt",

@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QFileDialog
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
+import os
 
 from qfluentwidgets import CommandBar, TitleLabel, Action, FluentIcon, InfoBar, InfoBarPosition
 from ComfyUI.Editor.component.editor_view import EditorView
@@ -50,13 +51,26 @@ class EditorInterface(QFrame):
     #     )
 
     def openPresetFolder(self):
-        defalut_path = "./ComfyUI/Editor/data/presets"
-        QDesktopServices.openUrl(QUrl.fromLocalFile(defalut_path))
+        default_path = "./ComfyUI/Editor/data/presets"
+        absolute_path = os.path.abspath(default_path)
+        folder_url = QUrl.fromLocalFile(absolute_path)
+        QDesktopServices.openUrl(folder_url)
 
     def savePreset(self):
-        defalut_path = "./ComfyUI/Editor/data/presets"
-        file_path, _ = QFileDialog.getSaveFileName(self, self.tr("save preset"), defalut_path, "Preset Files (*.preset)")
+        default_path = "./ComfyUI/Editor/data/presets"
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            self.tr("Save Preset"), 
+            default_path, 
+            "Preset Files (*.preset)", 
+            options=QFileDialog.DontUseNativeDialog
+        )
+
         if file_path:
+            # 检查文件是否有 .preset 后缀，如果没有则追加
+            if not file_path.endswith(".preset"):
+                file_path += ".preset"
+
             self.scene.saveToJson(file_path)
             InfoBar.success(
                 title=self.tr("Save Preset Success"),
@@ -68,9 +82,10 @@ class EditorInterface(QFrame):
                 parent=self
             )
 
+
     def loadPreset(self):
-        defalut_path = "./ComfyUI/Editor/data/presets"
-        file_path, _ = QFileDialog.getOpenFileName(self, self.tr("load preset"), defalut_path, "Preset Files (*.preset)")
+        default_path = "./ComfyUI/Editor/data/presets"
+        file_path, _ = QFileDialog.getOpenFileName(self, self.tr("load preset"), default_path, "Preset Files (*.preset)", options=QFileDialog.DontUseNativeDialog)
         if file_path:
             self.scene.loadFromJson(file_path)
             InfoBar.success(
