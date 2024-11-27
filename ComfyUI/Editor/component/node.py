@@ -37,6 +37,13 @@ example of a node_dict:
     "up_stream_node": "example-uid3", # uid of the upstream node, default is None, note that there is only one upstream node
     "output_format": "wav", # output format of the node, in ["wav", "mp3", "flac"]
     "scene_pos": [0, 0], # position of the node in the scene, default is [0, 0]
+    "input_path": None, # path of the input folder, default is None
+    "output_path": None, # path of the output folder, default is None. Note that str for single folder, dict with instrument keys for multiple folders
+    # example of an output path:
+    # {
+    #     "vocal": "./output/vocal",
+    #     "instruments": "./output/instruments"
+    # }
 }
 """
 

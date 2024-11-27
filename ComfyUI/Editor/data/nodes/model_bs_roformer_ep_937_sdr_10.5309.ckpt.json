@@ -55,5 +55,7 @@
     "scene_pos": [
         0,
         0
-    ]
+    ],
+    "input_path": null,
+    "output_path": null
 }

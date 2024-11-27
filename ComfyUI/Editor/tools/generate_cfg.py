@@ -168,6 +168,8 @@ def generate_cfg():
         model_dict["up_stream_node"] = None
         model_dict["output_format"] = "wav"
         model_dict["scene_pos"] = [0, 0]
+        model_dict["input_path"] = None
+        model_dict["output_path"] = None
 
         # print(model_dict)
         try:

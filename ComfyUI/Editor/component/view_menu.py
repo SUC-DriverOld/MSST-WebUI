@@ -12,6 +12,7 @@ class ViewMenu(RoundMenu):
             Action(FluentIcon.PASTE, self.tr("Paste"), triggered=lambda: self.scene.pasteItems(self.scene_pos)),
             Action(FluentIcon.DELETE, self.tr("Delete"), triggered=lambda: self.scene.removeSelectedItems()),
             Action(FluentIcon.BRUSH, self.tr("Clear"), triggered=lambda: self.scene.clearItems()),
+            Action(FluentIcon.PLAY, self.tr("Run"), triggered=lambda: self.scene.run())
         ])
         self.addNodeMenu()
 

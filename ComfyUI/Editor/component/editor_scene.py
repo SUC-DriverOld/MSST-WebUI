@@ -1,6 +1,7 @@
 import json
 import math
 import uuid
+import os
 from qfluentwidgets import InfoBar, InfoBarPosition
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView
 from PySide6.QtGui import QBrush, QColor, QPen, QPainter
@@ -17,6 +18,8 @@ class EditorScene(QGraphicsScene):
         self.input_node = None
         self.nodes = {}
         self.copy_data = {}
+        self.nodes_to_run = []
+        self.tmp_dir = "./tmp"
 
     def drawBackground(self, painter: QPainter, rect) -> None:
         self.setBackgroundBrush(QBrush(QColor('#212121')))
@@ -119,35 +122,11 @@ class EditorScene(QGraphicsScene):
 
     def addNodeFromText(self, text, pos):
         if text == "Input Node":
-            if self.input_node:
-                InfoBar.error(
-                    title='Error',
-                    content="Only one Input Node is allowed",
-                    orient=Qt.Vertical,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=-1,
-                    parent=self.views()[0]
-                )
-                return
             node = InputNode(path="input/")
-            self.input_node = node
         elif text == "Output Node":
             node = OutputNode(path="output/")
         elif text == "File Input Node":
-            if self.input_node:
-                InfoBar.error(
-                    title='Error',
-                    content="Only one Input Node is allowed",
-                    orient=Qt.Vertical,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=-1,
-                    parent=self.views()[0]
-                )
-                return
             node = FileInputNode(path="tmp/input/")
-            self.input_node = node
         else:
             node = ModelNode(text)
         node.setPos(pos)
@@ -196,6 +175,20 @@ class EditorScene(QGraphicsScene):
         lower_port.updateConnectionState()
 
     def addNode(self, node, uid=None):
+        if isinstance(node, InputNode) or isinstance(node, FileInputNode):
+            if self.input_node:
+                InfoBar.error(
+                    title='Error',
+                    content="Only one Input Node is allowed",
+                    orient=Qt.Vertical,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=-1,
+                    parent=self.views()[0]
+                )
+                return
+            self.input_node = node
+
         self.addItem(node)
         if uid is not None:
             node.node_dict["uid"] = uid
@@ -330,3 +323,55 @@ class EditorScene(QGraphicsScene):
     def clearItems(self):
         self.selectAll()
         self.removeSelectedItems()
+
+    def generatePath(self, node):
+        
+        if isinstance(node, ModelNode):
+            self.nodes_to_run.append(node)
+            upstream_node_uid = node.node_dict["up_stream_node"]
+            upstream_node = self.nodes[upstream_node_uid]
+            if isinstance(upstream_node, InputNode):
+                input_path = upstream_node.node_dict["parameter"][0]["current_value"]
+                node.node_dict["input_path"] = input_path
+            else:
+                pass
+            output_path_dict = {}        
+            for item in node.node_dict["down_stream_nodes"]:
+                downstream_node_uid, port_index = item
+                downstream_node = self.nodes[downstream_node_uid]
+                instrument = node.node_dict["output"][port_index]
+                if isinstance(downstream_node, OutputNode):
+                    output_path = downstream_node.node_dict["parameter"][0]["current_value"]
+                    output_path_dict[instrument] = output_path
+                else:
+                    output_path = os.path.join(self.tmp_dir, f"{node.node_dict['uid']}_{instrument}")
+                    os.makedirs(output_path, exist_ok=True)
+                    output_path_dict[instrument] = output_path
+                    downstream_node.node_dict["input_path"] = output_path
+            node.node_dict["output_path"] = output_path_dict        
+
+        for item in node.node_dict["down_stream_nodes"]:
+            downstream_node_uid, port_index = item
+            downstream_node = self.nodes[downstream_node_uid]
+            self.generatePath(downstream_node)
+
+    def run(self):
+        if self.input_node is None:
+            InfoBar.error(
+                title='Error',
+                content="No Input Node",
+                orient=Qt.Vertical,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=-1,
+                parent=self.views()[0]
+            )
+            return
+        self.generatePath(self.input_node)         
+        for node in self.nodes_to_run:
+            pass 
+
+
+        
+            
+
