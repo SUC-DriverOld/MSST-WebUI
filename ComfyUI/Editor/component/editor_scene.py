@@ -16,6 +16,7 @@ class EditorScene(QGraphicsScene):
         self.dragging_edge_mode = False
         self.input_node = None
         self.nodes = {}
+        self.copy_data = {}
 
     def drawBackground(self, painter: QPainter, rect) -> None:
         self.setBackgroundBrush(QBrush(QColor('#212121')))
@@ -103,10 +104,18 @@ class EditorScene(QGraphicsScene):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
-            for item in self.selectedItems():
-                if not isinstance(item, NodeEdge):
-                    self.removeNode(item)
-            super().keyPressEvent(event)
+            self.removeSelectedItems()
+            
+        elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
+            self.selectAll()
+            
+        elif event.key() == Qt.Key_C and event.modifiers() == Qt.ControlModifier:
+            self.copySelectedItems()   
+            
+        elif event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
+            self.pasteItems(self.views()[0].mapToScene(self.views()[0].mapFromGlobal(self.views()[0].cursor().pos())))
+            
+        super().keyPressEvent(event)       
 
     def addNodeFromText(self, text, pos):
         if text == "Input Node":
@@ -242,3 +251,82 @@ class EditorScene(QGraphicsScene):
                     upper_port = upper_node.output_ports[port_index]
                     lower_port = lower_node.input_ports[0]
                     self.createNodeEdge(upper_port, lower_port, from_load=True)
+                    
+    def removeSelectedItems(self):
+        for item in self.selectedItems():
+                if not isinstance(item, NodeEdge):
+                    self.removeNode(item)
+                    
+    def selectAll(self):
+        for item in self.items():
+            item.setSelected(True)
+            
+    def copySelectedItems(self):
+        self.copy_data = {
+            "nodes": [],
+            "edges": []
+        }
+        node_map = {}  # 用于记录旧节点与新节点的映射
+
+        for item in self.selectedItems():
+            if not isinstance(item, NodeEdge):
+                node_data = {
+                    "uid": item.node_dict["uid"],
+                    "model_name": item.node_dict["model_name"],
+                    "parameters": item.node_dict["parameter"],
+                    "pos": item.pos(),
+                    "down_stream_nodes": item.node_dict.get("down_stream_nodes", [])
+                }
+                self.copy_data["nodes"].append(node_data)
+                node_map[item.node_dict["uid"]] = node_data
+
+        # 记录边信息
+        for node_data in self.copy_data["nodes"]:
+            for downstream in node_data["down_stream_nodes"]:
+                downstream_uid, output_port_index = downstream
+                if downstream_uid in node_map:
+                    self.copy_data["edges"].append((node_data["uid"], downstream_uid, output_port_index))
+
+        # print("Copied data:", self.copy_data)
+            
+    def pasteItems(self, new_pos):
+        if not self.copy_data["nodes"]:
+            return
+
+        uid_map = {}  # 用于替换旧的 UID 为新的 UID
+        # 计算第一个节点的位置偏移量
+        offset = new_pos - self.copy_data["nodes"][0]["pos"]
+
+        new_nodes = {}
+        # 创建节点
+        for node_data in self.copy_data["nodes"]:
+            if node_data["model_name"] == "Input Node":
+                node = InputNode(path=node_data["parameters"][0]["current_value"])
+            elif node_data["model_name"] == "Output Node":
+                node = OutputNode(path=node_data["parameters"][0]["current_value"])
+            elif node_data["model_name"] == "File Input Node":
+                node = FileInputNode(path=node_data["parameters"][0]["current_value"])
+            else:
+                node = ModelNode(node_data["model_name"])
+
+            new_uid = str(uuid.uuid4())
+            uid_map[node_data["uid"]] = new_uid
+            node.node_dict["uid"] = new_uid
+            node.setPos(node_data["pos"] + offset)
+            self.addNode(node)
+            new_nodes[new_uid] = node
+
+        # 创建新的edge
+        for source_uid, target_uid, output_port_index in self.copy_data["edges"]:
+            if source_uid in uid_map and target_uid in uid_map:
+                upper_node = new_nodes[uid_map[source_uid]]
+                lower_node = new_nodes[uid_map[target_uid]]
+                # 根据记录的 output_port_index 获取正确的输出端口
+                if hasattr(upper_node, 'output_ports') and len(upper_node.output_ports) > output_port_index:
+                    upper_port = upper_node.output_ports[output_port_index]
+                    lower_port = lower_node.input_ports[0] # 输入端口有且仅有一个
+                    self.createNodeEdge(upper_port, lower_port)
+
+    def clearItems(self):
+        self.selectAll()
+        self.removeSelectedItems()

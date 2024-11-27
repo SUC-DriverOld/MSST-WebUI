@@ -7,6 +7,12 @@ class ViewMenu(RoundMenu):
         super().__init__(parent)
         self.scene = scene
         self.scene_pos = scene_pos
+        self.addActions([
+            Action(FluentIcon.COPY, self.tr("Copy"), triggered=lambda: self.scene.copySelectedItems(), shortcut="Ctrl+C"),
+            Action(FluentIcon.PASTE, self.tr("Paste"), triggered=lambda: self.scene.pasteItems(self.scene_pos)),
+            Action(FluentIcon.DELETE, self.tr("Delete"), triggered=lambda: self.scene.removeSelectedItems()),
+            Action(FluentIcon.BRUSH, self.tr("Clear"), triggered=lambda: self.scene.clearItems()),
+        ])
         self.addNodeMenu()
 
     def addNodeMenu(self):
