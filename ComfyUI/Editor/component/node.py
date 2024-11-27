@@ -199,19 +199,22 @@ class ModelNode(QGraphicsItem):
     def removeDownStreamNode(self, target_node_uid, output_port):
         for i, port in enumerate(self.output_ports):
             if port == output_port:
-                self.node_dict["down_stream_nodes"].remove([target_node_uid, i])
-                break
+                try:
+                    self.node_dict["down_stream_nodes"].remove([target_node_uid, i])
+                    break
+                except:
+                    print(f"{self.node_dict['down_stream_nodes']}, {target_node_uid}, {output_port}, {i}")
         # print(self.node_dict["down_stream_nodes"])
 
     def addUpStreamNode(self, target_node_uid):
-        if self.node_dict["up_stream_node"] == -1:
+        if self.node_dict["up_stream_node"] is None:
             self.node_dict["up_stream_node"] = target_node_uid
         else:
             print("There is already an upstream node.")
 
     def removeUpStreamNode(self, target_node_uid):
         if self.node_dict["up_stream_node"] == target_node_uid:
-            self.node_dict["up_stream_node"] = -1
+            self.node_dict["up_stream_node"] = None
         else:
             print("The target node is not the upstream node.")
 
@@ -319,13 +322,17 @@ class InputNode(QGraphicsItem):
         for edge in self.edges:
             edge.updatePath() 
 
-    def addDownStreamNode(self, target_node_index, output_port):
+    def addDownStreamNode(self, target_node_uid, output_port):
         if output_port == self.output_port:
-            self.node_dict["down_stream_nodes"].append([target_node_index, 0])
+            self.node_dict["down_stream_nodes"].append([target_node_uid, 0])
 
-    def removeDownStreamNode(self, target_node_index, output_port):
+    def removeDownStreamNode(self, target_node_uid, output_port):
         if output_port == self.output_port:
-            self.node_dict["down_stream_nodes"].remove([target_node_index, 0])
+            try:
+                self.node_dict["down_stream_nodes"].remove([target_node_uid, 0])
+            except:
+                print(f"{self.node_dict['down_stream_nodes']}, {target_node_uid}, {output_port}")
+
 
         
 class OutputNode(QGraphicsItem):
@@ -432,14 +439,14 @@ class OutputNode(QGraphicsItem):
             edge.updatePath()  
 
     def addUpStreamNode(self, target_node_uid):
-        if self.node_dict["up_stream_node"] == -1:
+        if self.node_dict["up_stream_node"] is None:
             self.node_dict["up_stream_node"] = target_node_uid
         else:
             print("There is already an upstream node.")
 
     def removeUpStreamNode(self, target_node_uid):
         if self.node_dict["up_stream_node"] == target_node_uid:
-            self.node_dict["up_stream_node"] = -1
+            self.node_dict["up_stream_node"] = None
         else:
             print("The target node is not the upstream node.")        
             

@@ -104,9 +104,7 @@ class EditorScene(QGraphicsScene):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
             for item in self.selectedItems():
-                if isinstance(item, NodeEdge):
-                    self.removeNodeEdge(item)
-                else:
+                if not isinstance(item, NodeEdge):
                     self.removeNode(item)
             super().keyPressEvent(event)
 
