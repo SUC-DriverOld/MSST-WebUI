@@ -14,7 +14,9 @@ webui.vmp.exe
 backup/
 tools/SOME_weights/model_steps_64000_simplified.ckpt
 input/
+output/
 results/
+tmp/
 test.py
 config_unofficial/
 cache/

@@ -2,6 +2,8 @@ import json
 import math
 import uuid
 import os
+import shutil
+import logging
 from qfluentwidgets import InfoBar, InfoBarPosition
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView
 from PySide6.QtGui import QBrush, QColor, QPen, QPainter
@@ -9,7 +11,10 @@ from PySide6.QtCore import QLine, Qt
 from ComfyUI.Editor.component.edge import NodeEdge, DraggingEdge
 from ComfyUI.Editor.component.node_port import InputPort, OutputPort
 from ComfyUI.Editor.component.node import InputNode, OutputNode, FileInputNode, ModelNode
-from ComfyUI.Editor.component.node_executor import NodeExecutor, NodeExecutorThread
+from ComfyUI.Editor.component.node_executor import InferenceWorker
+from ComfyUI.Editor.inference.msst_inference import msst_inference
+from ComfyUI.Editor.inference.vr_inference import vr_inference
+from ComfyUI.Editor.common.logger import LoggerFactory, GlobalLoggerManager
 
 class EditorScene(QGraphicsScene):
     def __init__(self, parent = None):
@@ -21,6 +26,7 @@ class EditorScene(QGraphicsScene):
         self.copy_data = {}
         self.nodes_to_run = []
         self.tmp_dir = "./tmp"
+        self.log_dir = "./logs/ComfyUI"
 
     def drawBackground(self, painter: QPainter, rect) -> None:
         self.setBackgroundBrush(QBrush(QColor('#212121')))
@@ -180,7 +186,7 @@ class EditorScene(QGraphicsScene):
             if self.input_node:
                 InfoBar.error(
                     title='Error',
-                    content="Only one Input Node is allowed",
+                    content=self.tr("Only one Input Node is allowed"),
                     orient=Qt.Vertical,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -357,10 +363,20 @@ class EditorScene(QGraphicsScene):
             self.generatePath(downstream_node)
 
     def run(self):
+        log_factory = LoggerFactory()
+        logger = log_factory.get_run_logger(self.log_dir)
+        log_path = [h for h in logger.handlers if isinstance(h, logging.FileHandler)][0].baseFilename
+
+        GlobalLoggerManager.set_logger(logger) # 设置全局 logger
+        
+        logger.info("Cleaning temporary directory...")
+        shutil.rmtree(self.tmp_dir, ignore_errors=True)
+        os.makedirs(self.tmp_dir, exist_ok=True)
+
         if self.input_node is None:
             InfoBar.error(
                 title='Error',
-                content="No Input Node",
+                content=self.tr("No Input Node"),
                 orient=Qt.Vertical,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -369,5 +385,69 @@ class EditorScene(QGraphicsScene):
             )
             return
         self.generatePath(self.input_node) 
+        self.worker = InferenceWorker(
+            self.nodes_to_run,
+            msst_inference_func=msst_inference,
+            vr_inference_func=vr_inference,
+            log_path=log_path
+        )
         
+        # 连接信号
+        self.worker.progress_signal.connect(self.handle_progress)
+        self.worker.result_signal.connect(self.handle_result)
+        self.worker.finished_signal.connect(self.handle_finished)
+        self.worker.error_signal.connect(self.handle_error)
+        
+        # 启动工作线程
+        self.worker.start()
+    
+    def handle_progress(self, message):
+        print(f"Progress: {message}")
+        # 可以在这里更新UI显示进度
+    
+    def handle_result(self, node_dict):
+        print(f"Node processed: {node_dict.get('model_name', 'Unknown')}")
+        # 处理单个节点的结果
+    
+    def handle_finished(self):
+        print("All nodes processed successfully!")
+        InfoBar.success(
+            title='Success',
+            content=self.tr("All nodes processed successfully!"),
+            orient=Qt.Vertical,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=5000,
+            parent=self.views()[0]
+        )
+        self.nodes_to_run = []
+        # 处理完成后的UI更新
+    
+    def handle_error(self, error_message):
+        print(f"Error occurred: {error_message}")
+        InfoBar.error(
+            title='Error',
+            content=error_message,
+            orient=Qt.Vertical,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=-1,
+            parent=self.views()[0]
+        )
+        
+    def stop_inference(self):
+        self.worker.stop()
+        self.worker.quit()
+        self.worker.wait()
+        self.worker = None
+        self.nodes_to_run = []
+        InfoBar.info(
+            title='Info',
+            content=self.tr("Inference stopped"),
+            orient=Qt.Vertical,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=5000,
+            parent=self.views()[0]
+        )
         

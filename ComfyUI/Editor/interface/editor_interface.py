@@ -30,8 +30,18 @@ class EditorInterface(QFrame):
         self.command_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         # self.command_bar.addAction(Action(FluentIcon.ADD, self.tr("Add"), triggered=self.showModelSelector))
         self.command_bar.addAction(Action(FluentIcon.FOLDER, self.tr("Open Preset Folder"), triggered=self.openPresetFolder))
+        self.command_bar.addSeparator()
         self.command_bar.addAction(Action(FluentIcon.SAVE, self.tr("Save"), triggered=self.savePreset))
-        self.command_bar.addAction(Action(FluentIcon.PASTE, self.tr("Load"), triggered=self.loadPreset))
+        self.command_bar.addAction(Action(FluentIcon.LABEL, self.tr("Load"), triggered=self.loadPreset))
+        self.command_bar.addSeparator()
+        self.command_bar.addAction(Action(FluentIcon.PLAY, self.tr("Run"), triggered=self.scene.run))
+        self.command_bar.addAction(Action(FluentIcon.CLOSE, self.tr("Stop"), triggered=self.scene.stop_inference))
+        self.command_bar.addSeparator()
+        self.command_bar.addAction(Action(FluentIcon.COPY, self.tr("Copy"), triggered=self.scene.copySelectedItems))
+        self.command_bar.addAction(Action(FluentIcon.PASTE, self.tr("Paste"), triggered=self.scene.pasteItems))
+        self.command_bar.addAction(Action(FluentIcon.DELETE, self.tr("Delete"), triggered=self.scene.removeSelectedItems))
+        self.command_bar.addAction(Action(FluentIcon.BRUSH, self.tr("Clear"), triggered=self.scene.clearItems))
+
         self.layout.insertWidget(0, self.command_bar)
 
     def setMainView(self): 

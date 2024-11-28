@@ -88,7 +88,7 @@
 
 from inference.comfy_infer import ComfyVR
 
-def vr_inference(node_dict):
+def vr_inference(node_dict, logger=None):
     model_path = node_dict["path"]
     input_path = node_dict["input_path"]
     output_dir = node_dict["output_path"]
@@ -124,7 +124,8 @@ def vr_inference(node_dict):
         output_format=output_format,
         invert_using_spec=invert_using_spec,
         use_cpu=use_cpu,
-        vr_params=vr_params
+        vr_params=vr_params,
+        logger=logger
     )            
     
     separator.process_folder(input_folder=input_path)

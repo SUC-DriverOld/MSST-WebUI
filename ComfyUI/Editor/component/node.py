@@ -47,8 +47,8 @@ example of a node_dict:
 }
 """
 
-import sys
-sys.path.append("D:\projects\python\MSST-WebUI")
+# import sys
+# sys.path.append("D:\projects\python\MSST-WebUI")
 
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsDropShadowEffect
 from PySide6.QtGui import QFont, QPen, QFontMetrics, QBrush, QColor, QPainterPath
