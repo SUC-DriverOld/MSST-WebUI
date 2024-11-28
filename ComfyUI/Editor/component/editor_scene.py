@@ -9,6 +9,7 @@ from PySide6.QtCore import QLine, Qt
 from ComfyUI.Editor.component.edge import NodeEdge, DraggingEdge
 from ComfyUI.Editor.component.node_port import InputPort, OutputPort
 from ComfyUI.Editor.component.node import InputNode, OutputNode, FileInputNode, ModelNode
+from ComfyUI.Editor.component.node_executor import NodeExecutor, NodeExecutorThread
 
 class EditorScene(QGraphicsScene):
     def __init__(self, parent = None):
@@ -367,11 +368,6 @@ class EditorScene(QGraphicsScene):
                 parent=self.views()[0]
             )
             return
-        self.generatePath(self.input_node)         
-        for node in self.nodes_to_run:
-            pass 
-
-
+        self.generatePath(self.input_node) 
         
-            
-
+        
