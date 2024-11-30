@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 import os
 from colorama import Fore, Style, init
+from PySide6.QtCore import Signal, QObject
 
 class LoggerFactory:
     MAX_LOG = 50
@@ -125,6 +126,7 @@ class LoggerFactory:
     
     def get_process_logger(self, log_path, process_name):
         """获取进程专用的logger实例，使用同一个日志文件"""
+        # 使用 logging.getLogger 获取或创建 logger
         logger = logging.getLogger(f"process_logger_{process_name}")
         logger.setLevel(logging.DEBUG)
         
@@ -153,6 +155,14 @@ class LoggerFactory:
         logger.addHandler(console_handler)
         logger.console_handler = console_handler
         
+        # 确保 logger 不会传播到父 logger
+        logger.propagate = False
+        
+        # 将 logger 添加到全局管理器
+        # GlobalLoggerManager.get_instance()._loggers = getattr(
+        #     GlobalLoggerManager.get_instance(), '_loggers', []
+        # )
+        
         return logger
         
 def create_queue_handler(log_queue):
@@ -161,15 +171,24 @@ def create_queue_handler(log_queue):
     handler.emit = lambda record: log_queue.put(handler.format(record))
     return handler
 
-class GlobalLoggerManager:
+class GlobalLoggerManager(QObject):
+    logger_updated = Signal(object)  # 用于通知 logger 的添加或更新
+    log_file_changed = Signal(str)   # 用于通知日志文件路径的更改
+    
     _instance = None
-    _logger = None
-    _log_window = None
     
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(GlobalLoggerManager, cls).__new__(cls)
+            cls._instance = QObject.__new__(cls)
         return cls._instance
+    
+    def __init__(self):
+        if not hasattr(self, '_initialized'):
+            super().__init__()
+            self._initialized = True
+            self._main_logger = None
+            self._loggers = []
+            self._log_file = None
     
     @classmethod
     def get_instance(cls):
@@ -178,21 +197,56 @@ class GlobalLoggerManager:
         return cls._instance
     
     @classmethod
-    def set_logger(cls, logger, log_window=None):
-        instance = cls.get_instance()
-        instance._logger = logger
-        instance._log_window = log_window
-    
-    @classmethod
-    def get_logger(cls):
-        return cls.get_instance()._logger
+    def add_logger(cls, logger, is_main=False, log_file=None):
+        """统一的logger添加/更新方法
         
-    @classmethod
-    def get_log_window(cls):
-        return cls.get_instance()._log_window
+        Args:
+            logger: 要添加的logger
+            is_main: 是否为主logger
+            log_file: 日志文件路径（仅当is_main=True时需要）
+        """
+        instance = cls.get_instance()
+        
+        if is_main:
+            instance._main_logger = logger
+            if log_file:
+                instance._log_file = log_file
+                print("Log file changed:", log_file)
+                instance.log_file_changed.emit(log_file)
+            
+        if logger not in instance._loggers:
+            instance._loggers.append(logger)
+            
+        instance.logger_updated.emit(logger)
     
     @classmethod
-    def show_log_window(cls):
-        log_window = cls.get_log_window()
-        if log_window and not log_window.isVisible():
-            log_window.show()
+    def get_main_logger(cls):
+        return cls.get_instance()._main_logger
+    
+    @classmethod
+    def get_all_loggers(cls):
+        return cls.get_instance()._loggers
+    
+    @classmethod
+    def get_log_file(cls):
+        return cls.get_instance()._log_file
+    
+    @classmethod
+    def add_debug_log(cls, log_text):
+        cls.get_main_logger().debug(log_text)
+
+    @classmethod
+    def add_info_log(cls, log_text):
+        cls.get_main_logger().info(log_text)
+
+    @classmethod
+    def add_warning_log(cls, log_text):
+        cls.get_main_logger().warning(log_text)
+
+    @classmethod
+    def add_error_log(cls, log_text):
+        cls.get_main_logger().error(log_text)
+
+    @classmethod
+    def add_critical_log(cls, log_text):
+        cls.get_main_logger().critical(log_text)

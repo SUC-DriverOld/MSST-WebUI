@@ -364,12 +364,13 @@ class EditorScene(QGraphicsScene):
 
     def run(self):
         log_factory = LoggerFactory()
-        logger = log_factory.get_run_logger(self.log_dir)
-        log_path = [h for h in logger.handlers if isinstance(h, logging.FileHandler)][0].baseFilename
+        self.logger = log_factory.get_run_logger(self.log_dir)
+        log_path = [h for h in self.logger.handlers if isinstance(h, logging.FileHandler)][0].baseFilename
 
-        GlobalLoggerManager.set_logger(logger) # 设置全局 logger
+        GlobalLoggerManager.add_logger(logger=self.logger, is_main=True, log_file=log_path)
         
-        logger.info("Cleaning temporary directory...")
+        self.logger.info("Starting inference, please wait patiently and do not run again...")
+        self.logger.info("Cleaning temporary directory...")
         shutil.rmtree(self.tmp_dir, ignore_errors=True)
         os.makedirs(self.tmp_dir, exist_ok=True)
 
@@ -402,15 +403,17 @@ class EditorScene(QGraphicsScene):
         self.worker.start()
     
     def handle_progress(self, message):
-        print(f"Progress: {message}")
-        # 可以在这里更新UI显示进度
-    
+        # print(f"Progress: {message}")
+        self.logger.info(f"Progress: {message}")
+        
     def handle_result(self, node_dict):
-        print(f"Node processed: {node_dict.get('model_name', 'Unknown')}")
+        # print(f"Node processed: {node_dict.get('model_name', 'Unknown')}")
+        self.logger.info(f"Node processed: {node_dict.get('model_name', 'Unknown')}")
         # 处理单个节点的结果
     
     def handle_finished(self):
-        print("All nodes processed successfully!")
+        # print("All nodes processed successfully!")
+        self.logger.info("All nodes processed successfully!")
         InfoBar.success(
             title='Success',
             content=self.tr("All nodes processed successfully!"),
@@ -424,7 +427,8 @@ class EditorScene(QGraphicsScene):
         # 处理完成后的UI更新
     
     def handle_error(self, error_message):
-        print(f"Error occurred: {error_message}")
+        # print(f"Error occurred: {error_message}")
+        self.logger.error(f"Error occurred: {error_message}")
         InfoBar.error(
             title='Error',
             content=error_message,
@@ -450,4 +454,5 @@ class EditorScene(QGraphicsScene):
             duration=5000,
             parent=self.views()[0]
         )
+        self.logger.warning("Inference stopped")
         

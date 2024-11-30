@@ -1,7 +1,7 @@
 from PySide6.QtCore import QThread, Signal
 import torch.multiprocessing as mp
 import traceback
-from ComfyUI.Editor.common.logger import LoggerFactory
+from ComfyUI.Editor.common.logger import LoggerFactory, GlobalLoggerManager
 
 class InferenceProcess(mp.Process):
     def __init__(self, task_queue, result_queue, msst_inference_func, vr_inference_func, log_path):
@@ -15,7 +15,7 @@ class InferenceProcess(mp.Process):
     def run(self):
         log_factory = LoggerFactory()
         logger = log_factory.get_process_logger(self.log_path, f"Process-{self.pid}")
-        
+        GlobalLoggerManager.add_logger(logger)
         while True:
             try:
                 task = self.task_queue.get()
