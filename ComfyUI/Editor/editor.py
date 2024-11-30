@@ -2,7 +2,7 @@ from qfluentwidgets import FluentWindow, NavigationItemPosition
 from qfluentwidgets import FluentIcon as FIF
 from ComfyUI.Editor.interface.settings_interface import SettingsInterface
 from ComfyUI.Editor.interface.editor_interface import EditorInterface
-
+from ComfyUI.Editor.interface.manager_interface import ManagerInterface
 
 class Editor(FluentWindow):
     def __init__(self, parent=None):
@@ -14,6 +14,8 @@ class Editor(FluentWindow):
     def addInterfaces(self):
         self.editor_interface = EditorInterface(self)
         self.addSubInterface(self.editor_interface, FIF.EDIT, "Editor", NavigationItemPosition.TOP)
+        self.manager_interface = ManagerInterface(self)
+        self.addSubInterface(self.manager_interface, FIF.SPEED_MEDIUM, "Manager", NavigationItemPosition.TOP)
         self.settings_interface = SettingsInterface(self)
         self.addSubInterface(self.settings_interface, FIF.SETTING, "Settings", NavigationItemPosition.BOTTOM)
         

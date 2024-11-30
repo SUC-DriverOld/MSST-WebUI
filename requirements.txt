@@ -47,3 +47,5 @@ fastapi==0.111.0
 # ComfyUI requirements
 PySide6
 PySide6-Fluent-Widgets
+GPUtil
+py-cpuinfo

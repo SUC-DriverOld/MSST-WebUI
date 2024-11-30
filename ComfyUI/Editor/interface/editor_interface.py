@@ -12,6 +12,7 @@ class EditorInterface(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName('EditorInterface')
+        self._update_enabled = True
         self.scene = None
         self.setupUI()
 
@@ -108,5 +109,6 @@ class EditorInterface(QFrame):
                 parent=self
             )
             
-
-        
+    def setUpdatesEnabled(self, enabled):
+        self._update_enabled = enabled
+        super().setUpdatesEnabled(enabled)        
