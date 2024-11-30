@@ -10,6 +10,7 @@ from ComfyUI.Editor.common.config import cfg
 class SettingsInterface(QFrame):
     def __init__(self, parent = None):
         super().__init__(parent)
+        self._update_enabled = True
         
         self.setObjectName('SettingsInterface')
         self.setupUI()
@@ -91,3 +92,7 @@ class SettingsInterface(QFrame):
             duration=1500,
             parent=self
         )
+        
+    def setUpdatesEnabled(self, enabled):
+        self._update_enabled = enabled
+        super().setUpdatesEnabled(enabled)    
