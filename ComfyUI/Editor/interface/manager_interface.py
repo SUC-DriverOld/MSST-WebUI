@@ -1,5 +1,5 @@
 from PySide6.QtCore import QTimer, Qt, QDateTime
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QWidget
 from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis
 from PySide6.QtGui import QPen, QColor, QPainter, QBrush
 from qfluentwidgets import (ProgressRing, ScrollArea, SimpleCardWidget, SubtitleLabel, 

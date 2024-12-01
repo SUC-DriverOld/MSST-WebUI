@@ -1,6 +1,7 @@
 from qfluentwidgets import RoundMenu, Action, FluentIcon
 from PySide6.QtGui import QAction
 from ComfyUI.Editor.common.data import models_info
+import os
 
 class ViewMenu(RoundMenu):
     def __init__(self, parent=None, scene_pos = None, scene = None):
@@ -48,6 +49,9 @@ class ViewMenu(RoundMenu):
 
         for model in models_info:
             model_class = models_info[model]["model_class"]
+            path = models_info[model]["target_position"]
+            if not os.path.isfile(path):
+                continue
             action = QAction(model, triggered=lambda checked, model=model: self.addNode(model))
             match model_class:
                 case "VR_Models":
