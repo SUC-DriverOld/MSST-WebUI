@@ -334,6 +334,7 @@ class ManagerInterface(QFrame):
                 gpu_percent = int(gpu.load * 100)
                 self.gpu_card.ring.setValue(gpu_percent)
                 self.gpu_card.ring.setFormat("%v%")
+                self.gpu_card.value_label.setText(f"{gpu_percent}%")
                 self.gpu_card.primary_detail.setText(f"Temp: {gpu.temperature}°C")
                 self.gpu_card.secondary_detail.setText(f"Driver: {gpu.driver}W")
                 

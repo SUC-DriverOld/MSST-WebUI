@@ -18,7 +18,7 @@
             "default_value": 4,
             "max_value": 100,
             "min_value": 1,
-            "current_value": 4
+            "current_value": 1
         },
         {
             "parameter": "dim_t",
