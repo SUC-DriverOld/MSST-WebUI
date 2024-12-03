@@ -11,6 +11,9 @@ class EditorConfig(QConfig):
         "MainWindow", "Language", Language.AUTO, OptionsValidator(Language), LanguageSerializer(), restart=True
         )
     pan_sensitivity = ConfigItem("Editor", "PanSensitivity", 1.0, restart=True)
+    preset_path = ConfigItem("Editor", "PresetPath", "./ComfyUI/Editor/data/presets", restart=True)
+    tmp_path = ConfigItem("Editor", "TmpPath", "./tmp", restart=True)
+    log_path = ConfigItem("Editor", "LogPath", "./logs/ComfyUI", restart=True)
     
 cfg = EditorConfig()
 qconfig.load("./ComfyUI/Editor/data/EditorConfig.json", cfg)

@@ -1,9 +1,12 @@
-from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QFileDialog
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import Qt, QUrl
 from qfluentwidgets import (setTheme, ScrollArea, setThemeColor, SettingCardGroup, OptionsSettingCard,
-                            CustomColorSettingCard, InfoBar, TitleLabel, ComboBoxSettingCard, SettingCard
+                            CustomColorSettingCard, InfoBar, TitleLabel, ComboBoxSettingCard, SettingCard,
+                            PushSettingCard
                             )
 from qfluentwidgets import FluentIcon as FIF
+from pathlib import Path
 from ComfyUI.Editor.common.config import cfg
 
 
@@ -35,8 +38,9 @@ class SettingsInterface(QFrame):
         # self.scroll_area.setViewportMargins(0, 80, 0, 20)
         
         self.personalGroup.addSettingCards([self.themeCard, self.themeColorCard, self.languageCard])
-
         self.cardsLayout.addWidget(self.personalGroup)
+        self.settingsGroup.addSettingCards([self.presetPathCard, self.tmpPathCard, self.logPathCard])
+        self.cardsLayout.addWidget(self.settingsGroup)
 
         self.layout.addWidget(self.scroll_area)
         self.setLayout(self.layout)
@@ -75,6 +79,24 @@ class SettingsInterface(QFrame):
         
         self.settingsGroup = SettingCardGroup(
             self.tr("Settings"), self.widget)
+        self.presetPathCard = PushSettingCard(
+            icon=FIF.FOLDER,
+            text=self.tr("Select Preset Folder"),
+            content=cfg.get(cfg.preset_path),
+            title=self.tr("Preset Path"),
+        )
+        self.tmpPathCard = PushSettingCard(
+            icon=FIF.FOLDER,
+            text=self.tr("Select Temp Folder"),
+            content=cfg.get(cfg.tmp_path),
+            title=self.tr("Temp Path"),
+        )
+        self.logPathCard = PushSettingCard(
+            icon=FIF.FOLDER,
+            text=self.tr("Select Log Folder"),
+            content=cfg.get(cfg.log_path),
+            title=self.tr("Log Path"),
+        )
 
         self.connectSignalToSlot()    
 
@@ -84,6 +106,11 @@ class SettingsInterface(QFrame):
         # personalization
         cfg.themeChanged.connect(setTheme)
         self.themeColorCard.colorChanged.connect(lambda c: setThemeColor(c))
+        
+        # editor settings
+        self.presetPathCard.clicked.connect(self.selectPresetPath)
+        self.tmpPathCard.clicked.connect(self.selectTmpPath)
+        self.logPathCard.clicked.connect(self.selectLogPath)
         
     def showRestartTooltip(self):
         InfoBar.success(
@@ -96,3 +123,84 @@ class SettingsInterface(QFrame):
     def setUpdatesEnabled(self, enabled):
         self._update_enabled = enabled
         super().setUpdatesEnabled(enabled)    
+        
+    def selectPresetPath(self):
+        """Opens a directory selection dialog and updates the preset path configuration"""
+        
+        # Get the current preset path or default to home directory
+        current_path = Path(cfg.get(cfg.preset_path))
+        
+        # Open directory selection dialog
+        new_path = QFileDialog.getExistingDirectory(
+            self,
+            self.tr("Select Preset Folder"),
+            str(current_path),
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+        )
+        
+        # Update configuration if a new path was selected
+        if new_path:
+            # Convert to Path object to ensure proper path handling
+            path = Path(new_path)
+            
+            # Update the configuration
+            cfg.set(cfg.preset_path, str(path))
+            
+            # Update the card content to show the new path
+            self.presetPathCard.setContent(str(path))
+            
+            # Show success message
+            InfoBar.success(
+                self.tr("Path Updated"),
+                self.tr("Preset folder path has been updated successfully"),
+                duration=1500,
+                parent=self
+            )
+            
+    def selectTmpPath(self):        
+        current_path = Path(cfg.get(cfg.tmp_path))
+        
+        new_path = QFileDialog.getExistingDirectory(
+            self,
+            self.tr("Select Temp Folder"),
+            str(current_path),
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+        )
+        
+        if new_path:
+            path = Path(new_path)
+            
+            cfg.set(cfg.tmp_path, str(path))
+            
+            self.tmpPathCard.setContent(str(path))
+            
+            InfoBar.success(
+                self.tr("Path Updated"),
+                self.tr("Temp folder path has been updated successfully"),
+                duration=1500,
+                parent=self
+            )    
+            
+    def selectLogPath(self):
+        current_path = Path(cfg.get(cfg.log_path))
+        
+        new_path = QFileDialog.getExistingDirectory(
+            self,
+            self.tr("Select Log Folder"),
+            str(current_path),
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+        )
+        
+        if new_path:
+            path = Path(new_path)
+            
+            cfg.set(cfg.log_path, str(path))
+            
+            self.logPathCard.setContent(str(path))
+            
+            InfoBar.success(
+                self.tr("Path Updated"),
+                self.tr("Log folder path has been updated successfully"),
+                duration=1500,
+                parent=self
+            )            

@@ -3,7 +3,10 @@
         "Language": "Auto"
     },
     "Editor": {
-        "PanSensitivity": 0.5
+        "LogPath": "./logs/ComfyUI",
+        "PanSensitivity": 0.5,
+        "PresetPath": "/home/tong/projects/python/MSST-WebUI/ComfyUI/Editor/data/presets",
+        "TmpPath": "./tmp"
     },
     "QFluentWidgets": {
         "ThemeColor": "#ff39c5bb",
