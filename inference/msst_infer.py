@@ -175,7 +175,10 @@ class MSSeparator:
         return success_files
 
     def separate(self, mix):
-        isstereo = self.config.model.get("stereo", True)
+        isstereo = True
+        if self.model_type in ['bs_roformer', 'mel_band_roformer']:
+            isstereo = self.config.model.get("stereo", True)
+
         if isstereo and len(mix.shape) == 1:
             mix = np.stack([mix, mix], axis=0)
             self.logger.warning(f"Track is mono, but model is stereo, adding a second channel.")
