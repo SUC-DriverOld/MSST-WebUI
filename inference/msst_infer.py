@@ -153,13 +153,6 @@ class MSSeparator:
                 self.logger.warning(f'Cannot process track: {path}, error: {str(e)}')
                 continue
 
-            if len(mix.shape) == 1:
-                mix = np.stack([mix, mix], axis=0)
-            if len(mix.shape) > 2:
-                mix = np.mean(mix, axis=0) # if more than 2 channels, take mean
-                mix = np.stack([mix, mix], axis=0)
-                self.logger.warning(f"Track {path} has more than 2 channels, taking mean of all channels. As a result, the output instruments will be mono but in stereo format.")
-
             self.logger.debug(f"Starting separation process for audio_file: {path}")
             results = self.separate(mix)
             self.logger.debug(f"Separation audio_file: {path} completed. Starting to save results.")
@@ -182,6 +175,18 @@ class MSSeparator:
         return success_files
 
     def separate(self, mix):
+        isstereo = self.config.model.get("stereo", True)
+        if isstereo and len(mix.shape) == 1:
+            mix = np.stack([mix, mix], axis=0)
+            self.logger.warning(f"Track is mono, but model is stereo, adding a second channel.")
+        elif isstereo and len(mix.shape) > 2:
+            mix = np.mean(mix, axis=0) # if more than 2 channels, take mean
+            mix = np.stack([mix, mix], axis=0)
+            self.logger.warning(f"Track has more than 2 channels, taking mean of all channels and adding a second channel.")
+        elif not isstereo and len(mix.shape) != 1:
+            mix = np.mean(mix, axis=0) # if more than 2 channels, take mean
+            self.logger.warning(f"Track has more than 1 channels, but model is mono, taking mean of all channels.")
+
         instruments = self.config.training.instruments.copy()
         if self.config.training.target_instrument is not None:
             instruments = [self.config.training.target_instrument]

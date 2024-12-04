@@ -99,6 +99,8 @@ def demix_track(config, model, mix, device, pbar=False):
 
     # Do pad from the beginning and end to account floating window results better
     if length_init > 2 * border and (border > 0):
+        if not config.model.get("stereo", True) and mix.ndim == 1:
+            mix = mix.unsqueeze(0)  # [1, length]
         mix = nn.functional.pad(mix, (border, border), mode='reflect')
 
     # windowingArray crossfades at segment boundaries to mitigate clicking artifacts
