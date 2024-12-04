@@ -10,7 +10,6 @@ from webui.train import (
     update_train_start_check_point,
     validate_model,
     load_augmentations_config,
-    stop_msst_training,
     stop_msst_valid
 )
 
@@ -70,7 +69,7 @@ def train(webui_config, device):
                 open_train_results_path = gr.Button(i18n("打开文件夹"), scale=1)
             with gr.Row():
                 train_start_check_point = gr.Dropdown(
-                    label=i18n("初始模型: 继续训练或微调模型训练时, 请选择初始模型, 否则将从头开始训练! "),
+                    label=i18n("选择初始模型, 若无初始模型, 留空或选择None即可"),
                     choices=["None"],
                     value="None",
                     interactive=True,
@@ -142,9 +141,7 @@ def train(webui_config, device):
             save_train_config = gr.Button(i18n("保存上述训练配置"))
             start_train_button = gr.Button(i18n("开始训练"), variant="primary")
             gr.Markdown(value=i18n("点击开始训练后, 请到终端查看训练进度或报错, 下方不会输出报错信息, 想要停止训练可以直接关闭终端。在训练过程中, 你也可以关闭网页, 仅**保留终端**。"))
-            with gr.Row():
-                output_message_train = gr.Textbox(label="Output Message", scale=4)
-                stop_training = gr.Button(i18n("强制停止"), scale=1)
+            output_message_train = gr.Textbox(label="Output Message")
 
             select_train_config_path.click(fn=select_yaml_file, outputs=train_config_path)
             select_train_dataset_path.click(fn=select_folder, outputs=train_dataset_path)
@@ -199,7 +196,6 @@ def train(webui_config, device):
                 ],
                 outputs=output_message_train
             )
-            stop_training.click(fn=stop_msst_training)
 
         with gr.TabItem(label=i18n("验证")):
             gr.Markdown(value=i18n("此页面用于手动验证模型效果, 测试验证集, 输出SDR测试信息。输出的信息会存放在输出文件夹的results.txt中。<br>下方参数将自动加载训练页面的参数, 在训练页面点击保存训练参数后, 重启WebUI即可自动加载。当然你也可以手动输入参数。<br>"))
@@ -251,29 +247,29 @@ def train(webui_config, device):
                         value=webui_config['training']['device'] if webui_config['training']['device'] else device[0],
                         interactive=True
                     )
-                    vaild_metrics = gr.CheckboxGroup(
-                        label=i18n("选择输出的评估指标"),
-                        choices=METRICS,
-                        value=webui_config['training']['metrics'] if webui_config['training']['metrics'] else METRICS[0],
+                    valid_extension = gr.Radio(
+                        label=i18n("选择验证集音频格式"),
+                        choices=["wav", "flac", "mp3"],
+                        value="wav",
                         interactive=True
                     )
+                    valid_num_workers = gr.Number(
+                        label=i18n("验证集读取线程数, 0为自动"),
+                        value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
+                        interactive=True,
+                        minimum=0,
+                        maximum=cpu_count(),
+                        step=1
+                    )
+
                 with gr.Row():
                     with gr.Column():
-                        with gr.Row():
-                            valid_extension = gr.Radio(
-                                label=i18n("选择验证集音频格式"),
-                                choices=["wav", "flac", "mp3"],
-                                value="wav",
-                                interactive=True
-                            )
-                            valid_num_workers = gr.Number(
-                                label=i18n("验证集读取线程数, 0为自动"),
-                                value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
-                                interactive=True,
-                                minimum=0,
-                                maximum=cpu_count(),
-                                step=1
-                            )
+                        vaild_metrics = gr.CheckboxGroup(
+                            label=i18n("选择输出的评估指标"),
+                            choices=METRICS,
+                            value=webui_config['training']['metrics'] if webui_config['training']['metrics'] else METRICS[0],
+                            interactive=True
+                        )
                     with gr.Column():
                         valid_pin_memory = gr.Checkbox(
                             label=i18n("是否将加载的数据放置在固定内存中, 默认为否"),

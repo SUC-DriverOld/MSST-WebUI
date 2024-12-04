@@ -84,13 +84,6 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
 
     return i18n("训练启动成功! 请前往控制台查看训练信息! ")
 
-def stop_msst_training():
-    for process in multiprocessing.active_children():
-        if process.name == "msst_training":
-            process.terminate()
-            process.join()
-            logger.info(f"Training process stopped, PID: {process.pid}")
-
 def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_path, valid_results_path, valid_device_ids, valid_num_workers, valid_extension, valid_pin_memory, valid_use_tta, vaild_metrics):
     if valid_model_type not in MODEL_TYPE:
         return i18n("模型类型错误, 请重新选择")
