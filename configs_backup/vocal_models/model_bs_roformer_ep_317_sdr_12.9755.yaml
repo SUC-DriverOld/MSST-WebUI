@@ -8,9 +8,9 @@ audio:
   num_channels: 2
   sample_rate: 44100
 inference:
-  batch_size: 4
+  batch_size: 1
   dim_t: 801
-  num_overlap: 2
+  num_overlap: 4
 model:
   attn_dropout: 0.1
   depth: 12

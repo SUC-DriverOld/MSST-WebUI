@@ -37,8 +37,8 @@ augmentations:
   mixup_loudness_max: 1.5
 
 inference:
-  num_overlap: 2
-  batch_size: 8
+  num_overlap: 4
+  batch_size: 1
 
 model: htdemucs
 

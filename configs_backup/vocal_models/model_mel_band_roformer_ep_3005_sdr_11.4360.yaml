@@ -60,6 +60,6 @@ training:
   use_amp: true # enable or disable usage of mixed precision (float16) - usually it must be true
 
 inference:
-  batch_size: 4
+  batch_size: 1
   dim_t: 801
-  num_overlap: 2
+  num_overlap: 4

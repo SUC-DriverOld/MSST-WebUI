@@ -30,4 +30,4 @@ augmentations:
 
 inference:
   batch_size: 1
-  num_overlap: 2
+  num_overlap: 4

@@ -82,7 +82,7 @@ augmentations:
     random_polarity: 0.5 # polarity change (multiply waveform to -1)
 
 inference:
-  batch_size: 8
+  batch_size: 1
   dim_t: 256
   num_overlap: 4
   normalize: false
