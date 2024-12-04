@@ -17,7 +17,7 @@ def change_to_folder_infer():
     return (gr.Button(i18n("输入音频分离"), variant="primary", visible=False),
             gr.Button(i18n("输入文件夹分离"), variant="primary", visible=True))
 
-def save_model_config(selected_model, batch_size, dim_t, num_overlap, normalize):
+def save_model_config(selected_model, batch_size, dim_t, num_overlap, chunk_size, normalize):
     _, config_path, _, _ = get_msst_model(selected_model)
     config = load_configs(config_path)
 
@@ -27,10 +27,12 @@ def save_model_config(selected_model, batch_size, dim_t, num_overlap, normalize)
         config.inference['dim_t'] = int(dim_t)
     if config.inference.get('num_overlap'):
         config.inference['num_overlap'] = int(num_overlap)
+    if config.audio.get('chunk_size'):
+        config.audio['chunk_size'] = int(chunk_size)
     if config.inference.get('normalize'):
         config.inference['normalize'] = normalize
     save_configs(config, config_path)
-    logger.debug(f"Saved model config: {config['inference']}")
+    logger.debug(f"Saved model config: batch_size={batch_size}, dim_t={dim_t}, num_overlap={num_overlap}, chunk_size={chunk_size}, normalize={normalize}")
     return i18n("配置保存成功!")
 
 def reset_model_config(selected_model):
@@ -52,10 +54,11 @@ def reset_model_config(selected_model):
         return i18n("备份文件不存在!")
 
 def update_inference_settings(selected_model):
-    batch_size = gr.Number(label=i18n("batch_size: 批次大小, 一般不需要改"), interactive=False)
-    dim_t = gr.Number(label=i18n("dim_t: 时序维度大小, 一般不需要改"), interactive=False)
-    num_overlap = gr.Number(label=i18n("num_overlap: 数值越小速度越快, 但会牺牲效果"), interactive=False)
-    normalize = gr.Checkbox(label=i18n("normalize (该模型不支持修改此值) "), value=False, interactive=False)
+    batch_size = gr.Number(label=i18n("batch_size: 批次大小"), interactive=False)
+    dim_t = gr.Number(label=i18n("dim_t: 时间维度"), interactive=False)
+    num_overlap = gr.Number(label=i18n("overlap: 重叠数"), interactive=False)
+    chunk_size = gr.Number(label=i18n("chunk_size: 分块大小"), interactive=False)
+    normalize = gr.Checkbox(label=i18n("normalize: 是否归一化"), value=False, interactive=False)
     extract_instrumental = gr.CheckboxGroup(label=i18n("选择输出音轨"), interactive=False)
 
     if selected_model:
@@ -63,16 +66,18 @@ def update_inference_settings(selected_model):
         config = load_configs(config_path)
 
         if config.inference.get('batch_size'):
-            batch_size = gr.Number(label=i18n("batch_size: 批次大小, 一般不需要改"), value=int(config.inference.get('batch_size')), interactive=True)
+            batch_size = gr.Number(label=i18n("batch_size: 批次大小"), value=int(config.inference.get('batch_size')), interactive=True)
         if config.inference.get('dim_t'):
-            dim_t = gr.Number(label=i18n("dim_t: 时序维度大小, 一般不需要改"), value=int(config.inference.get('dim_t')), interactive=True)
+            dim_t = gr.Number(label=i18n("dim_t: 时间维度"), value=int(config.inference.get('dim_t')), interactive=True)
         if config.inference.get('num_overlap'):
-            num_overlap = gr.Number(label=i18n("num_overlap: 数值越小速度越快, 但会牺牲效果"), value=int(config.inference.get('num_overlap')), interactive=True)
+            num_overlap = gr.Number(label=i18n("overlap: 重叠数"), value=int(config.inference.get('num_overlap')), interactive=True)
+        if config.audio.get('chunk_size'):
+            chunk_size = gr.Number(label=i18n("chunk_size: 分块大小"), value=int(config.audio.get('chunk_size')), interactive=True)
         if config.inference.get('normalize'):
-            normalize = gr.Checkbox(label=i18n("normalize: 是否对音频进行归一化处理"), value=config.inference.get('normalize'), interactive=True)
+            normalize = gr.Checkbox(label=i18n("normalize: 是否归一化"), value=config.inference.get('normalize'), interactive=True)
         extract_instrumental = gr.CheckboxGroup(label=i18n("选择输出音轨"), choices=config.training.get('instruments'), interactive=True)
 
-    return batch_size, dim_t, num_overlap, normalize, extract_instrumental
+    return batch_size, dim_t, num_overlap, chunk_size, normalize, extract_instrumental
 
 def update_selected_model(model_type):
     webui_config = load_configs(WEBUI_CONFIG)

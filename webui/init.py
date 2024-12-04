@@ -4,12 +4,7 @@ from webui.utils import i18n, load_configs, get_msst_model, get_vr_model
 
 def init_selected_model():
     try:
-        batch_size, dim_t, num_overlap, is_normalize = (
-            i18n("该模型不支持修改此值"),
-            i18n("该模型不支持修改此值"),
-            i18n("该模型不支持修改此值"),
-            False
-        )
+        batch_size, dim_t, num_overlap, chunk_size, is_normalize = None, None, None, None, False
         config = load_configs(WEBUI_CONFIG)
         selected_model = config['inference']['selected_model']
         _, config_path, _, _ = get_msst_model(selected_model)
@@ -21,11 +16,13 @@ def init_selected_model():
             dim_t = int(config.inference.get('dim_t'))
         if config.inference.get('num_overlap'):
             num_overlap = int(config.inference.get('num_overlap'))
+        if config.audio.get("chunk_size"):
+            chunk_size = int(config.audio.get("chunk_size"))
         if config.inference.get('normalize'):
             is_normalize = True
-        return batch_size, dim_t, num_overlap, is_normalize
+        return batch_size, dim_t, num_overlap, chunk_size, is_normalize
     except: 
-        return i18n("请先选择模型"), i18n("请先选择模型"), i18n("请先选择模型"), False
+        return None, None, None, None, False
 
 def init_selected_msst_model():
     webui_config = load_configs(WEBUI_CONFIG)
