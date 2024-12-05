@@ -160,24 +160,18 @@ def msst():
             interactive=True
         )
     with gr.Row():
-        with gr.Column():
-            force_cpu = gr.Checkbox(
-                label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),
-                value=force_cpu_value,
-                interactive=False if force_cpu_value else True
-            )
-            use_tta = gr.Checkbox(
-                label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),
-                value=False,
-                interactive=True
-            )
-        with gr.Column():
-            extract_instrumental = gr.CheckboxGroup(
-                label=i18n("选择输出音轨"),
-                choices=[i18n("请先选择模型")],
-                value=None,
-                interactive=True
-            )
+        extract_instrumental = gr.CheckboxGroup(
+            label=i18n("选择输出音轨"),
+            choices=[i18n("请先选择模型")],
+            value=None,
+            interactive=True
+        )
+        force_cpu = gr.Checkbox(
+            info=" ",
+            label=i18n("强制使用CPU: 使用CPU推理速度非常慢!"),
+            value=force_cpu_value,
+            interactive=True
+        )
     with gr.Tabs():
         with gr.TabItem(label=i18n("输入文件夹")) as folder_tab:
             folder_input = gr.Textbox(
@@ -199,21 +193,31 @@ def msst():
         gr.Markdown(value=i18n("只有在点击保存后才会生效。参数直接写入配置文件, 无法撤销。假如不知道如何设置, 请保持默认值。<br>请牢记自己修改前的参数数值, 防止出现问题以后无法恢复。请确保输入正确的参数, 否则可能会导致模型无法正常运行。<br>假如修改后无法恢复, 请点击``重置``按钮, 这会使得配置文件恢复到默认值。"))
         with gr.Row():
             batch_size = gr.Number(
-                label=i18n("batch_size: 批次大小, 一般不需要改"),
-                value=None
-            )
-            dim_t = gr.Number(
-                label=i18n("dim_t: 时序维度大小, 一般不需要改"),
+                label=i18n("batch_size: 批次大小"),
                 value=None
             )
             num_overlap = gr.Number(
-                label=i18n("num_overlap: 数值越小速度越快, 但会牺牲效果"),
+                label=i18n("overlap: 重叠数"),
                 value=None
             )
+            dim_t = gr.Number(
+                label=i18n("dim_t: 时间维度"),
+                value=None
+            )
+            chunk_size = gr.Number(
+                label=i18n("chunk_size: 分块大小"),
+                value=None
+            )
+        with gr.Row():
             normalize = gr.Checkbox(
-                label=i18n("normalize: 是否对音频进行归一化处理"),
+                label=i18n("normalize: 是否归一化"),
                 value=False,
                 interactive=False
+            )
+            use_tta = gr.Checkbox(
+                label=i18n("use_tta: 是否使用TTA, 若使用, 推理时间x3"),
+                value=False,
+                interactive=True
             )
         with gr.Row():
             save_config_button = gr.Button(i18n("保存配置"))
@@ -228,8 +232,8 @@ def msst():
     folder_tab.select(fn=change_to_folder_infer, outputs=[inference_audio, inference_folder])
     inference_audio.click(fn=cloud_msst_infer_audio,inputs=[selected_model,audio_input,store_dir,extract_instrumental,gpu_id,output_format,force_cpu,use_tta,],outputs=output_message)
     inference_folder.click(fn=cloud_msst_infer_folder,inputs=[selected_model,folder_input,store_dir,extract_instrumental,gpu_id,output_format,force_cpu,use_tta,],outputs=output_message)
-    selected_model.change(fn=update_inference_settings,inputs=selected_model,outputs=[batch_size,dim_t,num_overlap,normalize,extract_instrumental,])
-    save_config_button.click(fn=save_model_config,inputs=[selected_model,batch_size,dim_t,num_overlap,normalize],outputs=output_message)
+    selected_model.change(fn=update_inference_settings,inputs=selected_model,outputs=[batch_size,dim_t,num_overlap,chunk_size,normalize,extract_instrumental,])
+    save_config_button.click(fn=save_model_config,inputs=[selected_model,batch_size,dim_t,num_overlap,chunk_size,normalize],outputs=output_message)
     select_model_type.change(fn=load_msst_cloud_model, inputs=select_model_type, outputs=selected_model)
     reset_config_button.click(fn=reset_model_config,inputs=selected_model,outputs=output_message)
     stop_msst.click(fn=stop_msst_inference)
@@ -516,7 +520,6 @@ def train():
         start_training,
         update_train_start_check_point,
         validate_model,
-        stop_msst_training,
         stop_msst_valid
     )
 
@@ -639,14 +642,11 @@ def train():
             save_train_config = gr.Button(i18n("保存上述训练配置"))
             start_train_button = gr.Button(i18n("开始训练"), variant="primary")
             gr.Markdown(value=i18n("点击开始训练后, 请到终端查看训练进度或报错, 下方不会输出报错信息, 想要停止训练可以直接关闭终端。在训练过程中, 你也可以关闭网页, 仅**保留终端**。"))
-            with gr.Row():
-                output_message_train = gr.Textbox(label="Output Message", scale=4)
-                stop_training = gr.Button(i18n("强制停止"), scale=1)
+            output_message_train = gr.Textbox(label="Output Message", scale=4)
 
             reflesh_start_check_point.click(fn=update_train_start_check_point, inputs=train_results_path, outputs=train_start_check_point)
             save_train_config.click(fn=save_training_config,inputs=[train_model_type,train_config_path,train_dataset_type,train_dataset_path,train_valid_path,train_num_workers,train_device_ids,train_seed,train_pin_memory,train_use_multistft_loss,train_use_mse_loss,train_use_l1_loss,train_results_path,train_accelerate,train_pre_validate,train_metrics_list,train_metrics_scheduler],outputs=output_message_train)
             start_train_button.click(fn=start_training,inputs=[train_model_type,train_config_path,train_dataset_type,train_dataset_path,train_valid_path,train_num_workers,train_device_ids,train_seed,train_pin_memory,train_use_multistft_loss,train_use_mse_loss,train_use_l1_loss,train_results_path,train_start_check_point,train_accelerate,train_pre_validate,train_metrics_list,train_metrics_scheduler],outputs=output_message_train)
-            stop_training.click(fn=stop_msst_training)
 
         with gr.TabItem(label=i18n("验证")):
             gr.Markdown(value=i18n("此页面用于手动验证模型效果, 测试验证集, 输出SDR测试信息。输出的信息会存放在输出文件夹的results.txt中。<br>下方参数将自动加载训练页面的参数, 在训练页面点击保存训练参数后, 重启WebUI即可自动加载。当然你也可以手动输入参数。<br>"))
@@ -693,29 +693,29 @@ def train():
                         value=webui_config['training']['device'] if webui_config['training']['device'] else device[0],
                         interactive=True
                     )
-                    vaild_metrics = gr.CheckboxGroup(
-                        label=i18n("选择输出的评估指标"),
-                        choices=METRICS,
-                        value=webui_config['training']['metrics'] if webui_config['training']['metrics'] else METRICS[0],
+                    valid_extension = gr.Radio(
+                        label=i18n("选择验证集音频格式"),
+                        choices=["wav", "flac", "mp3"],
+                        value="wav",
                         interactive=True
                     )
+                    valid_num_workers = gr.Number(
+                        label=i18n("验证集读取线程数, 0为自动"),
+                        value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
+                        interactive=True,
+                        minimum=0,
+                        maximum=cpu_count(),
+                        step=1
+                    )
+
                 with gr.Row():
                     with gr.Column():
-                        with gr.Row():
-                            valid_extension = gr.Radio(
-                                label=i18n("选择验证集音频格式"),
-                                choices=["wav", "flac", "mp3"],
-                                value="wav",
-                                interactive=True
-                            )
-                            valid_num_workers = gr.Number(
-                                label=i18n("验证集读取线程数, 0为自动"),
-                                value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
-                                interactive=True,
-                                minimum=0,
-                                maximum=cpu_count(),
-                                step=1
-                            )
+                        vaild_metrics = gr.CheckboxGroup(
+                            label=i18n("选择输出的评估指标"),
+                            choices=METRICS,
+                            value=webui_config['training']['metrics'] if webui_config['training']['metrics'] else METRICS[0],
+                            interactive=True
+                        )
                     with gr.Column():
                         valid_pin_memory = gr.Checkbox(
                             label=i18n("是否将加载的数据放置在固定内存中, 默认为否"),
@@ -885,6 +885,7 @@ def settings():
         reset_settings,
         reset_webui_config,
         change_language,
+        save_audio_setting_fn
     )
 
     theme_choices = []
@@ -898,32 +899,57 @@ def settings():
         if language_dict[lg] == current_language:
             language = lg
 
-    with gr.Row():
-        gr.Textbox(label=i18n("GPU信息"), value=device if len(device) > 1 else device[0], interactive=False)
-        gr.Textbox(label=i18n("系统信息"), value=f"System: {platform.system()}, Machine: {platform.machine()}", interactive=False)
-    with gr.Row():
-        set_language = gr.Dropdown(
-            label=i18n("选择语言"),
-            choices=language_dict.keys(),
-            value=language,
-            interactive=True
-        )
-        debug_mode = gr.Checkbox(
-            label=i18n("全局调试模式: 向开发者反馈问题时请开启。(该选项支持热切换)"),
-            value=webui_config['settings']['debug'],
-            interactive=True
-        )
-    with gr.Row():
-        reset_all_webui_config = gr.Button(i18n("重置WebUI路径记录"), variant="primary")
-        reset_seetings = gr.Button(i18n("重置WebUI设置"), variant="primary")
-    setting_output_message = gr.Textbox(label="Output Message")
-    restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
+    with gr.Tabs():
+        with gr.TabItem(i18n("WebUI设置")):
+            with gr.Row():
+                gr.Textbox(label=i18n("GPU信息"), value=device if len(device) > 1 else device[0], interactive=False)
+                gr.Textbox(label=i18n("系统信息"), value=f"System: {platform.system()}, Machine: {platform.machine()}", interactive=False)
+            with gr.Row():
+                set_language = gr.Dropdown(
+                    label=i18n("选择语言"),
+                    choices=language_dict.keys(),
+                    value=language,
+                    interactive=True
+                )
+                debug_mode = gr.Checkbox(
+                    label=i18n("全局调试模式: 向开发者反馈问题时请开启。(该选项支持热切换)"),
+                    value=webui_config['settings']['debug'],
+                    interactive=True
+                )
+            with gr.Row():
+                reset_all_webui_config = gr.Button(i18n("重置WebUI路径记录"), variant="primary")
+                reset_seetings = gr.Button(i18n("重置WebUI设置"), variant="primary")
+            setting_output_message = gr.Textbox(label="Output Message")
+            restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
+        with gr.TabItem(label=i18n("音频输出设置")):
+            gr.Markdown(i18n("此页面支持用户自定义修改MSST/VR推理后输出音频的质量。输出音频的**采样率, 声道数与模型支持的参数有关, 无法更改**。<br>修改完成后点击保存设置即可生效。"))
+            wav_bit_depth = gr.Radio(
+                label=i18n("输出wav位深度"),
+                choices=["PCM_16", "PCM_24", "PCM_32", "FLOAT"],
+                value="FLOAT",
+                interactive=True
+            )
+            flac_bit_depth = gr.Radio(
+                label=i18n("输出flac位深度"),
+                choices=["PCM_16", "PCM_24"],
+                value="PCM_24",
+                interactive=True
+            )
+            mp3_bit_rate = gr.Radio(
+                label=i18n("输出mp3比特率(bps)"),
+                choices=['96k', '128k', '192k', '256k', '320k'],
+                value="320k",
+                interactive=True
+            )
+            save_audio_setting = gr.Button(i18n("保存设置"), variant="primary")
+            audio_setting_output_message = gr.Textbox(label="Output Message")
 
     restart_webui.click(fn=webui_restart, outputs=setting_output_message)
     reset_seetings.click(fn=reset_settings,outputs=setting_output_message)
     reset_all_webui_config.click(fn=reset_webui_config,outputs=setting_output_message)
     set_language.change(fn=change_language,inputs=set_language,outputs=setting_output_message)
     debug_mode.change(fn=log_level_debug,inputs=debug_mode,outputs=setting_output_message)
+    save_audio_setting.click(fn=save_audio_setting_fn,inputs=[wav_bit_depth,flac_bit_depth,mp3_bit_rate], outputs=audio_setting_output_message)
 
 if __name__ == "__main__":
     import multiprocessing
