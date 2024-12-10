@@ -104,7 +104,10 @@ def save_flow_func(preset_name, df):
         output_message = i18n("请填写预设名称")
         return output_message, None, None
 
-    preset_dict = {f"Step_{index + 1}": row.dropna().to_dict() for index, row in df.iterrows()}
+    preset_dict = {}
+    preset_dict["version"] = PRESET_VERSION
+    preset_dict["name"] = preset_name
+    preset_dict["flow"] = {f"Step_{index + 1}": row.dropna().to_dict() for index, row in df.iterrows()}
     os.makedirs(PRESETS, exist_ok=True)
     save_configs(preset_dict, os.path.join(PRESETS, f"{preset_name}.json"))
 
@@ -130,9 +133,19 @@ def reset_last_func(df):
 def load_preset(preset_name):
     if preset_name in os.listdir(PRESETS):
         preset_data = load_configs(os.path.join(PRESETS, preset_name))
+
+        version = preset_data.get("version", None)
+        if version not in SUPPORTED_PRESET_VERSION:
+            gr.Warning(i18n("不支持的预设版本: ") + str(version))
+            logger.error(f"Load preset: {preset_name} failed, unsupported version: {version}, supported version: {SUPPORTED_PRESET_VERSION}")
+            return gr.Dataframe(
+                pd.DataFrame({"model_type": [i18n("预设版本不支持")], "model_name": [i18n("预设版本不支持")], "input_to_next": [i18n("预设版本不支持")], "output_to_storage": [i18n("预设版本不支持")]}),
+                interactive=False,
+                label=None
+            )
+
         preset_flow = pd.DataFrame({"model_type": [""], "model_name": [""], "input_to_next": [""], "output_to_storage": [""]})
-    
-        for step in preset_data.keys():
+        for step in preset_data["flow"].keys():
             preset_flow = add_to_flow_func(
                 preset_data[step]["model_type"],
                 preset_data[step]["model_name"],
@@ -190,21 +203,19 @@ def restore_preset_func(backup_file):
 class Presets:
     def __init__(
             self,
-            preset_name,
+            presets,
             force_cpu=False,
             use_tta=False,
             logger=get_logger()
     ):
-        if preset_name not in os.listdir(PRESETS):
-            raise FileNotFoundError(i18n("预设") + preset_name + i18n("不存在"))
-
-        presets = load_configs(os.path.join(PRESETS, preset_name))
-        self.presets = presets
+        self.presets = presets.get("flow", {})
         self.device = "auto" if not force_cpu else "cpu"
         self.force_cpu = force_cpu
         self.use_tta = use_tta
         self.logger = logger
-        self.total_steps = len(presets.keys())
+        self.total_steps = len(self.presets.keys())
+        self.preset_version = presets.get("version", "Unknown version")
+        self.preset_name = presets.get("name", "Unknown name")
 
         webui_config = load_configs(WEBUI_CONFIG)
         self.debug = webui_config["settings"].get("debug", False)
@@ -306,6 +317,15 @@ def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_for
     return msg
 
 def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir: bool, is_audio=False):
+    if preset_name not in os.listdir(PRESETS):
+        return (i18n("预设") + preset_name + i18n("不存在"))
+
+    preset_data = load_configs(os.path.join(PRESETS, preset_name))
+    preset_version = preset_data.get("version", "Unknown version")
+    if preset_version not in SUPPORTED_PRESET_VERSION:
+        logger.error(f"Unsupported preset version: {preset_version}, supported version: {SUPPORTED_PRESET_VERSION}")
+        return i18n("不支持的预设版本: ") + preset_version
+
     config = load_configs(WEBUI_CONFIG)
     config['inference']['preset'] = preset_name
     config['inference']['force_cpu'] = force_cpu
@@ -329,7 +349,7 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
         shutil.rmtree(TEMP_PATH)
     tmp_store_dir = os.path.join(TEMP_PATH, "step_1_output")
 
-    preset = Presets(preset_name, force_cpu, use_tta, logger)
+    preset = Presets(preset_data, force_cpu, use_tta, logger)
 
     logger.info(f"Starting preset inference process, use presets: {preset_name}")
     logger.debug(f"presets: {preset.presets}")

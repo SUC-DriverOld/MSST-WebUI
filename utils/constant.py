@@ -51,6 +51,10 @@ with open(WEBUI_CONFIG_BACKUP, "r") as f:
 PRESETS = "presets"
 PRESETS_BACKUP = "presets_backup"
 
+# preset version
+PRESET_VERSION = "1.0.0"
+SUPPORTED_PRESET_VERSION = ["1.0.0"]
+
 # msst model map path
 MSST_MODEL = "data/msst_model_map.json"
 MSST_MODEL_BACKUP = "data_backup/msst_model_map.json"
