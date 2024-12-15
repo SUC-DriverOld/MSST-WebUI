@@ -1,6 +1,6 @@
 import gradio as gr
 
-from webui.utils import i18n, select_folder, open_folder
+from webui.utils import i18n, select_folder, open_folder, change_to_audio_infer, change_to_folder_infer
 from webui.init import init_selected_model, init_selected_msst_model
 from webui.msst import (
     run_inference_single,
@@ -11,8 +11,6 @@ from webui.msst import (
     save_model_config,
     reset_model_config,
     update_inference_settings,
-    change_to_audio_infer,
-    change_to_folder_infer
 )
 
 def msst(webui_config, device, force_cpu_flag=False):

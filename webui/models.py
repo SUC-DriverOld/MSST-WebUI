@@ -70,7 +70,7 @@ def show_model_info(model_type, model_name):
         if sha256 != caculate_sha256(model_path):
             info += i18n("sha256校验失败")
             gr.Warning(i18n("模型sha256校验失败, 请重新下载"))
-            logger.error(f"Model {model_name} sha256 check failed, please redownload")
+            logger.warning(f"Model {model_name} sha256 check failed, please redownload")
         else:
             info += i18n("sha256校验成功")
             logger.info(f"Model {model_name} sha256 check passed")
@@ -130,7 +130,7 @@ def download_file(url, path, model_name):
         logger.debug(f"Model {model_name} sha256: {current_sha256}, target sha256: {target_sha256}")
         if target_sha256 != "Unknown":
             if target_sha256 != current_sha256:
-                logger.error(f"Model {model_name} sha256 check failed")
+                logger.warning(f"Model {model_name} sha256 check failed")
                 return i18n("模型") + model_name + i18n("sha256校验失败") + ", " + i18n("请重新下载")
             else:
                 logger.info(f"Model {model_name} downloaded successfully, sha256 check passed")
