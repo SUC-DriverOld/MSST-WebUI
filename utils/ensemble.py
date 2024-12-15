@@ -125,8 +125,8 @@ def average_waveforms(pred_track, weights, algorithm):
     return pred_track
 
 
-def ensemble_files(files, type, weights, output):
-    logger.info(f'Ensemble type: {type}, Number of input files: {len(files)}, Weights: {weights}, Output file: {output}')
+def ensemble_audios(files, type, weights):
+    logger.info(f'Ensemble type: {type}, Number of input files: {len(files)}, Weights: {weights}')
     if weights is None:
         weights = np.ones(len(files))
     data = []
@@ -141,8 +141,7 @@ def ensemble_files(files, type, weights, output):
     data = np.array(data)
     res = average_waveforms(data, weights, type)
     logger.info('Result shape: {}'.format(res.shape))
-    sf.write(output, res.T, sr, 'FLOAT')
-    logger.info(f'Ensemble result saved to: {output}')
+    return res.T, sr
 
 
 if __name__ == "__main__":
@@ -156,4 +155,6 @@ if __name__ == "__main__":
                         help="Path to wav file where ensemble result will be stored")
     args = parser.parse_args()
 
-    ensemble_files(args.files, args.type, args.weights, args.output)
+    res, sr = ensemble_audios(args.files, args.type, args.weights)
+    sf.write(args.output, res.T, sr, 'FLOAT')
+    logger.info(f'Ensemble result saved to: {args.output}')
