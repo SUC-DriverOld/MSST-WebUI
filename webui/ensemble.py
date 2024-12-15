@@ -129,7 +129,6 @@ def inference_audio_func(ensemble_model_mode, output_format, force_cpu, use_tta,
         shutil.copy(audio, os.path.join(TEMP_PATH, "ensemble_raw"))
     input_folder = os.path.join(TEMP_PATH, "ensemble_raw")
     msg = inference_folder_func(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_folder, is_audio=True)
-    shutil.rmtree(TEMP_PATH)
     return msg
 
 def inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, is_audio=False):
@@ -210,6 +209,9 @@ def inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, stor
         except Exception as e:
             logger.error(f"Fail to ensemble audio: {audio}. Error: {e}\n{traceback.format_exc()}")
             continue
+
+    if os.path.exists(TEMP_PATH):
+        shutil.rmtree(TEMP_PATH)
 
     logger.info(f"Ensemble process completed, saved to: {store_dir}, total time cost: {round(time.time() - start_time, 2)}s")
     return i18n("处理完成, 结果已保存至: ") + store_dir + i18n(", 耗时: ") + str(round(time.time() - start_time, 2)) + "s"

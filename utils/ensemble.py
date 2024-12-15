@@ -133,14 +133,21 @@ def ensemble_audios(files, type, weights):
     sr = 44100
     for f in files:
         if not os.path.isfile(f):
-            logger.info(f'Error. Can\'t find file: {f}. Check paths.')
+            logger.error(f"Can't find file: {f}. Check paths.")
             return None
         wav, sr = librosa.load(f, sr=None, mono=False)
-        logger.info(f"Reading file: {f}, waveform shape: {wav.shape} sample rate: {sr}")
+        logger.debug(f"Reading file: {f}, waveform shape: {wav.shape}, sample rate: {sr}")
         data.append(wav)
+
+    lengths = [d.shape[-1] for d in data]
+    min_length = min(lengths)
+    if len(set(lengths)) > 1:
+        logger.warning("Input audio files have different lengths. Truncating all to the shortest length.")
+        data = [d[..., :min_length] for d in data]
+
     data = np.array(data)
     res = average_waveforms(data, weights, type)
-    logger.info('Result shape: {}'.format(res.shape))
+    logger.debug('Result shape: {}'.format(res.shape))
     return res.T, sr
 
 
