@@ -204,7 +204,7 @@ def inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, stor
 
             logger.debug(f"ensemble_audio: {ensemble_audio}, ensemble_weights: {ensemble_weights}")
             res, sr = ensemble_audios(ensemble_audio, ensemble_mode, ensemble_weights)
-            save_filename = os.path.join(store_dir, f"{base_name}_ensemble_{ensemble_mode}")
+            save_filename = f"{base_name}_ensemble_{ensemble_mode}"
             preset.save_audio(res, sr, output_format, save_filename, store_dir)
         except Exception as e:
             logger.error(f"Fail to ensemble audio: {audio}. Error: {e}\n{traceback.format_exc()}")
