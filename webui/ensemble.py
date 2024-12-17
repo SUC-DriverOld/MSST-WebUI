@@ -118,7 +118,7 @@ def load_ensemble():
     except:
         return flow
 
-def inference_audio_func(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_audio):
+def inference_audio_func(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_audio, extract_inst):
     if not input_audio:
         return i18n("请上传至少一个音频文件!")
     if os.path.exists(TEMP_PATH):
@@ -128,10 +128,10 @@ def inference_audio_func(ensemble_model_mode, output_format, force_cpu, use_tta,
     for audio in input_audio:
         shutil.copy(audio, os.path.join(TEMP_PATH, "ensemble_raw"))
     input_folder = os.path.join(TEMP_PATH, "ensemble_raw")
-    msg = inference_folder_func(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_folder, is_audio=True)
+    msg = inference_folder_func(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_folder, extract_inst, is_audio=True)
     return msg
 
-def inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, is_audio=False):
+def inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, extract_inst, is_audio=False):
     config = load_configs(WEBUI_CONFIG)
     preset_data = config['inference']['ensemble_preset']
     if not preset_data:
@@ -142,6 +142,7 @@ def inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, stor
     config['inference']['store_dir'] = store_dir
     config['inference']['ensemble_use_tta'] = use_tta
     config['inference']['ensemble_type'] = ensemble_mode
+    config['inference']['ensemble_extract_inst'] = extract_inst
 
     if not is_audio:
         config['inference']['input_dir'] = input_folder
@@ -191,6 +192,9 @@ def inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, stor
 
     logger.info(f"\033[33mInference process completed, time cost: {round(time.time() - start_time, 2)}s, starting ensemble...\033[0m")
 
+    success_count = 0
+    failed_count = 0
+
     for audio in os.listdir(input_folder):
         base_name = os.path.splitext(audio)[0]
         ensemble_audio = []
@@ -206,15 +210,36 @@ def inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, stor
             res, sr = ensemble_audios(ensemble_audio, ensemble_mode, ensemble_weights)
             save_filename = f"{base_name}_ensemble_{ensemble_mode}"
             preset.save_audio(res, sr, output_format, save_filename, store_dir)
+
+            if extract_inst:
+                import librosa
+                logger.debug(f"User choose to extract other instruments")
+                raw, _ = librosa.load(os.path.join(input_folder, audio), sr=sr, mono=False)
+                res = res.T
+
+                if raw.shape[-1] != res.shape[-1]:
+                    logger.warning(f"Extracted audio shape: {res.shape} is not equal to raw audio shape: {raw.shape}, matching min length")
+                    min_length = min(raw.shape[-1], res.shape[-1])
+                    raw = raw[..., :min_length]
+                    res = res[..., :min_length]
+
+                result = raw - res
+                logger.debug(f"Extracted audio shape: {result.shape}")
+                save_inst = f"{base_name}_ensemble_{ensemble_mode}_other"
+                preset.save_audio(result.T, sr, output_format, save_inst, store_dir)
+
+            success_count += 1
+
         except Exception as e:
             logger.error(f"Fail to ensemble audio: {audio}. Error: {e}\n{traceback.format_exc()}")
+            failed_count += 1
             continue
 
     if os.path.exists(TEMP_PATH):
         shutil.rmtree(TEMP_PATH)
 
     logger.info(f"Ensemble process completed, saved to: {store_dir}, total time cost: {round(time.time() - start_time, 2)}s")
-    return i18n("处理完成, 结果已保存至: ") + store_dir + i18n(", 耗时: ") + str(round(time.time() - start_time, 2)) + "s"
+    return i18n("处理完成, 成功: ") + str(success_count) + i18n("个文件, 失败: ") + str(failed_count) + i18n("个文件") + i18n(", 结果已保存至: ") + store_dir + i18n(", 耗时: ") + str(round(time.time() - start_time, 2)) + "s"
 
 def stop_ensemble_func():
     for process in multiprocessing.active_children():

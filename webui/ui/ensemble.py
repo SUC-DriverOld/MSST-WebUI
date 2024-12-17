@@ -92,7 +92,12 @@ def ensemble(webui_config, force_cpu_flag=False):
                 )
                 use_tta = gr.Checkbox(
                     label=i18n("使用TTA (测试时增强), 可能会提高质量, 但时间x3"),
-                    value=webui_config['inference']['preset_use_tta'] if webui_config['inference']['preset_use_tta'] else False,
+                    value=webui_config['inference']['ensemble_use_tta'] if webui_config['inference']['ensemble_use_tta'] else False,
+                    interactive=True
+                )
+                extract_inst = gr.Checkbox(
+                    label=i18n("输出次级音轨 (例如: 合奏人声时, 同时输出伴奏)"),
+                    value=webui_config['inference']['ensemble_extract_inst'] if webui_config['inference']['ensemble_extract_inst'] else False,
                     interactive=True
                 )
             with gr.Tabs():
@@ -101,7 +106,8 @@ def ensemble(webui_config, force_cpu_flag=False):
                 with gr.TabItem(label=i18n("输入文件夹")) as folder_tab:
                     with gr.Row():
                         input_folder = gr.Textbox(
-                            label=i18n("输入目录"),value=webui_config['inference']['input_dir'] if webui_config['inference']['input_dir'] else "input/",
+                            label=i18n("输入目录"),
+                            value=webui_config['inference']['input_dir'] if webui_config['inference']['input_dir'] else "input/",
                             interactive=True,
                             scale=3
                         )
@@ -177,7 +183,8 @@ def ensemble(webui_config, force_cpu_flag=False):
             force_cpu,
             use_tta,
             store_dir_flow,
-            input_audio
+            input_audio,
+            extract_inst
         ],
         outputs = output_message_ensemble
     )
@@ -189,7 +196,8 @@ def ensemble(webui_config, force_cpu_flag=False):
             force_cpu,
             use_tta,
             store_dir_flow,
-            input_folder
+            input_folder,
+            extract_inst
         ],
         outputs = output_message_ensemble
     )

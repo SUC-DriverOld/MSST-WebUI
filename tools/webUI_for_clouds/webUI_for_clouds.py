@@ -76,25 +76,25 @@ def cloud_preset_infer_audio(input_audio, store_dir, preset, force_cpu, output_f
     from webui.preset import preset_inference_audio
     preset_data = load_configs(os.path.join(PRESETS, preset))
     assert check_preset(preset_data), i18n("模型下载失败, 请重试!")
-    return preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir)
+    return preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir, is_audio=True)
 
-def cloud_preset_infer_folder(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir, is_audio=False):
+def cloud_preset_infer_folder(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir):
     from webui.preset import preset_inference
     preset_data = load_configs(os.path.join(PRESETS, preset_name))
     assert check_preset(preset_data), i18n("模型下载失败, 请重试!")
-    return preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir, is_audio)
+    return preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir, is_audio=False)
 
-def cloud_ensemble_infer_audio(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_audio):
+def cloud_ensemble_infer_audio(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_audio, extract_inst):
     from webui.ensemble import inference_audio_func
     ensemble_data = webui_config['inference']['ensemble_preset']
     assert check_preset(ensemble_data), i18n("模型下载失败, 请重试!")
-    return inference_audio_func(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_audio)
+    return inference_audio_func(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_audio, extract_inst, is_audio=True)
 
-def cloud_ensemble_infer_folder(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, is_audio=False):
+def cloud_ensemble_infer_folder(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, extract_inst):
     from webui.ensemble import inference_folder_func
     ensemble_data = webui_config['inference']['ensemble_preset']
     assert check_preset(ensemble_data), i18n("模型下载失败, 请重试!")
-    return inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, is_audio=False)
+    return inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, extract_inst, is_audio=False)
 
 def setup():
     global device, force_cpu_value
@@ -600,6 +600,11 @@ def ensemble():
                     value=False,
                     interactive=True
                 )
+                extract_inst = gr.Checkbox(
+                    label=i18n("输出次级音轨 (例如: 合奏人声时, 同时输出伴奏)"),
+                    value=False,
+                    interactive=True
+                )
             with gr.Tabs():
                 with gr.TabItem(label=i18n("输入文件夹")) as folder_tab:
                     input_folder = gr.Textbox(
@@ -663,8 +668,8 @@ def ensemble():
     audio_tab.select(fn=change_to_audio_infer, outputs=[inference_audio, inference_folder])
     folder_tab.select(fn=change_to_folder_infer, outputs=[inference_audio, inference_folder])
     add_to_flow.click(fn=add_to_ensemble_flow,inputs=[model_type, model_name, stem_weight, stem, ensemble_flow],outputs=ensemble_flow)
-    inference_audio.click(fn=cloud_ensemble_infer_audio,inputs=[ensemble_model_mode,output_format,force_cpu,use_tta,store_dir_flow,input_audio],outputs = output_message_ensemble)
-    inference_folder.click(fn=cloud_ensemble_infer_folder,inputs=[ensemble_model_mode,output_format,force_cpu,use_tta,store_dir_flow,input_folder],outputs = output_message_ensemble)
+    inference_audio.click(fn=cloud_ensemble_infer_audio,inputs=[ensemble_model_mode,output_format,force_cpu,use_tta,store_dir_flow,input_audio, extract_inst],outputs = output_message_ensemble)
+    inference_folder.click(fn=cloud_ensemble_infer_folder,inputs=[ensemble_model_mode,output_format,force_cpu,use_tta,store_dir_flow,input_folder, extract_inst],outputs = output_message_ensemble)
     ensemble_button.click(fn=ensemble_files,inputs=[files,ensemble_type,weights,ensembl_output_path,file_output_format],outputs = output_message_ensemble)
     model_type.change(load_preset_cloud_model, inputs=model_type, outputs=model_name)
     model_name.change(fn=update_model_stem,inputs=[model_type, model_name],outputs=[stem])
