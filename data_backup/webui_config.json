@@ -26,6 +26,7 @@
         "vr_enable_post_process": false,
         "ensemble_type": null,
         "ensemble_use_tta": false,
+        "ensemble_extract_inst": false,
         "ensemble_preset": null
     },
     "tools": {
