@@ -6,7 +6,6 @@ from pydub import AudioSegment
 from tqdm import tqdm
 
 from utils.constant import *
-from utils.ensemble import ensemble_files
 from webui.utils import i18n, load_configs, save_configs, logger
 
 def convert_audio(uploaded_files, output_format, output_folder, sample_rate, channels, wav_bit_depth, flac_bit_depth, mp3_bit_rate, ogg_bit_rate):
@@ -54,19 +53,19 @@ def convert_audio(uploaded_files, output_format, output_folder, sample_rate, cha
 
         if output_format == "wav":
             output_file = os.path.join(output_folder, f"{basename}_{sample_rate}_{wav_bit_depth}.wav")
-            command = f"{FFMPEG} -i \"{file}\" -ar {sample_rate} -ac {channels} -c:a {ca} -y \"{output_file}\""
+            command = f"{FFMPEG} -i \"{file}\" -loglevel error -ar {sample_rate} -ac {channels} -c:a {ca} -y \"{output_file}\""
         elif output_format == "flac":
             output_file = os.path.join(output_folder, f"{basename}_{sample_rate}_{flac_bit_depth}.flac")
-            command = f"{FFMPEG} -i \"{file}\" -ar {sample_rate} -ac {channels} -sample_fmt {sample_fmt} -compression_level 5 -y \"{output_file}\""
+            command = f"{FFMPEG} -i \"{file}\" -loglevel error -ar {sample_rate} -ac {channels} -sample_fmt {sample_fmt} -compression_level 5 -y \"{output_file}\""
         elif output_format == "mp3":
             output_file = os.path.join(output_folder, f"{basename}_{sample_rate}_{mp3_bit_rate}.mp3")
-            command = f"{FFMPEG} -i \"{file}\" -ar {sample_rate} -ac {channels} -b:a {mp3_bit_rate} -y \"{output_file}\""
+            command = f"{FFMPEG} -i \"{file}\" -loglevel error -ar {sample_rate} -ac {channels} -b:a {mp3_bit_rate} -y \"{output_file}\""
         elif output_format == "ogg":
             output_file = os.path.join(output_folder, f"{basename}_{sample_rate}_{ogg_bit_rate}.ogg")
-            command = f"{FFMPEG} -i \"{file}\" -ar {sample_rate} -ac {channels} -b:a {ogg_bit_rate} -y \"{output_file}\""
+            command = f"{FFMPEG} -i \"{file}\" -loglevel error -ar {sample_rate} -ac {channels} -b:a {ogg_bit_rate} -y \"{output_file}\""
         else:
             output_file = os.path.join(output_folder, f"{basename}_{sample_rate}.{output_format}")
-            command = f"{FFMPEG} -i \"{file}\" -ar {sample_rate} -ac {channels} -y \"{output_file}\""
+            command = f"{FFMPEG} -i \"{file}\" -loglevel error -ar {sample_rate} -ac {channels} -y \"{output_file}\""
 
         try:
             subprocess.run(command, shell=False, check=True)
@@ -127,28 +126,6 @@ def caculate_sdr(reference_path, estimated_path):
     average_sdr = np.mean(sdr_values)
     logger.info(f"SDR Values: {sdr_values}, Average SDR: {average_sdr:.4f}")
     return f"SDR Values: {sdr_values}, Average SDR: {average_sdr:.4f}"
-
-def ensemble(files, ensemble_mode, weights, output_path):
-    if len(files) < 2:
-        return i18n("请上传至少2个文件")
-    if len(files) != len(weights.split()):
-        return i18n("上传的文件数目与权重数目不匹配")
-
-    config = load_configs(WEBUI_CONFIG)
-    config['tools']['ensemble_type'] = ensemble_mode
-    config['tools']['store_dir'] = output_path
-    save_configs(config, WEBUI_CONFIG)
-
-    os.makedirs(output_path, exist_ok=True)
-    weights = [float(w) for w in weights.split()]
-    output_file = os.path.join(output_path, f"ensemble_{ensemble_mode}_{len(files)}_songs.wav")
-    try:
-        ensemble_files(files, ensemble_mode, weights, output_file)
-        logger.info(f"Ensemble files completed, saved as: {output_file}")
-        return i18n("处理完成, 文件已保存为: ") + output_file
-    except Exception as e:
-        logger.error(f"Fail to ensemble files. Error: {e}\n{traceback.format_exc()}")
-        return i18n("处理失败!") + str(e)
 
 def some_inference(audio_file, bpm, output_dir):
     if not os.path.isfile(SOME_WEIGHT):

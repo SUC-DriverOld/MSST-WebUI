@@ -122,6 +122,9 @@ MODEL_CHOICES = [
 # metrics for model evaluation and training
 METRICS = ['sdr', 'l1_freq', 'si_sdr', 'log_wmse', 'aura_stft', 'aura_mrstft', 'bleedless', 'fullness']
 
+# ensemble modes
+ENSEMBLE_MODES = ["avg_wave", "median_wave", "min_wave", "max_wave", "avg_fft", "median_fft", "min_fft", "max_fft"]
+
 # ffmpeg executable path, if not found, use system ffmpeg
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"
 

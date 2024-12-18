@@ -1,7 +1,7 @@
 import gradio as gr
 
 from webui.utils import i18n, select_folder, open_folder
-from webui.tools import convert_audio, merge_audios, caculate_sdr, ensemble, some_inference
+from webui.tools import convert_audio, merge_audios, caculate_sdr, some_inference
 
 def tools(webui_config):
     channels = webui_config["tools"]["channels"]
@@ -100,39 +100,6 @@ def tools(webui_config):
                 estimated_audio = gr.File(label=i18n("待估音频"), type="filepath")
             compute_sdr_button = gr.Button(i18n("计算SDR"), variant="primary")
             output_message_sdr = gr.Textbox(label="Output Message")
-        with gr.TabItem(label = i18n("Ensemble模式")):
-            gr.Markdown(value = i18n("可用于集成不同算法的结果。具体的文档位于/docs/ensemble.md"))
-            with gr.Row():
-                files = gr.Files(label = i18n("上传多个音频文件"), type = "filepath", file_count = 'multiple')
-                with gr.Column():
-                    with gr.Row():
-                        ensemble_type = gr.Dropdown(
-                            choices = ["avg_wave", "median_wave", "min_wave", "max_wave", "avg_fft", "median_fft", "min_fft", "max_fft"],
-                            label = i18n("集成模式"),
-                            value = webui_config['tools']['ensemble_type'] if webui_config['tools']['ensemble_type'] else "avg_wave",
-                            interactive=True
-                        )
-                        weights = gr.Textbox(
-                            label = i18n("权重(以空格分隔, 数量要与上传的音频一致)"),
-                            value = "1 1"
-                        )
-                    ensembl_output_path = gr.Textbox(
-                        label = i18n("输出目录"),
-                        value = webui_config['tools']['store_dir'] if webui_config['tools']['store_dir'] else "results/",
-                        interactive=True
-                    )
-                    with gr.Row():
-                        select_ensembl_output_path = gr.Button(i18n("选择文件夹"))
-                        open_ensembl_output_path = gr.Button(i18n("打开文件夹"))
-            ensemble_button = gr.Button(i18n("运行"), variant = "primary")
-            output_message_ensemble = gr.Textbox(label = "Output Message")
-            with gr.Row():
-                with gr.Column():
-                    gr.Markdown(i18n("### 集成模式"))
-                    gr.Markdown(i18n("1. `avg_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的平均值<br>2. `median_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的中位数<br>3. `min_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的最小绝对值<br>4. `max_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的最大绝对值<br>5. `avg_fft`: 在频谱图 (短时傅里叶变换 (STFT) 2D变体) 上进行集成, 独立地找到频谱图的每个像素的平均值。平均后使用逆STFT得到原始的1D波形<br>6. `median_fft`: 与avg_fft相同, 但使用中位数代替平均值 (仅在集成3个或更多来源时有用) <br>7. `min_fft`: 与avg_fft相同, 但使用最小函数代替平均值 (减少激进程度) <br>8. `max_fft`: 与avg_fft相同, 但使用最大函数代替平均值 (增加激进程度) "))
-                with gr.Column():
-                    gr.Markdown(i18n("### 注意事项"))
-                    gr.Markdown(i18n("1. min_fft可用于进行更保守的合成, 它将减少更激进模型的影响。<br>2. 最好合成等质量的模型。在这种情况下, 它将带来增益。如果其中一个模型质量不好, 它将降低整体质量。<br>3. 在原仓库作者的实验中, 与其他方法相比, avg_wave在SDR分数上总是更好或相等。<br>4. 最终会在输出目录下生成一个`ensemble_<集成模式>.wav`。"))
         with gr.TabItem(label=i18n("歌声转MIDI")):
             gr.Markdown(value=i18n("歌声转MIDI功能使用开源项目[SOME](https://github.com/openvpi/SOME/), 可以将分离得到的**干净的歌声**转换成.mid文件。<br>【必须】若想要使用此功能, 请先下载权重文件[model_steps_64000_simplified.ckpt](https://hf-mirror.com/Sucial/MSST-WebUI/resolve/main/SOME_weights/model_steps_64000_simplified.ckpt)并将其放置在程序目录下的`tools/SOME_weights`文件夹内。文件命名不可随意更改! <br>【重要】只能上传wav格式的音频! "))
             gr.Markdown(value=i18n("如果不知道如何测量歌曲BPM, 可以尝试这两个在线测量工具: [bpmdetector](https://bpmdetector.kniffen.dev/) | [key-bpm-finder](https://vocalremover.org/zh/key-bpm-finder), 测量时建议上传原曲或伴奏, 若干声可能导致测量结果不准确。"))
@@ -189,16 +156,6 @@ def tools(webui_config):
         ],
         outputs=output_message_sdr
     )
-    ensemble_button.click(
-        fn=ensemble,
-        inputs=[
-            files,
-            ensemble_type,
-            weights,
-            ensembl_output_path
-        ],
-        outputs = output_message_ensemble
-    )
     some_button.click(
         fn=some_inference,
         inputs=[
@@ -214,7 +171,5 @@ def tools(webui_config):
     open_merge_input_dir.click(fn=open_folder, inputs=merge_audio_input)
     select_merge_output_dir.click(fn=select_folder, outputs=merge_audio_output)
     open_merge_output_dir.click(fn=open_folder, inputs=merge_audio_output)
-    select_ensembl_output_path.click(fn=select_folder, outputs = ensembl_output_path)
-    open_ensembl_output_path.click(fn=open_folder, inputs = ensembl_output_path)
     select_some_output_dir.click(fn=select_folder, outputs=some_output_folder)
     open_some_output_dir.click(fn=open_folder, inputs=some_output_folder)

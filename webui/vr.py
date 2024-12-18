@@ -8,14 +8,6 @@ from utils.constant import *
 from webui.utils import i18n, get_vr_model, load_configs, save_configs, logger
 from modules.vocal_remover.separator import Separator
 
-def change_to_audio_infer():
-    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=True),
-            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False))
-
-def change_to_folder_infer():
-    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=False),
-            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=True))
-
 def load_vr_model_stem(model):
     primary_stem, secondary_stem, _, _= get_vr_model(model)
     return (gr.Checkbox(label=f"{primary_stem} Only", value=False, interactive=True),

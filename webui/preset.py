@@ -12,19 +12,10 @@ from webui.utils import (
     save_configs,
     load_vr_model, 
     get_vr_model,
-    load_selected_model,
     load_msst_model,
     get_msst_model,
     logger
 )
-
-def change_to_audio_infer():
-    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=True),
-            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False))
-
-def change_to_folder_infer():
-    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=False),
-            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=True))
 
 def get_presets_list() -> list:
     if os.path.exists(PRESETS):
@@ -38,14 +29,6 @@ def preset_backup_list():
         return [i18n("暂无备份文件")]
     backup_files = [file for file in os.listdir(PRESETS_BACKUP) if file.endswith(".json")]
     return backup_files
-
-def update_model_name(model_type):
-    if model_type == "UVR_VR_Models":
-        model_map = load_vr_model()
-        return gr.Dropdown(label=i18n("选择模型"), choices=model_map, interactive=True)
-    else:
-        model_map = load_selected_model(model_type)
-        return gr.Dropdown(label=i18n("选择模型"), choices=model_map, interactive=True)
 
 def update_model_stem(model_type, model_name):
     if model_type == "UVR_VR_Models":
@@ -107,7 +90,7 @@ def save_flow_func(preset_name, df):
     preset_dict = {}
     preset_dict["version"] = PRESET_VERSION
     preset_dict["name"] = preset_name
-    preset_dict["flow"] = {f"Step_{index + 1}": row.dropna().to_dict() for index, row in df.iterrows()}
+    preset_dict["flow"] = df.to_dict(orient="records")
     os.makedirs(PRESETS, exist_ok=True)
     save_configs(preset_dict, os.path.join(PRESETS, f"{preset_name}.json"))
 
@@ -145,13 +128,13 @@ def load_preset(preset_name):
             )
 
         preset_flow = pd.DataFrame({"model_type": [""], "model_name": [""], "input_to_next": [""], "output_to_storage": [""]})
-        for step in preset_data["flow"].keys():
+        for step in preset_data["flow"]:
             preset_flow = add_to_flow_func(
-                preset_data[step]["model_type"],
-                preset_data[step]["model_name"],
-                preset_data[step]["input_to_next"],
-                preset_data[step]["output_to_storage"],
-                preset_flow,
+                model_type=step["model_type"],
+                model_name=step["model_name"],
+                input_to_next=step["input_to_next"],
+                output_to_storage=step["output_to_storage"],
+                df=preset_flow,
             )
         logger.info(f"Load preset: {preset_name}: {preset_data}")
         return preset_flow
@@ -208,12 +191,12 @@ class Presets:
             use_tta=False,
             logger=get_logger()
     ):
-        self.presets = presets.get("flow", {})
+        self.presets = presets.get("flow", [])
         self.device = "auto" if not force_cpu else "cpu"
         self.force_cpu = force_cpu
         self.use_tta = use_tta
         self.logger = logger
-        self.total_steps = len(self.presets.keys())
+        self.total_steps = len(self.presets)
         self.preset_version = presets.get("version", "Unknown version")
         self.preset_name = presets.get("name", "Unknown name")
 
@@ -243,11 +226,11 @@ class Presets:
             self.gpu_ids = [0]
 
     def get_step(self, step):
-        return self.presets[f"Step_{step + 1}"]
+        return self.presets[step]
 
     def is_exist_models(self):
-        for step in self.presets.keys():
-            model_name = self.presets[step]["model_name"]
+        for step in self.presets:
+            model_name = step["model_name"]
             if model_name not in load_msst_model() and model_name not in load_vr_model():
                 return False, model_name
         return True, None
@@ -353,7 +336,7 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
 
     logger.info(f"Starting preset inference process, use presets: {preset_name}")
     logger.debug(f"presets: {preset.presets}")
-    logger.debug(f"total_steps: {preset.total_steps}, force_cpu: {force_cpu}, use_tta: {use_tta}, extra_output_dir: {extra_output_dir}")
+    logger.debug(f"total_steps: {preset.total_steps}, force_cpu: {force_cpu}, use_tta: {use_tta}, store_dir: {store_dir}, extra_output_dir: {extra_output_dir}, output_format: {output_format}")
 
     if not preset.is_exist_models()[0]:
         return i18n("模型") + preset.is_exist_models()[1] + i18n("不存在")

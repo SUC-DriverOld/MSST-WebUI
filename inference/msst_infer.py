@@ -101,16 +101,16 @@ class MSSeparator:
             first_line = ffmpeg_version_output.splitlines()[0]
             self.logger.debug(f"FFmpeg installed: {first_line}")
         except FileNotFoundError:
-            self.logger.error("FFmpeg is not installed. Please install FFmpeg to use this package.")
+            self.logger.warning("FFmpeg is not installed. Please install FFmpeg to use this package.")
 
     def load_model(self):
         start_time = time()
         model, config = get_model_from_config(self.model_type, self.config_path)
 
-        self.logger.info(f"Separator params: model_type: {self.model_type}, model_path: {self.model_path}, config_path: {self.config_path}")
-        self.logger.info(f"Separator params: output_folder: {self.store_dirs}, output_format: {self.output_format}")
-        self.logger.info(f"Model params: instruments: {config.training.instruments}, target_instrument: {config.training.target_instrument}")
-        self.logger.debug(f"Model params: batch_size: {config.inference.get('batch_size', None)}, num_overlap: {config.inference.get('num_overlap', None)}, dim_t: {config.inference.get('dim_t', None)}, normalize: {config.inference.get('normalize', None)}, use_tta: {self.use_tta}")
+        self.logger.info(f"Separator params: model_type: {self.model_type}, model_path: {self.model_path}, config_path: {self.config_path}, output_folder: {self.store_dirs}")
+        self.logger.info(f"Audio params: output_format: {self.output_format}, audio_params: {self.audio_params}")
+        self.logger.info(f"Model params: instruments: {config.training.get('instruments', None)}, target_instrument: {config.training.get('target_instrument', None)}")
+        self.logger.debug(f"Model params: batch_size: {config.inference.get('batch_size', None)}, num_overlap: {config.inference.get('num_overlap', None)}, dim_t: {config.inference.get('dim_t', None)}, chunk_size: {config.audio.get('chunk_size', None)}, normalize: {config.inference.get('normalize', None)}, use_tta: {self.use_tta}")
 
         if self.model_type in ['htdemucs', 'apollo']:
             state_dict = torch.load(self.model_path, map_location=self.device, weights_only=False)
