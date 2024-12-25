@@ -313,7 +313,6 @@ def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_for
         shutil.copy(audio, os.path.join(TEMP_PATH, "step_0_output"))
     input_folder = os.path.join(TEMP_PATH, "step_0_output")
     msg = preset_inference(input_folder, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir, is_audio=True)
-    shutil.rmtree(TEMP_PATH)
     return msg
 
 def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir: bool, is_audio=False):
@@ -360,7 +359,6 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
 
     start_time = time.time()
     current_step = 0
-    temp_format = "wav"
 
     for step in range(preset.total_steps):
         if current_step == 0:
@@ -373,11 +371,9 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
         if current_step == preset.total_steps - 1:
             input_to_use = tmp_store_dir
             tmp_store_dir = store_dir
-            temp_format = output_format
         if preset.total_steps == 1:
             input_to_use = input_folder
             tmp_store_dir = store_dir
-            temp_format = output_format
 
         data = preset.get_step(step)
         model_type = data["model_type"]
@@ -395,7 +391,7 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
                 storage[stem].append(direct_output)
 
             logger.debug(f"input_to_next: {input_to_next}, output_to_storage: {output_to_storage}, storage: {storage}")
-            result = preset.vr_infer(model_name, input_to_use, storage, temp_format)
+            result = preset.vr_infer(model_name, input_to_use, storage, output_format)
             if result[0] == -1:
                 return i18n("用户强制终止")
             elif result[0] == 0:
@@ -409,12 +405,15 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
                 storage[stem].append(direct_output)
 
             logger.debug(f"input_to_next: {input_to_next}, output_to_storage: {output_to_storage}, storage: {storage}")
-            result = preset.msst_infer(msst_model_type, config_path, model_path, input_to_use, storage, temp_format)
+            result = preset.msst_infer(msst_model_type, config_path, model_path, input_to_use, storage, output_format)
             if result[0] == -1:
                 return i18n("用户强制终止")
             elif result[0] == 0:
                 return i18n("处理失败: ") + result[1]
         current_step += 1
+
+    if os.path.exists(TEMP_PATH):
+        shutil.rmtree(TEMP_PATH)
 
     logger.info(f"\033[33mPreset: {preset_name} inference process completed, results saved to {store_dir}, "
                 f"time cost: {round(time.time() - start_time, 2)}s\033[0m")

@@ -70,7 +70,8 @@ def preset(webui_config, force_cpu_flag=False):
                 with gr.TabItem(label=i18n("输入文件夹")) as folder_tab:
                     with gr.Row():
                         input_folder = gr.Textbox(
-                            label=i18n("输入目录"),value=webui_config['inference']['input_dir'] if webui_config['inference']['input_dir'] else "input/",
+                            label=i18n("输入目录"),
+                            value=webui_config['inference']['input_dir'] if webui_config['inference']['input_dir'] else "input/",
                             interactive=True,
                             scale=3
                         )
