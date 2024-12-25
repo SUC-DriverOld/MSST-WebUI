@@ -107,7 +107,7 @@ class Separator:
             first_line = ffmpeg_version_output.splitlines()[0]
             self.logger.debug(f"FFmpeg installed: {first_line}")
         except FileNotFoundError:
-            self.logger.error("FFmpeg is not installed. Please install FFmpeg to use this package.")
+            self.logger.warning("FFmpeg is not installed. Please install FFmpeg to use this package.")
 
     def setup_torch_device(self):
         """

@@ -23,7 +23,11 @@
         "vr_invert_spect": false,
         "vr_enable_tta": false,
         "vr_high_end_process": false,
-        "vr_enable_post_process": false
+        "vr_enable_post_process": false,
+        "ensemble_type": null,
+        "ensemble_use_tta": false,
+        "ensemble_extract_inst": false,
+        "ensemble_preset": null
     },
     "tools": {
         "store_dir": null,
@@ -34,8 +38,7 @@
         "flac_bit_depth": "16-bit",
         "mp3_bit_rate": "320k",
         "ogg_bit_rate": "320k",
-        "merge_audio_input": null,
-        "ensemble_type": null
+        "merge_audio_input": null
     },
     "training": {
         "model_type": null,
@@ -63,7 +66,7 @@
         "download_link": "Auto",
         "local_link": false,
         "share_link": false,
-        "auto_clean_cache": false,
+        "auto_clean_cache": true,
         "debug": false,
         "theme": "theme_blue.json",
         "wav_bit_depth": "FLOAT",

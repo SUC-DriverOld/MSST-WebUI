@@ -177,6 +177,21 @@ def load_model_info(model_name):
         share256 = "Unknown"
     return model_size, share256
 
+def update_model_name(model_type):
+    if model_type == "UVR_VR_Models":
+        model_map = load_vr_model()
+        return gr.Dropdown(label=i18n("选择模型"), choices=model_map, interactive=True)
+    else:
+        model_map = load_selected_model(model_type)
+        return gr.Dropdown(label=i18n("选择模型"), choices=model_map, interactive=True)
+
+def change_to_audio_infer():
+    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=True),
+            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False))
+
+def change_to_folder_infer():
+    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=False),
+            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=True))
 
 def select_folder():
     root = tk.Tk()

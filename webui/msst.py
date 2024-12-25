@@ -9,14 +9,6 @@ from webui.utils import i18n, load_configs, save_configs, load_selected_model, l
 from webui.init import get_msst_model
 from inference.msst_infer import MSSeparator
 
-def change_to_audio_infer():
-    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=True),
-            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False))
-
-def change_to_folder_infer():
-    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=False),
-            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=True))
-
 def save_model_config(selected_model, batch_size, dim_t, num_overlap, chunk_size, normalize):
     _, config_path, _, _ = get_msst_model(selected_model)
     config = load_configs(config_path)
