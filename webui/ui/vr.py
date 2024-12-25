@@ -1,13 +1,11 @@
 import gradio as gr
 
-from webui.utils import i18n, load_vr_model, select_folder, open_folder
+from webui.utils import i18n, load_vr_model, select_folder, open_folder, change_to_audio_infer, change_to_folder_infer
 from webui.init import init_selected_vr_model
 from webui.vr import (
     vr_inference_single,
     vr_inference_multi,
     stop_vr_inference,
-    change_to_audio_infer,
-    change_to_folder_infer,
     load_vr_model_stem
 )
 
