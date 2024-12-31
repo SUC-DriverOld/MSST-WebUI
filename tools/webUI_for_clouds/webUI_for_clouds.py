@@ -76,25 +76,25 @@ def cloud_preset_infer_audio(input_audio, store_dir, preset, force_cpu, output_f
     from webui.preset import preset_inference_audio
     preset_data = load_configs(os.path.join(PRESETS, preset))
     assert check_preset(preset_data), i18n("模型下载失败, 请重试!")
-    return preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir, is_audio=True)
+    return preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir)
 
 def cloud_preset_infer_folder(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir):
     from webui.preset import preset_inference
     preset_data = load_configs(os.path.join(PRESETS, preset_name))
     assert check_preset(preset_data), i18n("模型下载失败, 请重试!")
-    return preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir, is_audio=False)
+    return preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir)
 
 def cloud_ensemble_infer_audio(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_audio, extract_inst):
     from webui.ensemble import inference_audio_func
     ensemble_data = webui_config['inference']['ensemble_preset']
     assert check_preset(ensemble_data), i18n("模型下载失败, 请重试!")
-    return inference_audio_func(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_audio, extract_inst, is_audio=True)
+    return inference_audio_func(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_audio, extract_inst)
 
 def cloud_ensemble_infer_folder(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, extract_inst):
     from webui.ensemble import inference_folder_func
     ensemble_data = webui_config['inference']['ensemble_preset']
     assert check_preset(ensemble_data), i18n("模型下载失败, 请重试!")
-    return inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, extract_inst, is_audio=False)
+    return inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, extract_inst)
 
 def setup():
     global device, force_cpu_value
