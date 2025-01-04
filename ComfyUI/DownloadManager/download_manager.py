@@ -1,8 +1,8 @@
 from qfluentwidgets import FluentWindow, NavigationItemPosition
 from qfluentwidgets import FluentIcon as FIF
-from ComfyUI.DownloadManager.interface.download_interface import downloadInterface
-from ComfyUI.DownloadManager.interface.manager_interface import managerInterface
-from ComfyUI.DownloadManager.interface.settings_interface import settingsInterface
+from ComfyUI.DownloadManager.interface.download_interface import DownloadInterface
+from ComfyUI.DownloadManager.interface.manager_interface import ManagerInterface
+from ComfyUI.DownloadManager.interface.settings_interface import SettingsInterface
 
 
 class DownloadManager(FluentWindow):
@@ -11,9 +11,9 @@ class DownloadManager(FluentWindow):
         self.setupUI()
 
     def setupUI(self):
-        download_interface = downloadInterface(self)
-        manager_interface = managerInterface(self)
-        settings_interface = settingsInterface(self)
+        download_interface = DownloadInterface(self)
+        manager_interface = ManagerInterface(self)
+        settings_interface = SettingsInterface(self)
         self.addSubInterface(download_interface, FIF.DOWNLOAD, "Download Center")
         self.addSubInterface(manager_interface, FIF.TAG, "Manager")
         self.addSubInterface(settings_interface, FIF.SETTING, "Settings", NavigationItemPosition.BOTTOM)

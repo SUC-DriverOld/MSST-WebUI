@@ -14,10 +14,10 @@ import requests
 import json
 import os
 
-class downloadInterface(QFrame):
+class DownloadInterface(QFrame):
     def __init__(self, parent = None):
         super().__init__(parent)
-        self.setObjectName('downloadInterface')
+        self.setObjectName('DownloadInterface')
         self.model_to_download = {
             "multi_stem_models": [],
             "single_stem_models": [],

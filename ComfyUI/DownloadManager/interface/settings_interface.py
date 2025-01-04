@@ -8,11 +8,11 @@ from qfluentwidgets import FluentIcon as FIF
 from ComfyUI.DownloadManager.common.config import cfg
 
 
-class settingsInterface(QFrame):
+class SettingsInterface(QFrame):
     def __init__(self, parent = None):
         super().__init__(parent)
         
-        self.setObjectName('settingsInterface')
+        self.setObjectName('SettingsInterface')
         self.setupUI()
         
     def setupUI(self):
