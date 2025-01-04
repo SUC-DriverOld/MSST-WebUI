@@ -72,6 +72,6 @@ augmentations:
   mixup_loudness_max: 1.5
 
 inference:
-  batch_size: 4
+  batch_size: 1
   dim_t: 256
   num_overlap: 4

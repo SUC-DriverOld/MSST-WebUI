@@ -30,6 +30,11 @@ def vr_inference(args):
             "post_process_threshold": args.post_process_threshold,
             "high_end_process": args.high_end_process,
         },
+        audio_params={
+            "wav_bit_depth": args.wav_bit_depth, 
+            "flac_bit_depth": args.flac_bit_depth, 
+            "mp3_bit_rate": args.mp3_bit_rate
+        },
     )
     success_files = separator.process_folder(args.input_folder)
     separator.del_cache()
@@ -58,6 +63,11 @@ if __name__ == "__main__":
     vr_params.add_argument("--high_end_process", action="store_true", help="Mirror the missing frequency range of the output (default: %(default)s). Example: --high_end_process")
     vr_params.add_argument("--enable_post_process", action="store_true", help="Identify leftover artifacts within vocal output; may improve separation for some songs (default: %(default)s). Example: --enable_post_process")
     vr_params.add_argument("--post_process_threshold", type=float, default=0.2, help="Threshold for post_process feature: 0.1-0.3 (default: %(default)s). Example: --post_process_threshold=0.1")
+
+    audio_params = parser.add_argument_group("Audio Params")
+    audio_params.add_argument("--wav_bit_depth", choices=["PCM_16", "PCM_24", "PCM_32", "FLOAT"], default="FLOAT", help="Bit depth for wav output (default: %(default)s). Example: --wav_bit_depth=PCM_32")
+    audio_params.add_argument("--flac_bit_depth", choices=["PCM_16", "PCM_24"], default="PCM_24", help="Bit depth for flac output (default: %(default)s). Example: --flac_bit_depth=PCM_24")
+    audio_params.add_argument("--mp3_bit_rate", choices=['96k', '128k', '192k', '256k', '320k'], default="320k", help="Bit rate for mp3 output (default: %(default)s). Example: --mp3_bit_rate=320k")
 
     args = parser.parse_args()
     vr_inference(args)

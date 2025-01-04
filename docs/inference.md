@@ -8,7 +8,8 @@ Use `inference/msst_cli.py`.
 
 ```bash
 usage: msst_cli.py [-h] [-d] [--device {auto,cpu,cuda,mps}] [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [-i INPUT_FOLDER] [-o OUTPUT_FOLDER] [--output_format {wav,flac,mp3}]
-                   [--model_type MODEL_TYPE] [--model_path MODEL_PATH] [--config_path CONFIG_PATH] [--use_tta]
+                   [--model_type MODEL_TYPE] [--model_path MODEL_PATH] [--config_path CONFIG_PATH] [--use_tta] [--wav_bit_depth {PCM_16,PCM_24,PCM_32,FLOAT}]
+                   [--flac_bit_depth {PCM_16,PCM_24}] [--mp3_bit_rate {96k,128k,192k,256k,320k}]
 
 Music Source Separation Command Line Interface
 
@@ -28,6 +29,11 @@ Model Params:
   --model_path MODEL_PATH                          Path to model checkpoint. [required]
   --config_path CONFIG_PATH                        Path to config file. [required]
   --use_tta                                        Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality (default: False). Example: --use_tta
+
+Audio Params:
+  --wav_bit_depth {PCM_16,PCM_24,PCM_32,FLOAT}     Bit depth for wav output (default: FLOAT). Example: --wav_bit_depth=PCM_32
+  --flac_bit_depth {PCM_16,PCM_24}                 Bit depth for flac output (default: PCM_24). Example: --flac_bit_depth=PCM_24
+  --mp3_bit_rate {96k,128k,192k,256k,320k}         Bit rate for mp3 output (default: 320k). Example: --mp3_bit_rate=320k
 ```
 
 ### Python API
@@ -44,10 +50,8 @@ separator = MSSeparator(
         device_ids=[0],
         output_format='mp3',
         use_tta=False,
-        store_dirs={
-            "vocals": "results/vocals",
-            "instrumental": "results/instrumental",
-            },
+        store_dirs={"vocals": "results/vocals", "instrumental": "results/instrumental"},
+        audio_params = {"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
         logger=get_logger(),
         debug=True
 )
@@ -68,7 +72,7 @@ separator.del_cache()
 > [!NOTE]
 > ### 1. About `store_dirs`
 > 
-> `str` or `dict` can be used for output_folder. If str is used, all separated stems will be stored in the same folder. If dict is used, separated stems will be stored in different folders based on the keys. Example:
+> `str` or `dict` can be used for output_folder. If str is used (for example, `store_dirs="results"`), all separated stems will be stored in the same folder. If dict is used, separated stems will be stored in different folders based on the keys. Example:
 > ```python
 > store_dirs={
 >    "vocals": "results/vocals", 
@@ -96,8 +100,10 @@ separator.del_cache()
 Use `inference/vr_cli.py`
 
 ```bash
-usage: vr_cli.py [-h] [-d] [--use_cpu] [-i INPUT_FOLDER] [-o OUTPUT_FOLDER] [--output_format {wav,flac,mp3}] [-m MODEL_PATH] [--invert_spect] [--batch_size BATCH_SIZE] [--window_size WINDOW_SIZE]
-                 [--aggression AGGRESSION] [--enable_tta] [--high_end_process] [--enable_post_process] [--post_process_threshold POST_PROCESS_THRESHOLD]
+usage: vr_cli.py [-h] [-d] [--use_cpu] [-i INPUT_FOLDER] [-o OUTPUT_FOLDER] [--output_format {wav,flac,mp3}] [-m MODEL_PATH] [--invert_spect] [--batch_size BATCH_SIZE]
+                 [--window_size WINDOW_SIZE] [--aggression AGGRESSION] [--enable_tta] [--high_end_process] [--enable_post_process]
+                 [--post_process_threshold POST_PROCESS_THRESHOLD] [--wav_bit_depth {PCM_16,PCM_24,PCM_32,FLOAT}] [--flac_bit_depth {PCM_16,PCM_24}]
+                 [--mp3_bit_rate {96k,128k,192k,256k,320k}]
 
 Vocal Remover Command Line Interface
 
@@ -123,6 +129,11 @@ VR Architecture Parameters:
   --high_end_process                               Mirror the missing frequency range of the output (default: False). Example: --high_end_process
   --enable_post_process                            Identify leftover artifacts within vocal output; may improve separation for some songs (default: False). Example: --enable_post_process
   --post_process_threshold POST_PROCESS_THRESHOLD  Threshold for post_process feature: 0.1-0.3 (default: 0.2). Example: --post_process_threshold=0.1
+
+Audio Params:
+  --wav_bit_depth {PCM_16,PCM_24,PCM_32,FLOAT}     Bit depth for wav output (default: FLOAT). Example: --wav_bit_depth=PCM_32
+  --flac_bit_depth {PCM_16,PCM_24}                 Bit depth for flac output (default: PCM_24). Example: --flac_bit_depth=PCM_24
+  --mp3_bit_rate {96k,128k,192k,256k,320k}         Bit rate for mp3 output (default: 320k). Example: --mp3_bit_rate=320k
 ```
 
 ### Python API
@@ -135,14 +146,12 @@ separator = Separator(
     logger=get_logger(),
     debug=True,
     model_file="pretrain/VR_Models/1_HP-UVR.pth",
-    output_dir={
-        "Vocals": "results/Vocals",
-        "Instrumental": "results/instrumental",
-        },
+    output_dir={"Vocals": "results/Vocals", "Instrumental": "results/instrumental"},
     output_format="mp3",
     invert_using_spec=False,
     use_cpu=False,
     vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
+    audio_params = {"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
 )
 
 # Separate a folder of mixtures.

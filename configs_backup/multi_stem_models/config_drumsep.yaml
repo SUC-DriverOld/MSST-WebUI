@@ -34,7 +34,7 @@ augmentations:
 
 inference:
   num_overlap: 4
-  batch_size: 8
+  batch_size: 1
 
 model: hdemucs
 

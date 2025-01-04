@@ -2,10 +2,9 @@ import gradio as gr
 import pandas as pd
 
 from utils.constant import *
-from webui.utils import i18n, select_folder, open_folder
+from webui.utils import i18n, select_folder, open_folder, update_model_name, change_to_audio_infer, change_to_folder_infer
 from webui.preset import (
     get_presets_list,
-    update_model_name,
     update_model_stem,
     add_to_flow_func,
     save_flow_func,
@@ -15,15 +14,13 @@ from webui.preset import (
     load_preset,
     restore_preset_func,
     preset_backup_list,
-    change_to_audio_infer,
-    change_to_folder_infer,
     preset_inference,
     preset_inference_audio,
     stop_preset
 )
 
-def preset(webui_config, force_cpu):
-    if webui_config['inference']['force_cpu'] or force_cpu:
+def preset(webui_config, force_cpu_flag=False):
+    if webui_config['inference']['force_cpu'] or force_cpu_flag:
         force_cpu_value = True
     else:
         force_cpu_value = False
@@ -43,7 +40,7 @@ def preset(webui_config, force_cpu):
                 )
                 output_format_flow = gr.Radio(
                     label=i18n("输出格式"),
-                    choices=["wav", "mp3", "flac"],
+                    choices=["wav", "flac", "mp3"],
                     value=webui_config['inference']['output_format'] if webui_config['inference']['output_format'] else "wav",
                     interactive=True,
                     scale=1
@@ -52,10 +49,10 @@ def preset(webui_config, force_cpu):
                 force_cpu = gr.Checkbox(
                     label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),
                     value=force_cpu_value,
-                    interactive=False if force_cpu_value else True
+                    interactive=False if force_cpu_flag else True
                 )
                 use_tta = gr.Checkbox(
-                    label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),
+                    label=i18n("使用TTA (测试时增强), 可能会提高质量, 但时间x3"),
                     value=webui_config['inference']['preset_use_tta'] if webui_config['inference']['preset_use_tta'] else False,
                     interactive=True
                 )
@@ -70,7 +67,8 @@ def preset(webui_config, force_cpu):
                 with gr.TabItem(label=i18n("输入文件夹")) as folder_tab:
                     with gr.Row():
                         input_folder = gr.Textbox(
-                            label=i18n("输入目录"),value=webui_config['inference']['input_dir'] if webui_config['inference']['input_dir'] else "input/",
+                            label=i18n("输入目录"),
+                            value=webui_config['inference']['input_dir'] if webui_config['inference']['input_dir'] else "input/",
                             interactive=True,
                             scale=3
                         )
@@ -207,17 +205,6 @@ def preset(webui_config, force_cpu):
             input_to_next,
             output_to_storage
         ]
-    )
-    add_to_flow.click(
-        fn=add_to_flow_func,
-        inputs=[
-            model_type,
-            model_name,
-            input_to_next,
-            output_to_storage,
-            preset_flow
-        ],
-        outputs=preset_flow
     )
     save_flow.click(
         fn=save_flow_func,

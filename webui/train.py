@@ -56,7 +56,7 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
     if len(train_device_ids) == 0:
         return i18n("请选择GPU")
     for gpu in train_device_ids:
-        gpu_ids.append(int(gpu[:gpu.index(":")]))
+        gpu_ids.append(str(gpu[:gpu.index(":")]))
 
     device_ids = " ".join(gpu_ids)
     num_workers = int(train_num_workers)
@@ -78,18 +78,11 @@ def start_training(train_model_type, train_config_path, train_dataset_type, trai
         command = f"{PYTHON} train/train.py --model_type {train_model_type} --config_path \"{train_config_path}\" {start_check_point} --results_path \"{train_results_path}\" --data_path \"{train_dataset_path}\" --dataset_type {train_dataset_type} --valid_path \"{train_valid_path}\" --num_workers {num_workers} --device_ids {device_ids} --seed {seed} {pin_memory} {use_multistft_loss} {use_mse_loss} {use_l1_loss} {pre_valid} --metrics {metrics} --metric_for_scheduler {metrics_scheduler}"
 
     logger.info(f"Start training with command: {command}")
-    msst_training = multiprocessing.Process(target=run_command, args=command, name="msst_training")
+    msst_training = multiprocessing.Process(target=run_command, args=(command,), name="msst_training")
     msst_training.start()
     logger.debug(f"Training process started, PID: {msst_training.pid}")
 
     return i18n("训练启动成功! 请前往控制台查看训练信息! ")
-
-def stop_msst_training():
-    for process in multiprocessing.active_children():
-        if process.name == "msst_training":
-            process.terminate()
-            process.join()
-            logger.info(f"Inference process stopped, PID: {process.pid}")
 
 def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_path, valid_results_path, valid_device_ids, valid_num_workers, valid_extension, valid_pin_memory, valid_use_tta, vaild_metrics):
     if valid_model_type not in MODEL_TYPE:
@@ -116,7 +109,7 @@ def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_
     command = f"{PYTHON} train/valid.py --model_type {valid_model_type} --config_path \"{valid_config_path}\" --start_check_point \"{valid_model_path}\" --valid_path \"{valid_path}\" --store_dir \"{valid_results_path}\" --device_ids {device} --num_workers {valid_num_workers} --extension {valid_extension} {pin_memory} {use_tta} --metrics {metrics}"
 
     logger.info(f"Start validation with command: {command}")
-    msst_valid = multiprocessing.Process(target=run_command, args=command, name="msst_valid")
+    msst_valid = multiprocessing.Process(target=run_command, args=(command,), name="msst_valid")
     msst_valid.start()
     logger.debug(f"Validation process started, PID: {msst_valid.pid}")
     msst_valid.join()

@@ -26,6 +26,11 @@ def msst_inference(args):
         output_format=args.output_format,
         use_tta=args.use_tta,
         store_dirs=args.output_folder,
+        audio_params = {
+            "wav_bit_depth": args.wav_bit_depth, 
+            "flac_bit_depth": args.flac_bit_depth, 
+            "mp3_bit_rate": args.mp3_bit_rate
+        },
         logger=logger,
         debug=args.debug
     )
@@ -50,6 +55,11 @@ if __name__ == '__main__':
     model_params.add_argument("--model_path", type=str, help="Path to model checkpoint. [required]")
     model_params.add_argument("--config_path", type=str, help="Path to config file. [required]")
     model_params.add_argument("--use_tta", action='store_true', help="Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality (default: %(default)s). Example: --use_tta")
+
+    audio_params = parser.add_argument_group("Audio Params")
+    audio_params.add_argument("--wav_bit_depth", choices=["PCM_16", "PCM_24", "PCM_32", "FLOAT"], default="FLOAT", help="Bit depth for wav output (default: %(default)s). Example: --wav_bit_depth=PCM_32")
+    audio_params.add_argument("--flac_bit_depth", choices=["PCM_16", "PCM_24"], default="PCM_24", help="Bit depth for flac output (default: %(default)s). Example: --flac_bit_depth=PCM_24")
+    audio_params.add_argument("--mp3_bit_rate", choices=['96k', '128k', '192k', '256k', '320k'], default="320k", help="Bit rate for mp3 output (default: %(default)s). Example: --mp3_bit_rate=320k")
 
     args = parser.parse_args()
     msst_inference(args)

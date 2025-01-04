@@ -25,6 +25,7 @@ class MSSeparator:
             output_format = 'wav',
             use_tta = False,
             store_dirs = 'results', # str for single folder, dict with instrument keys for multiple folders
+            audio_params = {"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
             logger = get_logger(),
             debug = False
     ):
@@ -42,6 +43,7 @@ class MSSeparator:
         self.output_format = output_format
         self.use_tta = use_tta
         self.store_dirs = store_dirs
+        self.audio_params = audio_params
         self.logger = logger
         self.debug = debug
 
@@ -99,21 +101,23 @@ class MSSeparator:
             first_line = ffmpeg_version_output.splitlines()[0]
             self.logger.debug(f"FFmpeg installed: {first_line}")
         except FileNotFoundError:
-            self.logger.error("FFmpeg is not installed. Please install FFmpeg to use this package.")
+            self.logger.warning("FFmpeg is not installed. Please install FFmpeg to use this package.")
 
     def load_model(self):
         start_time = time()
         model, config = get_model_from_config(self.model_type, self.config_path)
 
-        self.logger.info(f"Separator params: model_type: {self.model_type}, model_path: {self.model_path}, config_path: {self.config_path}")
-        self.logger.info(f"Separator params: output_folder: {self.store_dirs}, output_format: {self.output_format}")
-        self.logger.info(f"Model params: instruments: {config.training.instruments}, target_instrument: {config.training.target_instrument}")
-        self.logger.debug(f"Model params: batch_size: {config.inference.get('batch_size', None)}, num_overlap: {config.inference.get('num_overlap', None)}, dim_t: {config.inference.get('dim_t', None)}, normalize: {config.inference.get('normalize', None)}, use_tta: {self.use_tta}")
+        self.logger.info(f"Separator params: model_type: {self.model_type}, model_path: {self.model_path}, config_path: {self.config_path}, output_folder: {self.store_dirs}")
+        self.logger.info(f"Audio params: output_format: {self.output_format}, audio_params: {self.audio_params}")
+        self.logger.info(f"Model params: instruments: {config.training.get('instruments', None)}, target_instrument: {config.training.get('target_instrument', None)}")
+        self.logger.debug(f"Model params: batch_size: {config.inference.get('batch_size', None)}, num_overlap: {config.inference.get('num_overlap', None)}, dim_t: {config.inference.get('dim_t', None)}, chunk_size: {config.audio.get('chunk_size', None)}, normalize: {config.inference.get('normalize', None)}, use_tta: {self.use_tta}")
 
-        if self.model_type == 'htdemucs':
+        if self.model_type in ['htdemucs', 'apollo']:
             state_dict = torch.load(self.model_path, map_location=self.device, weights_only=False)
             if 'state' in state_dict:
                 state_dict = state_dict['state']
+            if 'state_dict' in state_dict:
+                state_dict = state_dict['state_dict']
         else:
             state_dict = torch.load(self.model_path, map_location=self.device, weights_only=True)
         model.load_state_dict(state_dict)
@@ -131,7 +135,10 @@ class MSSeparator:
 
         all_mixtures_path = [os.path.join(input_folder, f) for f in os.listdir(input_folder)]
 
-        self.logger.info(f"Input_folder: {input_folder}, Total files found: {len(all_mixtures_path)}")
+        sample_rate = 44100
+        if 'sample_rate' in self.config.audio:
+            sample_rate = self.config.audio['sample_rate']
+        self.logger.info(f"Input_folder: {input_folder}, Total files found: {len(all_mixtures_path)}, Use sample rate: {sample_rate}")
 
         if not self.debug:
             all_mixtures_path = tqdm(all_mixtures_path, desc="Total progress")
@@ -140,19 +147,11 @@ class MSSeparator:
         for path in all_mixtures_path:
             if not self.debug:
                 all_mixtures_path.set_postfix({'track': os.path.basename(path)})
-
             try:
-                mix, sr = librosa.load(path, sr=44100, mono=False)
+                mix, sr = librosa.load(path, sr=sample_rate, mono=False)
             except Exception as e:
                 self.logger.warning(f'Cannot process track: {path}, error: {str(e)}')
                 continue
-
-            if len(mix.shape) == 1:
-                mix = np.stack([mix, mix], axis=0)
-            if len(mix.shape) > 2:
-                mix = np.mean(mix, axis=0) # if more than 2 channels, take mean
-                mix = np.stack([mix, mix], axis=0)
-                self.logger.warning(f"Track {path} has more than 2 channels, taking mean of all channels. As a result, the output instruments will be mono but in stereo format.")
 
             self.logger.debug(f"Starting separation process for audio_file: {path}")
             results = self.separate(mix)
@@ -176,6 +175,21 @@ class MSSeparator:
         return success_files
 
     def separate(self, mix):
+        isstereo = True
+        if self.model_type in ['bs_roformer', 'mel_band_roformer']:
+            isstereo = self.config.model.get("stereo", True)
+
+        if isstereo and len(mix.shape) == 1:
+            mix = np.stack([mix, mix], axis=0)
+            self.logger.warning(f"Track is mono, but model is stereo, adding a second channel.")
+        elif isstereo and len(mix.shape) > 2:
+            mix = np.mean(mix, axis=0) # if more than 2 channels, take mean
+            mix = np.stack([mix, mix], axis=0)
+            self.logger.warning(f"Track has more than 2 channels, taking mean of all channels and adding a second channel.")
+        elif not isstereo and len(mix.shape) != 1:
+            mix = np.mean(mix, axis=0) # if more than 2 channels, take mean
+            self.logger.warning(f"Track has more than 1 channels, but model is mono, taking mean of all channels.")
+
         instruments = self.config.training.instruments.copy()
         if self.config.training.target_instrument is not None:
             instruments = [self.config.training.target_instrument]
@@ -249,7 +263,7 @@ class MSSeparator:
     def save_audio(self, audio, sr, file_name, store_dir):
         if self.output_format.lower() == 'flac':
             file = os.path.join(store_dir, file_name + '.flac')
-            sf.write(file, audio, sr, subtype='PCM_24')
+            sf.write(file, audio, sr, subtype=self.audio_params['flac_bit_depth'])
 
         elif self.output_format.lower() == 'mp3':
             file = os.path.join(store_dir, file_name + '.mp3')
@@ -264,11 +278,11 @@ class MSSeparator:
                 channels=2
                 )
 
-            audio_segment.export(file, format='mp3', bitrate='320k')
+            audio_segment.export(file, format='mp3', bitrate=self.audio_params['mp3_bit_rate'])
 
         else:
             file = os.path.join(store_dir, file_name + '.wav')
-            sf.write(file, audio, sr, subtype='FLOAT')
+            sf.write(file, audio, sr, subtype=self.audio_params['wav_bit_depth'])
 
     def del_cache(self):
         self.logger.debug("Running garbage collection...")

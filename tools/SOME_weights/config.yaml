@@ -47,7 +47,7 @@ midi_shift_proportion: 0.0
 midi_shift_range:
 - -6
 - 6
-model_cls: modules.model.Gmidi_conform.midi_conforms
+model_cls: tools.SOME.modules.model.Gmidi_conform.midi_conforms
 num_ckpt_keep: 5
 num_sanity_val_steps: 1
 num_valid_plots: 300

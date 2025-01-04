@@ -12,19 +12,10 @@ from webui.utils import (
     save_configs,
     load_vr_model, 
     get_vr_model,
-    load_selected_model,
     load_msst_model,
     get_msst_model,
     logger
 )
-
-def change_to_audio_infer():
-    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=True),
-            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False))
-
-def change_to_folder_infer():
-    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=False),
-            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=True))
 
 def get_presets_list() -> list:
     if os.path.exists(PRESETS):
@@ -38,14 +29,6 @@ def preset_backup_list():
         return [i18n("暂无备份文件")]
     backup_files = [file for file in os.listdir(PRESETS_BACKUP) if file.endswith(".json")]
     return backup_files
-
-def update_model_name(model_type):
-    if model_type == "UVR_VR_Models":
-        model_map = load_vr_model()
-        return gr.Dropdown(label=i18n("选择模型"), choices=model_map, interactive=True)
-    else:
-        model_map = load_selected_model(model_type)
-        return gr.Dropdown(label=i18n("选择模型"), choices=model_map, interactive=True)
 
 def update_model_stem(model_type, model_name):
     if model_type == "UVR_VR_Models":
@@ -97,7 +80,6 @@ def add_to_flow_func(model_type, model_name, input_to_next, output_to_storage, d
         return new_data
 
     updated_df = pd.concat([df, new_data], ignore_index=True)
-    logger.info(f"Add to flow: {model_type}, {model_name}, {input_to_next}, {output_to_storage}")
     return updated_df
 
 def save_flow_func(preset_name, df):
@@ -105,7 +87,10 @@ def save_flow_func(preset_name, df):
         output_message = i18n("请填写预设名称")
         return output_message, None, None
 
-    preset_dict = {f"Step_{index + 1}": row.dropna().to_dict() for index, row in df.iterrows()}
+    preset_dict = {}
+    preset_dict["version"] = PRESET_VERSION
+    preset_dict["name"] = preset_name
+    preset_dict["flow"] = df.to_dict(orient="records")
     os.makedirs(PRESETS, exist_ok=True)
     save_configs(preset_dict, os.path.join(PRESETS, f"{preset_name}.json"))
 
@@ -131,15 +116,25 @@ def reset_last_func(df):
 def load_preset(preset_name):
     if preset_name in os.listdir(PRESETS):
         preset_data = load_configs(os.path.join(PRESETS, preset_name))
+
+        version = preset_data.get("version", None)
+        if version not in SUPPORTED_PRESET_VERSION:
+            gr.Warning(i18n("不支持的预设版本: ") + str(version))
+            logger.error(f"Load preset: {preset_name} failed, unsupported version: {version}, supported version: {SUPPORTED_PRESET_VERSION}")
+            return gr.Dataframe(
+                pd.DataFrame({"model_type": [i18n("预设版本不支持")], "model_name": [i18n("预设版本不支持")], "input_to_next": [i18n("预设版本不支持")], "output_to_storage": [i18n("预设版本不支持")]}),
+                interactive=False,
+                label=None
+            )
+
         preset_flow = pd.DataFrame({"model_type": [""], "model_name": [""], "input_to_next": [""], "output_to_storage": [""]})
-    
-        for step in preset_data.keys():
+        for step in preset_data["flow"]:
             preset_flow = add_to_flow_func(
-                preset_data[step]["model_type"],
-                preset_data[step]["model_name"],
-                preset_data[step]["input_to_next"],
-                preset_data[step]["output_to_storage"],
-                preset_flow
+                model_type=step["model_type"],
+                model_name=step["model_name"],
+                input_to_next=step["input_to_next"],
+                output_to_storage=step["output_to_storage"],
+                df=preset_flow,
             )
         logger.info(f"Load preset: {preset_name}: {preset_data}")
         return preset_flow
@@ -191,21 +186,19 @@ def restore_preset_func(backup_file):
 class Presets:
     def __init__(
             self,
-            preset_name,
+            presets,
             force_cpu=False,
             use_tta=False,
             logger=get_logger()
     ):
-        if preset_name not in os.listdir(PRESETS):
-            raise FileNotFoundError(i18n("预设") + preset_name + i18n("不存在"))
-
-        presets = load_configs(os.path.join(PRESETS, preset_name))
-        self.presets = presets
+        self.presets = presets.get("flow", [])
         self.device = "auto" if not force_cpu else "cpu"
         self.force_cpu = force_cpu
         self.use_tta = use_tta
         self.logger = logger
-        self.total_steps = len(presets.keys())
+        self.total_steps = len(self.presets)
+        self.preset_version = presets.get("version", "Unknown version")
+        self.preset_name = presets.get("name", "Unknown name")
 
         webui_config = load_configs(WEBUI_CONFIG)
         self.debug = webui_config["settings"].get("debug", False)
@@ -217,6 +210,9 @@ class Presets:
         self.enable_post_process = webui_config['inference']['vr_enable_post_process']
         self.post_process_threshold = float(webui_config['inference']['vr_post_process_threshold'])
         self.high_end_process = webui_config['inference']['vr_high_end_process']
+        self.wav_bit_depth = webui_config["settings"].get("wav_bit_depth", "FLOAT")
+        self.flac_bit_depth = webui_config["settings"].get("flac_bit_depth", "PCM_24")
+        self.mp3_bit_rate = webui_config["settings"].get("mp3_bit_rate", "320k")
         
         gpu_id = webui_config["inference"].get("device", None)
         self.gpu_ids = []
@@ -230,11 +226,11 @@ class Presets:
             self.gpu_ids = [0]
 
     def get_step(self, step):
-        return self.presets[f"Step_{step + 1}"]
+        return self.presets[step]
 
     def is_exist_models(self):
-        for step in self.presets.keys():
-            model_name = self.presets[step]["model_name"]
+        for step in self.presets:
+            model_name = step["model_name"]
             if model_name not in load_msst_model() and model_name not in load_vr_model():
                 return False, model_name
         return True, None
@@ -247,7 +243,8 @@ class Presets:
             target=run_inference,
             args=(
                 model_type, config_path, model_path, self.device, self.gpu_ids, output_format,
-                self.use_tta, store_dict, self.debug, input_folder, result_queue
+                self.use_tta, store_dict, self.debug, self.wav_bit_depth, self.flac_bit_depth,
+                self.mp3_bit_rate, input_folder, result_queue
             ),
             name="msst_preset_inference"
         )
@@ -272,7 +269,8 @@ class Presets:
             args=(
                 self.debug, model_file, output_dir, output_format, self.invert_using_spec, self.force_cpu,
                 self.batch_size, self.window_size, self.aggression, self.use_tta, self.enable_post_process,
-                self.post_process_threshold, self.high_end_process, input_folder, result_queue
+                self.post_process_threshold, self.high_end_process, self.wav_bit_depth, self.flac_bit_depth,
+                self.mp3_bit_rate, input_folder, result_queue
             ),
             name="vr_preset_inference"
         )
@@ -298,10 +296,18 @@ def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_for
         shutil.copy(audio, os.path.join(TEMP_PATH, "step_0_output"))
     input_folder = os.path.join(TEMP_PATH, "step_0_output")
     msg = preset_inference(input_folder, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir, is_audio=True)
-    shutil.rmtree(TEMP_PATH)
     return msg
 
 def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir: bool, is_audio=False):
+    if preset_name not in os.listdir(PRESETS):
+        return (i18n("预设") + preset_name + i18n("不存在"))
+
+    preset_data = load_configs(os.path.join(PRESETS, preset_name))
+    preset_version = preset_data.get("version", "Unknown version")
+    if preset_version not in SUPPORTED_PRESET_VERSION:
+        logger.error(f"Unsupported preset version: {preset_version}, supported version: {SUPPORTED_PRESET_VERSION}")
+        return i18n("不支持的预设版本: ") + preset_version
+
     config = load_configs(WEBUI_CONFIG)
     config['inference']['preset'] = preset_name
     config['inference']['force_cpu'] = force_cpu
@@ -325,18 +331,17 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
         shutil.rmtree(TEMP_PATH)
     tmp_store_dir = os.path.join(TEMP_PATH, "step_1_output")
 
-    preset = Presets(preset_name, force_cpu, use_tta, logger)
+    preset = Presets(preset_data, force_cpu, use_tta, logger)
 
     logger.info(f"Starting preset inference process, use presets: {preset_name}")
     logger.debug(f"presets: {preset.presets}")
-    logger.debug(f"total_steps: {preset.total_steps}, force_cpu: {force_cpu}, use_tta: {use_tta}, extra_output_dir: {extra_output_dir}")
+    logger.debug(f"total_steps: {preset.total_steps}, force_cpu: {force_cpu}, use_tta: {use_tta}, store_dir: {store_dir}, extra_output_dir: {extra_output_dir}, output_format: {output_format}")
 
     if not preset.is_exist_models()[0]:
         return i18n("模型") + preset.is_exist_models()[1] + i18n("不存在")
 
     start_time = time.time()
     current_step = 0
-    temp_format = "wav"
 
     for step in range(preset.total_steps):
         if current_step == 0:
@@ -349,11 +354,9 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
         if current_step == preset.total_steps - 1:
             input_to_use = tmp_store_dir
             tmp_store_dir = store_dir
-            temp_format = output_format
         if preset.total_steps == 1:
             input_to_use = input_folder
             tmp_store_dir = store_dir
-            temp_format = output_format
 
         data = preset.get_step(step)
         model_type = data["model_type"]
@@ -371,7 +374,7 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
                 storage[stem].append(direct_output)
 
             logger.debug(f"input_to_next: {input_to_next}, output_to_storage: {output_to_storage}, storage: {storage}")
-            result = preset.vr_infer(model_name, input_to_use, storage, temp_format)
+            result = preset.vr_infer(model_name, input_to_use, storage, output_format)
             if result[0] == -1:
                 return i18n("用户强制终止")
             elif result[0] == 0:
@@ -385,12 +388,15 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
                 storage[stem].append(direct_output)
 
             logger.debug(f"input_to_next: {input_to_next}, output_to_storage: {output_to_storage}, storage: {storage}")
-            result = preset.msst_infer(msst_model_type, config_path, model_path, input_to_use, storage, temp_format)
+            result = preset.msst_infer(msst_model_type, config_path, model_path, input_to_use, storage, output_format)
             if result[0] == -1:
                 return i18n("用户强制终止")
             elif result[0] == 0:
                 return i18n("处理失败: ") + result[1]
         current_step += 1
+
+    if os.path.exists(TEMP_PATH):
+        shutil.rmtree(TEMP_PATH)
 
     logger.info(f"\033[33mPreset: {preset_name} inference process completed, results saved to {store_dir}, "
                 f"time cost: {round(time.time() - start_time, 2)}s\033[0m")

@@ -5,7 +5,7 @@ import platform
 from torch import cuda
 from multiprocessing import cpu_count
 from utils.constant import *
-from webui.utils import i18n, load_configs, webui_restart, log_level_debug, logger
+from webui.utils import i18n, load_configs, webui_restart, log_level_debug, change_to_audio_infer, change_to_folder_infer, logger
 from download_models import download_model
 
 webui_config = load_configs(WEBUI_CONFIG)
@@ -62,11 +62,10 @@ def cloud_vr_infer_folder(vr_select_model, vr_window_size, vr_aggression, vr_out
         assert download_model("uvr", vr_select_model), i18n("模型下载失败, 请重试!")
         return vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
 
-def check_preset(preset):
-    preset_data = load_configs(os.path.join(PRESETS, preset))
-    for step in preset_data.keys():
-        model_type = preset_data[step]["model_type"]
-        model_name = preset_data[step]["model_name"]
+def check_preset(preset_data):
+    for model in preset_data["flow"]:
+        model_type = model["model_type"]
+        model_name = model["model_name"]
         if model_type == "UVR_VR_Models":
             assert download_model("uvr", model_name), i18n("模型下载失败, 请重试!")
         else:
@@ -75,13 +74,27 @@ def check_preset(preset):
 
 def cloud_preset_infer_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir):
     from webui.preset import preset_inference_audio
-    assert check_preset(preset), i18n("模型下载失败, 请重试!")
+    preset_data = load_configs(os.path.join(PRESETS, preset))
+    assert check_preset(preset_data), i18n("模型下载失败, 请重试!")
     return preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir)
 
-def cloud_preset_infer_folder(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir, is_audio=False):
+def cloud_preset_infer_folder(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir):
     from webui.preset import preset_inference
-    assert check_preset(preset_name), i18n("模型下载失败, 请重试!")
-    return preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir, is_audio)
+    preset_data = load_configs(os.path.join(PRESETS, preset_name))
+    assert check_preset(preset_data), i18n("模型下载失败, 请重试!")
+    return preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir)
+
+def cloud_ensemble_infer_audio(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_audio, extract_inst):
+    from webui.ensemble import inference_audio_func
+    ensemble_data = webui_config['inference']['ensemble_preset']
+    assert check_preset(ensemble_data), i18n("模型下载失败, 请重试!")
+    return inference_audio_func(ensemble_model_mode, output_format, force_cpu, use_tta, store_dir_flow, input_audio, extract_inst)
+
+def cloud_ensemble_infer_folder(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, extract_inst):
+    from webui.ensemble import inference_folder_func
+    ensemble_data = webui_config['inference']['ensemble_preset']
+    assert check_preset(ensemble_data), i18n("模型下载失败, 请重试!")
+    return inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, extract_inst)
 
 def setup():
     global device, force_cpu_value
@@ -112,6 +125,8 @@ def app():
                 vr()
             with gr.TabItem(label=i18n("预设流程")):
                 preset()
+            with gr.TabItem(label=i18n("合奏模式")):
+                ensemble()
             with gr.TabItem(label=i18n("小工具")):
                 tools()
             with gr.TabItem(label=i18n("MSST训练")):
@@ -121,14 +136,7 @@ def app():
     return webui
 
 def msst():
-    from webui.msst import (
-        stop_msst_inference,
-        save_model_config,
-        reset_model_config,
-        update_inference_settings,
-        change_to_audio_infer,
-        change_to_folder_infer
-    )
+    from webui.msst import stop_msst_inference, save_model_config, reset_model_config, update_inference_settings
 
     gr.Markdown(value=i18n("MSST音频分离原项目地址: [https://github.com/ZFTurbo/Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)"))
     with gr.Row():
@@ -160,24 +168,18 @@ def msst():
             interactive=True
         )
     with gr.Row():
-        with gr.Column():
-            force_cpu = gr.Checkbox(
-                label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),
-                value=force_cpu_value,
-                interactive=False if force_cpu_value else True
-            )
-            use_tta = gr.Checkbox(
-                label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),
-                value=False,
-                interactive=True
-            )
-        with gr.Column():
-            extract_instrumental = gr.CheckboxGroup(
-                label=i18n("选择输出音轨"),
-                choices=[i18n("请先选择模型")],
-                value=None,
-                interactive=True
-            )
+        extract_instrumental = gr.CheckboxGroup(
+            label=i18n("选择输出音轨"),
+            choices=[i18n("请先选择模型")],
+            value=None,
+            interactive=True
+        )
+        force_cpu = gr.Checkbox(
+            info=" ",
+            label=i18n("强制使用CPU: 使用CPU推理速度非常慢!"),
+            value=force_cpu_value,
+            interactive=True
+        )
     with gr.Tabs():
         with gr.TabItem(label=i18n("输入文件夹")) as folder_tab:
             folder_input = gr.Textbox(
@@ -199,21 +201,31 @@ def msst():
         gr.Markdown(value=i18n("只有在点击保存后才会生效。参数直接写入配置文件, 无法撤销。假如不知道如何设置, 请保持默认值。<br>请牢记自己修改前的参数数值, 防止出现问题以后无法恢复。请确保输入正确的参数, 否则可能会导致模型无法正常运行。<br>假如修改后无法恢复, 请点击``重置``按钮, 这会使得配置文件恢复到默认值。"))
         with gr.Row():
             batch_size = gr.Number(
-                label=i18n("batch_size: 批次大小, 一般不需要改"),
-                value=None
-            )
-            dim_t = gr.Number(
-                label=i18n("dim_t: 时序维度大小, 一般不需要改"),
+                label=i18n("batch_size: 批次大小"),
                 value=None
             )
             num_overlap = gr.Number(
-                label=i18n("num_overlap: 数值越小速度越快, 但会牺牲效果"),
+                label=i18n("overlap: 重叠数"),
                 value=None
             )
+            dim_t = gr.Number(
+                label=i18n("dim_t: 时间维度"),
+                value=None
+            )
+            chunk_size = gr.Number(
+                label=i18n("chunk_size: 分块大小"),
+                value=None
+            )
+        with gr.Row():
             normalize = gr.Checkbox(
-                label=i18n("normalize: 是否对音频进行归一化处理"),
+                label=i18n("normalize: 是否归一化"),
                 value=False,
                 interactive=False
+            )
+            use_tta = gr.Checkbox(
+                label=i18n("use_tta: 是否使用TTA, 若使用, 推理时间x3"),
+                value=False,
+                interactive=True
             )
         with gr.Row():
             save_config_button = gr.Button(i18n("保存配置"))
@@ -228,19 +240,14 @@ def msst():
     folder_tab.select(fn=change_to_folder_infer, outputs=[inference_audio, inference_folder])
     inference_audio.click(fn=cloud_msst_infer_audio,inputs=[selected_model,audio_input,store_dir,extract_instrumental,gpu_id,output_format,force_cpu,use_tta,],outputs=output_message)
     inference_folder.click(fn=cloud_msst_infer_folder,inputs=[selected_model,folder_input,store_dir,extract_instrumental,gpu_id,output_format,force_cpu,use_tta,],outputs=output_message)
-    selected_model.change(fn=update_inference_settings,inputs=selected_model,outputs=[batch_size,dim_t,num_overlap,normalize,extract_instrumental,])
-    save_config_button.click(fn=save_model_config,inputs=[selected_model,batch_size,dim_t,num_overlap,normalize],outputs=output_message)
+    selected_model.change(fn=update_inference_settings,inputs=selected_model,outputs=[batch_size,dim_t,num_overlap,chunk_size,normalize,extract_instrumental,])
+    save_config_button.click(fn=save_model_config,inputs=[selected_model,batch_size,dim_t,num_overlap,chunk_size,normalize],outputs=output_message)
     select_model_type.change(fn=load_msst_cloud_model, inputs=select_model_type, outputs=selected_model)
     reset_config_button.click(fn=reset_model_config,inputs=selected_model,outputs=output_message)
     stop_msst.click(fn=stop_msst_inference)
 
 def vr():
-    from webui.vr import (
-        stop_vr_inference,
-        change_to_audio_infer,
-        change_to_folder_infer,
-        load_vr_model_stem
-    )
+    from webui.vr import stop_vr_inference, load_vr_model_stem
 
     gr.Markdown(value=i18n("说明: 本整合包仅融合了UVR的VR Architecture模型, MDX23C和HtDemucs类模型可以直接使用前面的MSST音频分离。<br>UVR分离使用项目: [https://github.com/nomadkaraoke/python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) 并进行了优化。"))
     vr_select_model = gr.Dropdown(
@@ -367,8 +374,6 @@ def preset():
         load_preset,
         restore_preset_func,
         preset_backup_list,
-        change_to_audio_infer,
-        change_to_folder_infer,
         stop_preset
     )
 
@@ -398,7 +403,7 @@ def preset():
                     interactive=False if force_cpu_value else True
                 )
                 use_tta = gr.Checkbox(
-                    label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),
+                    label=i18n("使用TTA (测试时增强), 可能会提高质量, 但时间x3"),
                     value=False,
                     interactive=True
                 )
@@ -497,7 +502,6 @@ def preset():
 
     audio_tab.select(fn=change_to_audio_infer, outputs=[inference_audio, inference_folder])
     folder_tab.select(fn=change_to_folder_infer, outputs=[inference_audio, inference_folder])
-    add_to_flow.click(fn=add_to_flow_func,inputs=[model_type,model_name,input_to_next,output_to_storage,preset_flow],outputs=preset_flow)
     inference_folder.click(fn=cloud_preset_infer_folder,inputs=[input_folder,store_dir_flow,preset_dropdown,force_cpu,output_format_flow,use_tta,extra_output_dir],outputs=output_message_flow)
     inference_audio.click(fn=cloud_preset_infer_audio,inputs=[input_audio,store_dir_flow,preset_dropdown,force_cpu,output_format_flow,use_tta,extra_output_dir],outputs=output_message_flow)
     model_name.change(fn=update_model_stem,inputs=[model_type,model_name],outputs=[input_to_next,output_to_storage])
@@ -511,13 +515,175 @@ def preset():
     reset_last.click(reset_last_func, inputs=preset_flow, outputs=preset_flow)
     stop_preset_inference.click(stop_preset)
 
+def ensemble():
+    from webui.ensemble import (
+        ensemble_files, 
+        update_model_stem, 
+        add_to_ensemble_flow, 
+        reset_flow_func, 
+        reset_last_func, 
+        save_ensemble_preset_func,
+        load_ensemble,
+        stop_ensemble_func
+    )
+
+    if webui_config['inference']['ensemble_preset']:
+        accordion_open = False
+    else:
+        accordion_open = True
+
+    gr.Markdown(value = i18n("合奏模式可用于集成不同算法的结果, 具体的文档位于/docs/ensemble.md。目前主要有以下两种合奏方式:<br>1. 从原始音频合奏: 直接上传一个或多个音频文件, 然后选择多个模型进行处理, 将这些处理结果根据选择的合奏模式进行合奏<br>2. 从分离结果合奏: 上传多个已经分离完成的结果音频, 然后选择合奏模式进行合奏"))
+    with gr.Tabs():
+        with gr.TabItem(i18n("从原始音频合奏")):
+            gr.Markdown(value = i18n("从原始音频合奏需要上传至少一个音频文件, 然后选择多个模型先进行分离处理, 然后将这些处理结果根据选择的合奏模式进行合奏。<br>注意, 请确保你的磁盘空间充足, 合奏过程会产生的临时文件仅会在处理结束后删除。"))
+            with gr.Accordion(label=i18n("制作合奏流程"), open=accordion_open):
+                with gr.Row():
+                    model_type = gr.Dropdown(
+                        label=i18n("选择模型类型"),
+                        choices=MODEL_CHOICES,
+                        interactive=True
+                    )
+                    model_name = gr.Dropdown(
+                        label=i18n("选择模型"),
+                        choices=None,
+                        interactive=False,
+                        scale=3
+                    )
+                with gr.Row():
+                    stem_weight = gr.Number(
+                        label=i18n("权重"),
+                        value=1.0,
+                        minimum=0.0,
+                        step=0.1,
+                        interactive=True
+                    )
+                    stem = gr.Radio(
+                        label=i18n("输出音轨"),
+                        choices=[i18n("请先选择模型")],
+                        interactive=False,
+                        scale=3
+                    )
+                add_to_flow = gr.Button(i18n("添加到合奏流程"), variant="primary")
+                with gr.Row():
+                    reset_last = gr.Button(i18n("撤销上一步"))
+                    reset_flow = gr.Button(i18n("全部清空"))
+                gr.Markdown(i18n("合奏流程"))
+                ensemble_flow = gr.Dataframe(
+                    value=load_ensemble(),
+                    interactive=False,
+                    label=None
+                )
+                save_ensemble_preset = gr.Button(i18n("保存此合奏流程"), variant="primary")
+            with gr.Row():
+                ensemble_model_mode = gr.Radio(
+                    choices = ENSEMBLE_MODES,
+                    label = i18n("集成模式"),
+                    value = "avg_wave",
+                    interactive=True,
+                    scale=3
+                )
+                output_format = gr.Radio(
+                    label=i18n("输出格式"),
+                    choices=["wav", "flac", "mp3"],
+                    value="wav",
+                    interactive=True,
+                    scale=1
+                )
+            with gr.Row():
+                force_cpu = gr.Checkbox(
+                    label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),
+                    value=force_cpu_value,
+                    interactive=True
+                )
+                use_tta = gr.Checkbox(
+                    label=i18n("使用TTA (测试时增强), 可能会提高质量, 但时间x3"),
+                    value=False,
+                    interactive=True
+                )
+                extract_inst = gr.Checkbox(
+                    label=i18n("输出次级音轨 (例如: 合奏人声时, 同时输出伴奏)"),
+                    value=False,
+                    interactive=True
+                )
+            with gr.Tabs():
+                with gr.TabItem(label=i18n("输入文件夹")) as folder_tab:
+                    input_folder = gr.Textbox(
+                        label=i18n("输入目录"),
+                        value="input/",
+                        interactive=False,
+                        scale=3
+                    )
+                with gr.TabItem(label=i18n("输入音频")) as audio_tab:
+                    input_audio = gr.Files(label=i18n("上传一个或多个音频文件"), type="filepath")
+            with gr.Row():
+                store_dir_flow = gr.Textbox(
+                    label=i18n("输出目录"),
+                    value="results/",
+                    interactive=False,
+                    scale=4
+                )
+            inference_audio = gr.Button(i18n("输入音频分离"), variant="primary", visible=False)
+            inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=True)
+        with gr.TabItem(i18n("从分离结果合奏")):
+            gr.Markdown(value = i18n("从分离结果合奏需要上传至少两个音频文件, 这些音频文件是使用不同的模型分离同一段音频的结果。因此, 上传的所有音频长度应该相同。"))
+            with gr.Row():
+                files = gr.Files(label = i18n("上传多个音频文件"), type = "filepath", file_count = 'multiple')
+                with gr.Column():
+                    weights = gr.Textbox(
+                        label = i18n("权重(以空格分隔, 数量要与上传的音频一致)"),
+                        value = "1 1"
+                    )
+                    ensembl_output_path = gr.Textbox(
+                        label = i18n("输出目录"),
+                        value = "results/",
+                        interactive=False
+                    )
+            with gr.Row():
+                ensemble_type = gr.Radio(
+                    choices = ENSEMBLE_MODES,
+                    label = i18n("集成模式"),
+                    value = "avg_wave",
+                    interactive=True,
+                    scale=3
+                )
+                file_output_format = gr.Radio(
+                    label = i18n("输出格式"),
+                    choices = ["wav", "flac", "mp3"],
+                    value = "wav",
+                    interactive=True
+                )
+            ensemble_button = gr.Button(i18n("运行"), variant = "primary")
+    
+    with gr.Row():
+        output_message_ensemble = gr.Textbox(label = "Output Message", scale=5)
+        stop_ensemble = gr.Button(i18n("强制停止"), scale=1)
+    with gr.Row():
+        with gr.Column():
+            gr.Markdown(i18n("### 集成模式"))
+            gr.Markdown(i18n("1. `avg_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的平均值<br>2. `median_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的中位数<br>3. `min_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的最小绝对值<br>4. `max_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的最大绝对值<br>5. `avg_fft`: 在频谱图 (短时傅里叶变换 (STFT) 2D变体) 上进行集成, 独立地找到频谱图的每个像素的平均值。平均后使用逆STFT得到原始的1D波形<br>6. `median_fft`: 与avg_fft相同, 但使用中位数代替平均值 (仅在集成3个或更多来源时有用) <br>7. `min_fft`: 与avg_fft相同, 但使用最小函数代替平均值 (减少激进程度) <br>8. `max_fft`: 与avg_fft相同, 但使用最大函数代替平均值 (增加激进程度) "))
+        with gr.Column():
+            gr.Markdown(i18n("### 注意事项"))
+            gr.Markdown(i18n("1. min_fft可用于进行更保守的合成, 它将减少更激进模型的影响。<br>2. 最好合成等质量的模型。在这种情况下, 它将带来增益。如果其中一个模型质量不好, 它将降低整体质量。<br>3. 在原仓库作者的实验中, 与其他方法相比, avg_wave在SDR分数上总是更好或相等。<br>4. 最终会在输出目录下生成一个`ensemble_<集成模式>.wav`。"))
+
+    audio_tab.select(fn=change_to_audio_infer, outputs=[inference_audio, inference_folder])
+    folder_tab.select(fn=change_to_folder_infer, outputs=[inference_audio, inference_folder])
+    add_to_flow.click(fn=add_to_ensemble_flow,inputs=[model_type, model_name, stem_weight, stem, ensemble_flow],outputs=ensemble_flow)
+    inference_audio.click(fn=cloud_ensemble_infer_audio,inputs=[ensemble_model_mode,output_format,force_cpu,use_tta,store_dir_flow,input_audio, extract_inst],outputs = output_message_ensemble)
+    inference_folder.click(fn=cloud_ensemble_infer_folder,inputs=[ensemble_model_mode,output_format,force_cpu,use_tta,store_dir_flow,input_folder, extract_inst],outputs = output_message_ensemble)
+    ensemble_button.click(fn=ensemble_files,inputs=[files,ensemble_type,weights,ensembl_output_path,file_output_format],outputs = output_message_ensemble)
+    model_type.change(load_preset_cloud_model, inputs=model_type, outputs=model_name)
+    model_name.change(fn=update_model_stem,inputs=[model_type, model_name],outputs=[stem])
+    reset_flow.click(reset_flow_func,outputs=ensemble_flow)
+    reset_last.click(reset_last_func, inputs=ensemble_flow, outputs=ensemble_flow)
+    save_ensemble_preset.click(save_ensemble_preset_func, inputs=ensemble_flow)
+    stop_ensemble.click(stop_ensemble_func)
+
 def train():
     from webui.train import (
         save_training_config,
         start_training,
         update_train_start_check_point,
         validate_model,
-        stop_msst_training,
         stop_msst_valid
     )
 
@@ -640,14 +806,11 @@ def train():
             save_train_config = gr.Button(i18n("保存上述训练配置"))
             start_train_button = gr.Button(i18n("开始训练"), variant="primary")
             gr.Markdown(value=i18n("点击开始训练后, 请到终端查看训练进度或报错, 下方不会输出报错信息, 想要停止训练可以直接关闭终端。在训练过程中, 你也可以关闭网页, 仅**保留终端**。"))
-            with gr.Row():
-                output_message_train = gr.Textbox(label="Output Message", scale=4)
-                stop_training = gr.Button(i18n("强制停止"), scale=1)
+            output_message_train = gr.Textbox(label="Output Message", scale=4)
 
             reflesh_start_check_point.click(fn=update_train_start_check_point, inputs=train_results_path, outputs=train_start_check_point)
             save_train_config.click(fn=save_training_config,inputs=[train_model_type,train_config_path,train_dataset_type,train_dataset_path,train_valid_path,train_num_workers,train_device_ids,train_seed,train_pin_memory,train_use_multistft_loss,train_use_mse_loss,train_use_l1_loss,train_results_path,train_accelerate,train_pre_validate,train_metrics_list,train_metrics_scheduler],outputs=output_message_train)
             start_train_button.click(fn=start_training,inputs=[train_model_type,train_config_path,train_dataset_type,train_dataset_path,train_valid_path,train_num_workers,train_device_ids,train_seed,train_pin_memory,train_use_multistft_loss,train_use_mse_loss,train_use_l1_loss,train_results_path,train_start_check_point,train_accelerate,train_pre_validate,train_metrics_list,train_metrics_scheduler],outputs=output_message_train)
-            stop_training.click(fn=stop_msst_training)
 
         with gr.TabItem(label=i18n("验证")):
             gr.Markdown(value=i18n("此页面用于手动验证模型效果, 测试验证集, 输出SDR测试信息。输出的信息会存放在输出文件夹的results.txt中。<br>下方参数将自动加载训练页面的参数, 在训练页面点击保存训练参数后, 重启WebUI即可自动加载。当然你也可以手动输入参数。<br>"))
@@ -694,29 +857,29 @@ def train():
                         value=webui_config['training']['device'] if webui_config['training']['device'] else device[0],
                         interactive=True
                     )
-                    vaild_metrics = gr.CheckboxGroup(
-                        label=i18n("选择输出的评估指标"),
-                        choices=METRICS,
-                        value=webui_config['training']['metrics'] if webui_config['training']['metrics'] else METRICS[0],
+                    valid_extension = gr.Radio(
+                        label=i18n("选择验证集音频格式"),
+                        choices=["wav", "flac", "mp3"],
+                        value="wav",
                         interactive=True
                     )
+                    valid_num_workers = gr.Number(
+                        label=i18n("验证集读取线程数, 0为自动"),
+                        value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
+                        interactive=True,
+                        minimum=0,
+                        maximum=cpu_count(),
+                        step=1
+                    )
+
                 with gr.Row():
                     with gr.Column():
-                        with gr.Row():
-                            valid_extension = gr.Radio(
-                                label=i18n("选择验证集音频格式"),
-                                choices=["wav", "flac", "mp3"],
-                                value="wav",
-                                interactive=True
-                            )
-                            valid_num_workers = gr.Number(
-                                label=i18n("验证集读取线程数, 0为自动"),
-                                value=webui_config['training']['num_workers'] if webui_config['training']['num_workers'] else 0,
-                                interactive=True,
-                                minimum=0,
-                                maximum=cpu_count(),
-                                step=1
-                            )
+                        vaild_metrics = gr.CheckboxGroup(
+                            label=i18n("选择输出的评估指标"),
+                            choices=METRICS,
+                            value=webui_config['training']['metrics'] if webui_config['training']['metrics'] else METRICS[0],
+                            interactive=True
+                        )
                     with gr.Column():
                         valid_pin_memory = gr.Checkbox(
                             label=i18n("是否将加载的数据放置在固定内存中, 默认为否"),
@@ -724,7 +887,7 @@ def train():
                             interactive=True
                         )
                         valid_use_tta = gr.Checkbox(
-                            label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),
+                            label=i18n("使用TTA (测试时增强), 可能会提高质量, 但时间x3"),
                             value=False,
                             interactive=True
                         )
@@ -737,7 +900,7 @@ def train():
             stop_valid.click(fn=stop_msst_valid)
 
 def tools():
-    from webui.tools import convert_audio, merge_audios, caculate_sdr, ensemble, some_inference
+    from webui.tools import convert_audio, merge_audios, caculate_sdr, some_inference
 
     with gr.Tabs():
         with gr.TabItem(label=i18n("音频格式转换")):
@@ -823,36 +986,6 @@ def tools():
                 estimated_audio = gr.File(label=i18n("待估音频"), type="filepath")
             compute_sdr_button = gr.Button(i18n("计算SDR"), variant="primary")
             output_message_sdr = gr.Textbox(label="Output Message")
-        with gr.TabItem(label = i18n("Ensemble模式")):
-            gr.Markdown(value = i18n("可用于集成不同算法的结果。具体的文档位于/docs/ensemble.md"))
-            with gr.Row():
-                files = gr.Files(label = i18n("上传多个音频文件"), type = "filepath", file_count = 'multiple')
-                with gr.Column():
-                    with gr.Row():
-                        ensemble_type = gr.Dropdown(
-                            choices = ["avg_wave", "median_wave", "min_wave", "max_wave", "avg_fft", "median_fft", "min_fft", "max_fft"],
-                            label = i18n("集成模式"),
-                            value = "avg_wave",
-                            interactive=True
-                        )
-                        weights = gr.Textbox(
-                            label = i18n("权重(以空格分隔, 数量要与上传的音频一致)"),
-                            value = "1 1"
-                        )
-                    ensembl_output_path = gr.Textbox(
-                        label = i18n("输出目录"),
-                        value = "results/",
-                        interactive=False,
-                    )
-            ensemble_button = gr.Button(i18n("运行"), variant = "primary")
-            output_message_ensemble = gr.Textbox(label = "Output Message")
-            with gr.Row():
-                with gr.Column():
-                    gr.Markdown(i18n("### 集成模式"))
-                    gr.Markdown(i18n("1. `avg_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的平均值<br>2. `median_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的中位数<br>3. `min_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的最小绝对值<br>4. `max_wave`: 在1D变体上进行集成, 独立地找到波形的每个样本的最大绝对值<br>5. `avg_fft`: 在频谱图 (短时傅里叶变换 (STFT) 2D变体) 上进行集成, 独立地找到频谱图的每个像素的平均值。平均后使用逆STFT得到原始的1D波形<br>6. `median_fft`: 与avg_fft相同, 但使用中位数代替平均值 (仅在集成3个或更多来源时有用) <br>7. `min_fft`: 与avg_fft相同, 但使用最小函数代替平均值 (减少激进程度) <br>8. `max_fft`: 与avg_fft相同, 但使用最大函数代替平均值 (增加激进程度) "))
-                with gr.Column():
-                    gr.Markdown(i18n("### 注意事项"))
-                    gr.Markdown(i18n("1. min_fft可用于进行更保守的合成, 它将减少更激进模型的影响。<br>2. 最好合成等质量的模型。在这种情况下, 它将带来增益。如果其中一个模型质量不好, 它将降低整体质量。<br>3. 在原仓库作者的实验中, 与其他方法相比, avg_wave在SDR分数上总是更好或相等。<br>4. 最终会在输出目录下生成一个`ensemble_<集成模式>.wav`。"))
         with gr.TabItem(label=i18n("歌声转MIDI")):
             gr.Markdown(value=i18n("歌声转MIDI功能使用开源项目[SOME](https://github.com/openvpi/SOME/), 可以将分离得到的**干净的歌声**转换成.mid文件。<br>【必须】若想要使用此功能, 请先下载权重文件[model_steps_64000_simplified.ckpt](https://hf-mirror.com/Sucial/MSST-WebUI/resolve/main/SOME_weights/model_steps_64000_simplified.ckpt)并将其放置在程序目录下的`tools/SOME_weights`文件夹内。文件命名不可随意更改! <br>【重要】只能上传wav格式的音频! "))
             gr.Markdown(value=i18n("如果不知道如何测量歌曲BPM, 可以尝试这两个在线测量工具: [bpmdetector](https://bpmdetector.kniffen.dev/) | [key-bpm-finder](https://vocalremover.org/zh/key-bpm-finder), 测量时建议上传原曲或伴奏, 若干声可能导致测量结果不准确。"))
@@ -878,15 +1011,10 @@ def tools():
     convert_audio_button.click(fn=convert_audio,inputs=[inputs,ffmpeg_output_format,ffmpeg_output_folder,sample_rate,channels,wav_bit_depth,flac_bit_depth,mp3_bit_rate,ogg_bit_rate],outputs=output_message_ffmpeg)
     merge_audio_button.click(fn=merge_audios,inputs=[merge_audio_input,merge_audio_output],outputs=output_message_merge)
     compute_sdr_button.click(fn=caculate_sdr,inputs=[reference_audio,estimated_audio],outputs=output_message_sdr)
-    ensemble_button.click(fn=ensemble,inputs=[files,ensemble_type,weights,ensembl_output_path],outputs = output_message_ensemble)
     some_button.click(fn=some_inference,inputs=[some_input_audio,audio_bpm,some_output_folder],outputs=output_message_some)
 
 def settings():
-    from webui.settings import (
-        reset_settings,
-        reset_webui_config,
-        change_language,
-    )
+    from webui.settings import reset_settings, reset_webui_config, change_language, save_audio_setting_fn
 
     theme_choices = []
     for i in os.listdir(THEME_FOLDER):
@@ -899,36 +1027,61 @@ def settings():
         if language_dict[lg] == current_language:
             language = lg
 
-    with gr.Row():
-        gr.Textbox(label=i18n("GPU信息"), value=device if len(device) > 1 else device[0], interactive=False)
-        gr.Textbox(label=i18n("系统信息"), value=f"System: {platform.system()}, Machine: {platform.machine()}", interactive=False)
-    with gr.Row():
-        set_language = gr.Dropdown(
-            label=i18n("选择语言"),
-            choices=language_dict.keys(),
-            value=language,
-            interactive=True
-        )
-        debug_mode = gr.Checkbox(
-            label=i18n("全局调试模式: 向开发者反馈问题时请开启。(该选项支持热切换)"),
-            value=webui_config['settings']['debug'],
-            interactive=True
-        )
-    with gr.Row():
-        reset_all_webui_config = gr.Button(i18n("重置WebUI路径记录"), variant="primary")
-        reset_seetings = gr.Button(i18n("重置WebUI设置"), variant="primary")
-    setting_output_message = gr.Textbox(label="Output Message")
-    restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
+    with gr.Tabs():
+        with gr.TabItem(i18n("WebUI设置")):
+            with gr.Row():
+                gr.Textbox(label=i18n("GPU信息"), value=device if len(device) > 1 else device[0], interactive=False)
+                gr.Textbox(label=i18n("系统信息"), value=f"System: {platform.system()}, Machine: {platform.machine()}", interactive=False)
+            with gr.Row():
+                set_language = gr.Dropdown(
+                    label=i18n("选择语言"),
+                    choices=language_dict.keys(),
+                    value=language,
+                    interactive=True
+                )
+                debug_mode = gr.Checkbox(
+                    label=i18n("全局调试模式: 向开发者反馈问题时请开启。(该选项支持热切换)"),
+                    value=webui_config['settings']['debug'],
+                    interactive=True
+                )
+            with gr.Row():
+                reset_all_webui_config = gr.Button(i18n("重置WebUI路径记录"), variant="primary")
+                reset_seetings = gr.Button(i18n("重置WebUI设置"), variant="primary")
+            setting_output_message = gr.Textbox(label="Output Message")
+            restart_webui = gr.Button(i18n("重启WebUI"), variant="primary")
+        with gr.TabItem(label=i18n("音频输出设置")):
+            gr.Markdown(i18n("此页面支持用户自定义修改MSST/VR推理后输出音频的质量。输出音频的**采样率, 声道数与模型支持的参数有关, 无法更改**。<br>修改完成后点击保存设置即可生效。"))
+            wav_bit_depth = gr.Radio(
+                label=i18n("输出wav位深度"),
+                choices=["PCM_16", "PCM_24", "PCM_32", "FLOAT"],
+                value="FLOAT",
+                interactive=True
+            )
+            flac_bit_depth = gr.Radio(
+                label=i18n("输出flac位深度"),
+                choices=["PCM_16", "PCM_24"],
+                value="PCM_24",
+                interactive=True
+            )
+            mp3_bit_rate = gr.Radio(
+                label=i18n("输出mp3比特率(bps)"),
+                choices=['96k', '128k', '192k', '256k', '320k'],
+                value="320k",
+                interactive=True
+            )
+            save_audio_setting = gr.Button(i18n("保存设置"), variant="primary")
+            audio_setting_output_message = gr.Textbox(label="Output Message")
 
     restart_webui.click(fn=webui_restart, outputs=setting_output_message)
     reset_seetings.click(fn=reset_settings,outputs=setting_output_message)
     reset_all_webui_config.click(fn=reset_webui_config,outputs=setting_output_message)
     set_language.change(fn=change_language,inputs=set_language,outputs=setting_output_message)
     debug_mode.change(fn=log_level_debug,inputs=debug_mode,outputs=setting_output_message)
+    save_audio_setting.click(fn=save_audio_setting_fn,inputs=[wav_bit_depth,flac_bit_depth,mp3_bit_rate], outputs=audio_setting_output_message)
 
 if __name__ == "__main__":
     import multiprocessing
-    multiprocessing.set_start_method('spawn')
+    multiprocessing.set_start_method('spawn', force=True)
 
     debug = webui_config["settings"].get("debug", False)
     if debug:

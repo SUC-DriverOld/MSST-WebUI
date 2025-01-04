@@ -7,7 +7,7 @@
 [![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers)<br>
 WebUI of Music-Source-Separation-Training-Inference , and we packed UVR together!<br>
-Support Languages: English, 简体中文, 繁體中文, 日本語
+Support Languages: English, 简体中文, 繁體中文, 日本語, 한국어
 </div>
 
 ## Introduction

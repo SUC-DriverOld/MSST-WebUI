@@ -165,6 +165,33 @@ def get_vr_model(model):
                 return primary_stem, secondary_stem, model_url, model_path
     raise gr.Error(i18n("模型不存在!"))
 
+def load_model_info(model_name):
+    model_info = load_configs(MODELS_INFO)
+    if model_name in model_info.keys():
+        model_size = model_info[model_name].get("model_size", "Unknown")
+        share256 = model_info[model_name].get("sha256", "Unknown")
+        if model_size != "Unknown":
+            model_size = round(int(model_size) / 1024 / 1024, 2)
+    else:
+        model_size = "Unknown"
+        share256 = "Unknown"
+    return model_size, share256
+
+def update_model_name(model_type):
+    if model_type == "UVR_VR_Models":
+        model_map = load_vr_model()
+        return gr.Dropdown(label=i18n("选择模型"), choices=model_map, interactive=True)
+    else:
+        model_map = load_selected_model(model_type)
+        return gr.Dropdown(label=i18n("选择模型"), choices=model_map, interactive=True)
+
+def change_to_audio_infer():
+    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=True),
+            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False))
+
+def change_to_folder_infer():
+    return (gr.Button(i18n("输入音频分离"), variant="primary", visible=False),
+            gr.Button(i18n("输入文件夹分离"), variant="primary", visible=True))
 
 def select_folder():
     root = tk.Tk()

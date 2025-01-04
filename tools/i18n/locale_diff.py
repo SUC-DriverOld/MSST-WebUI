@@ -30,7 +30,7 @@ def sort(target):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 template = "locale/template.json"
-target = ["locale/en_US.json", "locale/ja_JP.json", "locale/emoji.json"]
+target = ["locale/en_US.json", "locale/ja_JP.json", "locale/emoji.json", "locale/ko_KR.json"]
 for t in target:
     locale_diff(template, t)
     sort(t)

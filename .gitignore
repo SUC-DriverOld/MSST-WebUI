@@ -22,14 +22,16 @@ tmpdir/
 pretrain/hub
 build/
 logs/
-data/presets
-data/presets_backup
+presets/
+presets_backup/
 
 !pretrain/*.json
 !.gitkeep
 setup.py
 app.c
 go-webui.bat
+DownloadManager.exe
+go-DownloadManager.bat
 
 *.ckpt
 *.pt

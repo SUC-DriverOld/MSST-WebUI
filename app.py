@@ -37,6 +37,8 @@ def app(platform, device, force_cpu, theme='tools/themes/theme_blue.json'):
                 ui.vr(webui_config, force_cpu)
             with gr.TabItem(label=i18n("预设流程")):
                 ui.preset(webui_config, force_cpu)
+            with gr.TabItem(label=i18n("合奏模式")):
+                ui.ensemble(webui_config, force_cpu)
             with gr.TabItem(label=i18n("小工具")):
                 ui.tools(webui_config)
             with gr.TabItem(label=i18n("安装模型")):

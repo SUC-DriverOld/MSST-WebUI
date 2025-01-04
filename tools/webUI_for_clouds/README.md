@@ -51,7 +51,7 @@ import os
 import shutil
 
 # Supported languages
-language_dict = {"Auto": "Auto", "简体中文": "zh_CN", "繁體中文": "zh_TW", "English": "en_US", "日本語": "ja_JP", "😊": "emoji"}
+language_dict = {"Auto": "Auto", "简体中文": "zh_CN", "繁體中文": "zh_TW", "English": "en_US", "日本語": "ja_JP", "한국어": "ko_KR", "😊": "emoji"}
 
 # Make dirs if not exist
 if not os.path.exists("data"):

@@ -1,18 +1,16 @@
 import gradio as gr
 
-from webui.utils import i18n, load_vr_model, select_folder, open_folder
+from webui.utils import i18n, load_vr_model, select_folder, open_folder, change_to_audio_infer, change_to_folder_infer
 from webui.init import init_selected_vr_model
 from webui.vr import (
     vr_inference_single,
     vr_inference_multi,
     stop_vr_inference,
-    change_to_audio_infer,
-    change_to_folder_infer,
     load_vr_model_stem
 )
 
-def vr(webui_config, force_cpu):
-    if webui_config['inference']['force_cpu'] or force_cpu:
+def vr(webui_config, force_cpu_flag=False):
+    if webui_config['inference']['force_cpu'] or force_cpu_flag:
         force_cpu_value = True
     else:
         force_cpu_value = False
@@ -52,7 +50,7 @@ def vr(webui_config, force_cpu):
         vr_use_cpu = gr.Checkbox(
             label=i18n("使用CPU"),
             value=force_cpu_value,
-            interactive=False if force_cpu_value else True
+            interactive=False if force_cpu_flag else True
         )
         vr_primary_stem_only = gr.Checkbox(
             label=primary_label,
