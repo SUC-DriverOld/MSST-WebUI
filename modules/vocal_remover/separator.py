@@ -214,6 +214,8 @@ class Separator:
                         self.logger.debug(f"Saved {stem} for {base_name}_{stem}.{self.output_format} in {dir}")
 
             success_files.append(os.path.basename(file_path))
+            del mix, results
+            gc.collect()
         return success_files
 
     def separate(self, mix):

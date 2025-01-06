@@ -172,6 +172,8 @@ class MSSeparator:
                         self.logger.debug(f"Saved {instr} for {file_name}_{instr}.{self.output_format} in {dir}")
 
             success_files.append(os.path.basename(path))
+            del mix, results
+            gc.collect()
         return success_files
 
     def separate(self, mix):
