@@ -168,7 +168,11 @@ class VRSeparator(CommonSeparator):
             self.primary_stem_name: self.process_stem(self.primary_stem_name, self.primary_source, y_spec),
             self.secondary_stem_name: self.process_stem(self.secondary_stem_name, self.secondary_source, v_spec)
         }
-        # self.logger.debug("Processing output files...")
+
+        if "Aspiration" in results.keys():
+            res = results["Aspiration"]
+            results["No Aspiration"] = res[:, 1] - res[:, 0]
+            results["Aspiration"] = res[:, 0]
 
         return results
 

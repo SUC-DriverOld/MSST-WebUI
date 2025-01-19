@@ -90,6 +90,7 @@ UPDATE_URL = "https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest"
 
 # pretrained SOME weight
 SOME_WEIGHT = "tools/SOME_weights/model_steps_64000_simplified.ckpt"
+SOME_CONFIG = "configs_backup/config_some.yaml"
 
 # path to the theme folder
 THEME_FOLDER = "tools/themes"

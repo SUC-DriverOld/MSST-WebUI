@@ -246,4 +246,4 @@ def rename_name(model_type, model_name, new_name):
 
     except Exception as e:
         logger.error(f"Fail to rename model. Error: {e}\n{traceback.format_exc()}")
-        gr.Error(i18n("重命名失败!")) + str(e)
+        gr.Error(i18n("重命名失败!") + str(e))

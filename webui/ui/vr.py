@@ -27,9 +27,9 @@ def vr(webui_config, force_cpu_flag=False):
     )
     with gr.Row():
         vr_window_size = gr.Dropdown(
-            label=i18n("Window Size: 窗口大小, 用于平衡速度和质量"),
+            label=i18n("Window Size: 窗口大小, 用于平衡速度和质量, 默认为512"),
             choices=[320, 512, 1024],
-            value=webui_config['inference']['vr_window_size'] if webui_config['inference']['vr_window_size'] else "512",
+            value=webui_config['inference']['vr_window_size'] if webui_config['inference']['vr_window_size'] else 512,
             interactive=True,
             allow_custom_value=True
         )
@@ -84,18 +84,20 @@ def vr(webui_config, force_cpu_flag=False):
         )
         vr_select_store_btn = gr.Button(i18n("选择文件夹"), scale=1)
         vr_open_store_btn = gr.Button(i18n("打开文件夹"), scale=1)
-    with gr.Accordion(i18n("以下是一些高级设置, 一般保持默认即可"), open=False):
+    with gr.Accordion(i18n("[点击展开] 以下是一些高级设置, 一般保持默认即可"), open=False):
         with gr.Row():
             vr_batch_size = gr.Slider(
-                label=i18n("Batch Size: 一次要处理的批次数, 越大占用越多RAM, 处理速度加快"),
+                label="Batch Size",
+                info=i18n("批次大小, 减小此值可以降低显存占用"),
                 minimum=1,
-                maximum=32,
+                maximum=16,
                 step=1,
                 value=webui_config['inference']['vr_batch_size'] if webui_config['inference']['vr_batch_size'] else 2,
                 interactive=True
             )
             vr_post_process_threshold = gr.Slider(
-                label=i18n("Post Process Threshold: 后处理特征阈值, 取值为0.1-0.3"),
+                label="Post Process Threshold",
+                info=i18n("后处理特征阈值, 取值为0.1-0.3, 默认0.2"),
                 minimum=0.1,
                 maximum=0.3,
                 step=0.01,
@@ -104,22 +106,26 @@ def vr(webui_config, force_cpu_flag=False):
             )
         with gr.Row():
             vr_invert_spect = gr.Checkbox(
-                label=i18n("Invert Spectrogram: 二级步骤将使用频谱图而非波形进行反转, 可能会提高质量, 但速度稍慢"),
+                label="Invert Spectrogram",
+                info=i18n("次级输出使用频谱而非波形进行反转, 可能会提高质量, 但速度稍慢"),
                 value=webui_config['inference']['vr_invert_spect'] if webui_config['inference']['vr_invert_spect'] else False,
                 interactive=True
             )
             vr_enable_tta = gr.Checkbox(
-                label=i18n("Enable TTA: 启用“测试时增强”, 可能会提高质量, 但速度稍慢"),
+                label="Enable TTA",
+                info=i18n("启用“测试时增强”, 可能会提高质量, 但速度稍慢"),
                 value=webui_config['inference']['vr_enable_tta'] if webui_config['inference']['vr_enable_tta'] else False,
                 interactive=True
             )
             vr_high_end_process = gr.Checkbox(
-                label=i18n("High End Process: 将输出音频缺失的频率范围镜像输出"),
+                label="High End Process",
+                info=i18n("将输出音频缺失的频率范围镜像输出, 作用不大"),
                 value=webui_config['inference']['vr_high_end_process'] if webui_config['inference']['vr_high_end_process'] else False,
                 interactive=True
             )
             vr_enable_post_process = gr.Checkbox(
-                label=i18n("Enable Post Process: 识别人声输出中残留的人工痕迹, 可改善某些歌曲的分离效果"),
+                label="Enable Post Process",
+                info=i18n("识别人声输出中残留的人工痕迹, 可改善某些歌曲的分离效果"),
                 value=webui_config['inference']['vr_enable_post_process'] if webui_config['inference']['vr_enable_post_process'] else False,
                 interactive=True
             )

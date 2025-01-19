@@ -5,7 +5,6 @@ import os
 import librosa
 import soundfile as sf
 import numpy as np
-import argparse
 
 from utils.logger import get_logger
 logger = get_logger()
@@ -149,19 +148,3 @@ def ensemble_audios(files, type, weights):
     res = average_waveforms(data, weights, type)
     logger.debug('Result shape: {}'.format(res.shape))
     return res.T, sr
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--files", type=str, required=True, nargs='+', help="Path to all audio-files to ensemble")
-    parser.add_argument("--type", type=str, default='avg_wave',
-                        help="One of avg_wave, median_wave, min_wave, max_wave, avg_fft, median_fft, min_fft, max_fft")
-    parser.add_argument("--weights", type=float, nargs='+',
-                        help="Weights to create ensemble. Number of weights must be equal to number of files")
-    parser.add_argument("--output", default="res.wav", type=str,
-                        help="Path to wav file where ensemble result will be stored")
-    args = parser.parse_args()
-
-    res, sr = ensemble_audios(args.files, args.type, args.weights)
-    sf.write(args.output, res.T, sr, 'FLOAT')
-    logger.info(f'Ensemble result saved to: {args.output}')

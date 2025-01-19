@@ -151,7 +151,7 @@ def inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, stor
     if os.path.exists(TEMP_PATH) and not is_audio:
         shutil.rmtree(TEMP_PATH)
 
-    preset = EnsembleFlow(preset_data, force_cpu, use_tta)
+    preset = EnsembleFlow(preset_data, force_cpu, use_tta, logger)
     if preset.total_steps < 2:
         return i18n("请至少添加2个模型到合奏流程")
     if not preset.is_exist_models()[0]:

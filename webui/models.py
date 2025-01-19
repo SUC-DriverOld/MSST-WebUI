@@ -1,3 +1,4 @@
+import os
 import shutil
 import requests
 import webbrowser
@@ -67,7 +68,9 @@ def show_model_info(model_type, model_name):
 
     if os.path.isfile(model_path):
         info += i18n("模型已安装") + ", "
-        if sha256 != caculate_sha256(model_path):
+        if sha256 == "Unknown":
+            info += i18n("无法校验sha256")
+        elif sha256 != caculate_sha256(model_path):
             info += i18n("sha256校验失败")
             gr.Warning(i18n("模型sha256校验失败, 请重新下载"))
             logger.warning(f"Model {model_name} sha256 check failed, please redownload")
@@ -91,15 +94,12 @@ def download_model(model_type, model_name):
         os.makedirs(model_path, exist_ok=True)
         return download_file(model_url, os.path.join(model_path, model_name), model_name)
     else:
-        msst_model_map = load_configs(MSST_MODEL)
         model_mapping = load_msst_model()
         if model_name in model_mapping:
             return i18n("模型") + model_name + i18n("已安装")
-        if model_type not in msst_model_map:
-            return i18n("模型类型") + model_type + i18n("不存在")
         _, _, _, model_url = get_msst_model(model_name)
-        model_path = f"pretrain/{model_type}/{model_name}"
-        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        model_path = os.path.join(MODEL_FOLDER, model_type, model_name)
+        os.makedirs(os.path.join(MODEL_FOLDER, model_type), exist_ok=True)
         return download_file(model_url, model_path, model_name)
 
 def download_file(url, path, model_name):
@@ -131,14 +131,14 @@ def download_file(url, path, model_name):
         if target_sha256 != "Unknown":
             if target_sha256 != current_sha256:
                 logger.warning(f"Model {model_name} sha256 check failed")
-                return i18n("模型") + model_name + i18n("sha256校验失败") + ", " + i18n("请重新下载")
+                return i18n("模型") + model_name + i18n("sha256校验失败") + ", " + i18n("请手动删除后重新下载")
             else:
                 logger.info(f"Model {model_name} downloaded successfully, sha256 check passed")
                 return i18n("模型") + model_name + i18n("下载成功") + ", " + i18n("sha256校验成功")
         else:
             logger.info(f"Model {model_name} downloaded successfully")
             logger.warning(f"Model {model_name} sha256 is unknown, cannot verify")
-            return i18n("模型") + model_name + i18n("下载成功") + ", " + i18n("sha256校验未知")
+            return i18n("模型") + model_name + i18n("下载成功") + ", " + i18n("无法校验sha256")
     except Exception as e:
         logger.error(f"Failed to download model: {str(e)}\n{traceback.format_exc()}")
         return i18n("模型") + model_name + i18n("下载失败") + str(e)
@@ -150,15 +150,12 @@ def manual_download_model(model_type, model_name):
     if model_type == "UVR_VR_Models":
         downloaded_model = load_vr_model()
         if model_name in downloaded_model:
-            return i18n("模型") + model_name + i18n("已安装")
+            return i18n("模型") + model_name + i18n("已安装。请勿重复安装。")
         _, _, model_url, _ = get_vr_model(model_name)
     else:
-        vr_model_map = load_configs(MSST_MODEL)
         model_mapping = load_msst_model()
         if model_name in model_mapping:
-            return i18n("模型") + model_name + i18n("已安装")
-        if model_type not in vr_model_map:
-            return i18n("模型类型") + model_type + i18n("不存在")
+            return i18n("模型") + model_name + i18n("已安装。请勿重复安装。")
         _, _, _, model_url = get_msst_model(model_name)
 
     webbrowser.open(model_url)
@@ -183,16 +180,17 @@ def install_unmsst_model(unmsst_model, unmsst_config, unmodel_class, unmodel_typ
     try:
         model_name = os.path.basename(unmsst_model)
 
-        if model_name in load_msst_model():
-            return i18n("模型") + model_name + i18n("已安装")
-        if unmsst_model.endswith((".ckpt", ".chpt", ".th")):
-            shutil.copy(unmsst_model, os.path.join(MODEL_FOLDER, unmodel_class))
-        else: 
-            return i18n("请上传'ckpt', 'chpt', 'th'格式的模型文件")
-        if unmsst_config.endswith(".yaml"):
-            shutil.copy(unmsst_config, os.path.join(UNOFFICIAL_MODEL, "msst_config"))
-        else: 
+        if not unmsst_config.endswith(".yaml"):
             return i18n("请上传'.yaml'格式的配置文件")
+        if not unmsst_model.endswith((".ckpt", ".chpt", ".th")):
+            return i18n("请上传'ckpt', 'chpt', 'th'格式的模型文件")
+
+        if model_name in load_msst_model():
+            os.remove(os.path.join(MODEL_FOLDER, unmodel_class, model_name))
+            logger.warning(f"Find existing model with the same name: {model_name}, overwriting.")
+
+        shutil.copy(unmsst_model, os.path.join(MODEL_FOLDER, unmodel_class))
+        shutil.copy(unmsst_config, os.path.join(UNOFFICIAL_MODEL, "msst_config"))
 
         config = {
             "name": model_name,
@@ -219,29 +217,29 @@ def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model
 
     try:
         model_name = os.path.basename(unvr_model)
-        if model_name in load_vr_model():
-            return i18n("模型") + model_name + i18n("已安装")
-        if unvr_model.endswith(".pth"):
-            shutil.copy(unvr_model, "pretrain/VR_Models")
-        else: 
-            return i18n("请上传'.pth'格式的模型文件")
+        model_map[model_name] = {}
 
-        if unvr_primary_stem != "" and unvr_secondary_stem != "" and unvr_primary_stem != unvr_secondary_stem:
-            model_map[model_name] = {}
-            model_map[model_name]["model_path"] = os.path.join(MODEL_FOLDER, "VR_Models", model_name)
-            model_map[model_name]["primary_stem"] = unvr_primary_stem
-            model_map[model_name]["secondary_stem"] = unvr_secondary_stem
-            model_map[model_name]["download_link"] = unvr_model_link
-        else: 
+        if model_param == i18n("上传参数") and not upload_param.endswith(".json"):
+            return i18n("请上传'.json'格式的参数文件")
+        if not unvr_model.endswith(".pth"):
+            return i18n("请上传'.pth'格式的模型文件")
+        if unvr_primary_stem == "" or unvr_secondary_stem == "" or unvr_primary_stem == unvr_secondary_stem:
             return i18n("请输入正确的音轨名称")
 
+        vr_model_path = load_configs(WEBUI_CONFIG)['settings']['uvr_model_dir']
+        if model_name in load_vr_model():
+            os.remove(os.path.join(vr_model_path, model_name))
+            logger.warning(f"Find existing model with the same name: {model_name}, overwriting.")
+        shutil.copy(unvr_model, vr_model_path)
+
+        model_map[model_name]["primary_stem"] = unvr_primary_stem
+        model_map[model_name]["secondary_stem"] = unvr_secondary_stem
+        model_map[model_name]["download_link"] = unvr_model_link
+
         if model_param == i18n("上传参数"):
-            if upload_param.endswith(".json"):
-                os.makedirs(os.path.join(UNOFFICIAL_MODEL, "vr_modelparams"), exist_ok=True)
-                shutil.copy(upload_param, os.path.join(UNOFFICIAL_MODEL, "vr_modelparams"))
-                model_map[model_name]["vr_model_param"] = os.path.basename(upload_param)[:-5]
-            else: 
-                return i18n("请上传'.json'格式的参数文件")
+            os.makedirs(os.path.join(UNOFFICIAL_MODEL, "vr_modelparams"), exist_ok=True)
+            shutil.copy(upload_param, os.path.join(UNOFFICIAL_MODEL, "vr_modelparams"))
+            model_map[model_name]["vr_model_param"] = os.path.basename(upload_param)[:-5]
         else: 
             model_map[model_name]["vr_model_param"] = model_param
 

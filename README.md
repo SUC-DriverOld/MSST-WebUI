@@ -1,35 +1,38 @@
+<div align="center"><img src="docs/logo.png" alt="logo" width="128" height="128"></div>
+<h1 align="center">MSST-WebUI</h1>
 <div align="center">
-  <img src="docs/logo.png" alt="logo" width="128" height="128">
 
-# MSST-WebUI
+English | [简体中文](docs/README_zh.md) | 繁體中文 | 日本語 | 한국어<br>
+A WebUI app for Music-Source-Separation-Training and we packed UVR together!<br>
 [![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb)
-[![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest)
-[![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers)<br>
-WebUI of Music-Source-Separation-Training-Inference , and we packed UVR together!<br>
-Support Languages: English, 简体中文, 繁體中文, 日本語, 한국어
+[![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI?label=Version)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest)
+[![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI?label=Stars&color=blue&style=flat)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers)
+[![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI?label=License)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE)
+[![Hugging Face Model](https://img.shields.io/badge/Hugging%20Face-Models-blue?)](https://huggingface.co/Sucial/MSST-WebUI)
+<br>
+
 </div>
 
 ## Introduction
 
-This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training), which is a music source separation training framework. You can use this webUI to infer the MSST model and VR Models (Inference code comes from [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator), and we do some changes on it), and the preset process page allows you to customize the processing flow yourself. You can install models in the "Install Models" interface. If you have downloaded [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui) before, you do not need to download VR Models again. You can go to the "Settings" page and directly select your UVR5 model folder. Finally, we also provide some convenient tools such as [SOME](https://github.com/openvpi/SOME/): Vocals to MIDI in the webUI.
+This is a webUI for [Music-Source-Separation-Training (MSST)](https://github.com/ZFTurbo/Music-Source-Separation-Training), which is a repository for training models for music source separation. You can use this webUI to infer the MSST model and VR Models, and the preset process page allows you to customize the processing flow yourself. You can install models in the "Install Models" interface. If you have downloaded [Ultimate Vocal Remover (UVR)](https://github.com/Anjok07/ultimatevocalremovergui) before, you do not need to download VR Models again. You can go to the "Settings" page and directly select your UVR5 model folder. We also provide some convenient tools in the WebUI such as [Singing-Oriented MIDI Extractor (SOME)](https://github.com/openvpi/SOME/), advanced ensemble mode, and more.
 
 ## Usage
 
-**Windows**: Download the installer from [Releases](https://github.com/SUC-DriverOld/MSST-WebUI/releases) and run it. Or you can clone this repository and run from source.<br>
-**Linux/macOS**: Clone this repository and run from source.<br>
-**Google Colab**: [Click here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) to run the webUI on Google Colab.<br>
-**[For Chinese Users] Feishu Documents**：[Click to jump](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc?from=from_copylink)
+- **Windows**: Download the installer from [Releases](https://github.com/SUC-DriverOld/MSST-WebUI/releases) or clone this repository and run from source.<br>
+- **Linux/macOS**: Clone this repository and run from source.<br>
+- **Google Colab**: [Click here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) to run the webUI on Google Colab.
 
-### Available Download links
+### Download links
 
-|    Websites     | Download Links                                       | Extract Code | Notes                              |
-|:---------------:|------------------------------------------------------|:------------:|------------------------------------|
-| Github Releases | https://github.com/SUC-DriverOld/MSST-WebUI/releases |      -       | Only installer, no models          |
-|   Huggingface   | https://huggingface.co/Sucial/MSST-WebUI/tree/main   |      -       | Installer and all available models |
-| [For Chinese Users] hf-mirror  | https://hf-mirror.com/Sucial/MSST-WebUI/tree/main    |      -       | Installer and all available models  |
-| [For Chinese Users] BaiduNetdisk  | https://pan.baidu.com/s/1uzYHSpMJ1nZVjRpIXIFF_Q      |     1145     | Installer and all available models  |
-| [For Chinese Users] 123Pan | https://www.123pan.cn/s/1bmETd-AefWh.html            |     1145     | Installer and all available models  |
+|    Websites     | Download Links                                       | Notes                              |
+|:---------------:|:----------------------------------------------------:|:----------------------------------:|
+| Github Releases | https://github.com/SUC-DriverOld/MSST-WebUI/releases |      Only installer, no models     |
+|   Huggingface   |  https://huggingface.co/Sucial/MSST-WebUI/tree/main  | Installer and all available models |
+
+### Documents
+
+We provided some detailed chinese documents for chinese users, click [here](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc) to jump. For other users, go to `docs` folder to find some documents. You can also see deton24's [Instrumental and vocal & stems separation & mastering guide](https://docs.google.com/document/d/17fjNvJzj8ZGSer7c7OFe_CNfUKbAxEh_OBv94ZdRG5c), which is a great guide too.
 
 ## Run from source
 
@@ -40,7 +43,7 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
   cd MSST-WebUI
   ```
 
-- Create Python environment and install the requirements.
+- Create Python environment and install the requirements. We recommend to use python 3.10.
 
   ```bash
   conda create -n msst python=3.10 -y
@@ -48,6 +51,7 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
   pip install -r requirements.txt --only-binary=samplerate
   ```
+
 - After installing the requirements, go to `site-packages` folder, open `librosa\util\utils.py` and go to line **2185**. Change the line from `np.dtype(complex): np.dtype(np.float).type,` to `np.dtype(complex): np.dtype(float).type,`. If you do not know how to do this, you can use the following command.
 
   ```bash
@@ -61,31 +65,17 @@ This is a webUI for [Music-Source-Separation-Training](https://github.com/ZFTurb
   python webUI.py
   ```
 
-  The optional arguments are as follows.
+- For more detailed launching arguments, or if you want to run the webUI on a cloud platform, see [this document](docs/webui.md).
 
-  ```
-  usage: webUI.py [-h] [--server_name SERVER_NAME] [--server_port SERVER_PORT] [--share] [--debug]
+- You may meet the following error when using model_type swin_upernet: `ValueError: Make sure that the channel dimension of the pixel values match with the one set in the configuration`. Refer to [this issue](https://github.com/SUC-DriverOld/MSST-WebUI/issues/24) to solve the problem.
 
-  options:
-    -h, --help                 show this help message and exit
-    --server_name SERVER_NAME  Server IP address (Default: Auto). For example: 0.0.0.0
-    --server_port SERVER_PORT  Server port (Default: Auto). For example: 7860
-    --share                    Enable share link (Default: False).
-    --debug                    Enable debug mode (Default: False).
-  ```
+## CLI & Python API
 
-- If you run webUI on a cloud platform, see [this document](tools/webUI_for_clouds/README.md) for more details.
+See [this document](docs/inference.md) for more details.
 
-> [!NOTE]
-> When using model_type `swin_upernet`, you may meet the following error: `ValueError: Make sure that the channel dimension of the pixel values match with the one set in the configuration.`. Please refer to [this issue](https://github.com/SUC-DriverOld/MSST-WebUI/issues/24) to solve the problem.
+## Training & Validation
 
-## CLI & API
-
-Please refer to [this document](docs/inference.md) for more details.
-
-## Training
-
-Please refer to [this document](docs/training.md) for more details.
+See [this document](docs/training.md) for more details.
 
 ## Reference
 
@@ -101,3 +91,36 @@ Please refer to [this document](docs/training.md) for more details.
 <a href="https://github.com/SUC-DriverOld/MSST-WebUI/graphs/contributors" target="_blank">
   <img src="https://contrib.rocks/image?repo=SUC-DriverOld/MSST-WebUI" alt=""/>
 </a>
+
+### Thanks for all model providers
+
+<table>
+  <tr>
+    <td style="text-align: center;"><img src="https://github.com/anvuew.png" style="width: 60px; height: 60px; border-radius: 50%;" alt="anvuew"></td>
+    <td style="text-align: center;"><img src="https://github.com/aufr33.png" style="width: 60px; height: 60px; border-radius: 50%;" alt="aufr33"></td>
+    <td style="text-align: center;"><img src="https://github.com/deton24.png" style="width: 60px; height: 60px; border-radius: 50%;" alt="deton24"></td>
+    <td style="text-align: center;"><img src="https://github.com/jarredou.png" style="width: 60px; height: 60px; border-radius: 50%;" alt="jarredou"></td>
+    <td style="text-align: center;"><img src="https://github.com/pcunwa.png" style="width: 60px; height: 60px; border-radius: 50%;" alt="pcunwa"></td>
+  </tr>
+  <tr>
+    <td style="text-align: center;"><a href="https://github.com/anvuew">anvuew</a></td>
+    <td style="text-align: center;"><a href="https://github.com/aufr33">aufr33</a></td>
+    <td style="text-align: center;"><a href="https://github.com/deton24">deton24</a></td>
+    <td style="text-align: center;"><a href="https://github.com/jarredou">jarredou</a></td>
+    <td style="text-align: center;"><a href="https://github.com/pcunwa">pcunwa</a></td>
+  </tr>
+  <tr>
+    <td style="text-align: center;"><img src="https://github.com/SUC-DriverOld.png" style="width: 60px; height: 60px; border-radius: 50%;" alt="Sucial"></td>
+    <td style="text-align: center;"><img src="https://github.com/Super-YH.png" style="width: 60px; height: 60px; border-radius: 50%;" alt="Super-YH"></td>
+    <td style="text-align: center;"><img src="https://github.com/playdasegunda.png" style="width: 60px; height: 60px; border-radius: 50%;" alt="viperx"></td>
+    <td style="text-align: center;"><img src="https://github.com/wesleyr36.png" style="width: 60px; height: 60px; border-radius: 50%;" alt="wesleyr36"></td>
+    <td style="text-align: center;"><img src="https://github.com/ZFTurbo.png" style="width: 60px; height: 60px; border-radius: 50%;" alt="ZFturbo"></td>
+  </tr>
+  <tr>
+    <td style="text-align: center;"><a href="https://github.com/SUC-DriverOld">Sucial</a></td>
+    <td style="text-align: center;"><a href="https://github.com/Super-YH">Super-YH</a></td>
+    <td style="text-align: center;"><a href="https://github.com/playdasegunda">viperx</a></td>
+    <td style="text-align: center;"><a href="https://github.com/wesleyr36">wesleyr36</a></td>
+    <td style="text-align: center;"><a href="https://github.com/ZFTurbo">ZFturbo</a></td>
+  </tr>
+</table>

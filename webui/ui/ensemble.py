@@ -1,5 +1,4 @@
 import gradio as gr
-import pandas as pd
 
 from utils.constant import *
 from webui.utils import i18n, select_folder, open_folder, update_model_name, change_to_audio_infer, change_to_folder_infer

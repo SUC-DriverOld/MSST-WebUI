@@ -277,7 +277,7 @@ def train(webui_config, device):
                             interactive=True
                         )
                         valid_use_tta = gr.Checkbox(
-                            label=i18n("使用TTA (测试时增强), 可能会提高质量, 但时间x3"),
+                            label=i18n("启用TTA, 能小幅提高分离质量, 若使用, 推理时间x3"),
                             value=False,
                             interactive=True
                         )

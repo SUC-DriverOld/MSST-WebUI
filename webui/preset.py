@@ -14,7 +14,8 @@ from webui.utils import (
     get_vr_model,
     load_msst_model,
     get_msst_model,
-    logger
+    logger,
+    detailed_error
 )
 
 def get_presets_list() -> list:
@@ -87,10 +88,7 @@ def save_flow_func(preset_name, df):
         output_message = i18n("请填写预设名称")
         return output_message, None, None
 
-    preset_dict = {}
-    preset_dict["version"] = PRESET_VERSION
-    preset_dict["name"] = preset_name
-    preset_dict["flow"] = df.to_dict(orient="records")
+    preset_dict = {"version": PRESET_VERSION, "name": preset_name, "flow": df.to_dict(orient="records")}
     os.makedirs(PRESETS, exist_ok=True)
     save_configs(preset_dict, os.path.join(PRESETS, f"{preset_name}.json"))
 
@@ -119,7 +117,7 @@ def load_preset(preset_name):
 
         version = preset_data.get("version", None)
         if version not in SUPPORTED_PRESET_VERSION:
-            gr.Warning(i18n("不支持的预设版本: ") + str(version))
+            gr.Warning(i18n("不支持的预设版本: ") + str(version)) + i18n(", 请重新制作预设。")
             logger.error(f"Load preset: {preset_name} failed, unsupported version: {version}, supported version: {SUPPORTED_PRESET_VERSION}")
             return gr.Dataframe(
                 pd.DataFrame({"model_type": [i18n("预设版本不支持")], "model_name": [i18n("预设版本不支持")], "input_to_next": [i18n("预设版本不支持")], "output_to_storage": [i18n("预设版本不支持")]}),
@@ -255,9 +253,9 @@ class Presets:
             return -1, None
         result = result_queue.get()
         if result[0] == "success":
-            return 1, result[1]
+            return 1, None
         elif result[0] == "error":
-            return 0, None
+            return 0, result[1]
 
     def vr_infer(self, model_name, input_folder, output_dir, output_format="wav"):
         from webui.vr import run_inference
@@ -281,9 +279,9 @@ class Presets:
             return -1, None
         result = result_queue.get()
         if result[0] == "success":
-            return 1, result[1]
+            return 1, None
         elif result[0] == "error":
-            return 0, None
+            return 0, result[1]
 
 def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir):
     if not input_audio:
@@ -300,13 +298,13 @@ def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_for
 
 def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir: bool, is_audio=False):
     if preset_name not in os.listdir(PRESETS):
-        return (i18n("预设") + preset_name + i18n("不存在"))
+        return i18n("预设") + preset_name + i18n("不存在")
 
     preset_data = load_configs(os.path.join(PRESETS, preset_name))
     preset_version = preset_data.get("version", "Unknown version")
     if preset_version not in SUPPORTED_PRESET_VERSION:
         logger.error(f"Unsupported preset version: {preset_version}, supported version: {SUPPORTED_PRESET_VERSION}")
-        return i18n("不支持的预设版本: ") + preset_version
+        return i18n("不支持的预设版本: ") + preset_version + i18n(", 请重新制作预设。")
 
     config = load_configs(WEBUI_CONFIG)
     config['inference']['preset'] = preset_name
@@ -378,7 +376,7 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
             if result[0] == -1:
                 return i18n("用户强制终止")
             elif result[0] == 0:
-                return i18n("处理失败: ") + result[1]
+                return i18n("处理失败: ") + detailed_error(result[1])
         else:
             model_path, config_path, msst_model_type, _ = get_msst_model(model_name)
             stems = load_configs(config_path).training.get("instruments", [])
@@ -392,7 +390,7 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
             if result[0] == -1:
                 return i18n("用户强制终止")
             elif result[0] == 0:
-                return i18n("处理失败: ") + result[1]
+                return i18n("处理失败: ") + detailed_error(result[1])
         current_step += 1
 
     if os.path.exists(TEMP_PATH):

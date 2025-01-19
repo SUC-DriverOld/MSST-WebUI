@@ -6,7 +6,7 @@ from torch import cuda
 from multiprocessing import cpu_count
 from utils.constant import *
 from webui.utils import i18n, load_configs, webui_restart, log_level_debug, change_to_audio_infer, change_to_folder_infer, logger
-from download_models import download_model
+from tools.webUI_for_clouds.download_models import download_model
 
 webui_config = load_configs(WEBUI_CONFIG)
 language_dict = load_configs(LANGUAGE)
@@ -96,8 +96,15 @@ def cloud_ensemble_infer_folder(ensemble_mode, output_format, force_cpu, use_tta
     assert check_preset(ensemble_data), i18n("模型下载失败, 请重试!")
     return inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, extract_inst)
 
-def setup():
+def launch():
     global device, force_cpu_value
+
+    debug = webui_config["settings"].get("debug", False)
+    if debug:
+        log_level_debug(True)
+    else:
+        log_level_debug(False)
+
     devices = {}
     force_cpu = False
     if cuda.is_available():
@@ -110,7 +117,9 @@ def setup():
         force_cpu = True
     device = [value for _, value in devices.items()]
     force_cpu_value = True if (webui_config['inference']['force_cpu'] or force_cpu) else False
+
     logger.info(f"WebUI Version: {PACKAGE_VERSION}, System: {platform.system()}, Machine: {platform.machine()}")
+    app().launch()
 
 def app():
     with gr.Blocks(theme=gr.Theme.load('tools/themes/theme_blue.json')) as webui:
@@ -175,8 +184,8 @@ def msst():
             interactive=True
         )
         force_cpu = gr.Checkbox(
-            info=" ",
-            label=i18n("强制使用CPU: 使用CPU推理速度非常慢!"),
+            info=i18n("强制使用CPU推理, 注意: 使用CPU推理速度非常慢!"),
+            label=i18n("使用CPU"),
             value=force_cpu_value,
             interactive=True
         )
@@ -197,33 +206,43 @@ def msst():
             interactive=False,
             scale=4
         )
-    with gr.Accordion(i18n("推理参数设置, 不同模型之间参数相互独立 (一般不需要动) "), open=False):
+    with gr.Accordion(i18n("[点击展开] 推理参数设置, 不同模型之间参数相互独立"), open=False):
         gr.Markdown(value=i18n("只有在点击保存后才会生效。参数直接写入配置文件, 无法撤销。假如不知道如何设置, 请保持默认值。<br>请牢记自己修改前的参数数值, 防止出现问题以后无法恢复。请确保输入正确的参数, 否则可能会导致模型无法正常运行。<br>假如修改后无法恢复, 请点击``重置``按钮, 这会使得配置文件恢复到默认值。"))
         with gr.Row():
-            batch_size = gr.Number(
-                label=i18n("batch_size: 批次大小"),
-                value=None
+            batch_size = gr.Slider(
+                label="batch_size",
+                info=i18n("批次大小, 减小此值可以降低显存占用, 此参数对推理效果影响不大"),
+                value=None,
+                minimum=1,
+                maximum=16,
+                step=1
             )
-            num_overlap = gr.Number(
-                label=i18n("overlap: 重叠数"),
-                value=None
+            num_overlap = gr.Slider(
+                label="overlap",
+                info=i18n("重叠数, 增大此值可以提高分离效果, 但会增加处理时间, 建议设置成4"),
+                value=None,
+                minimum=1,
+                maximum=16,
+                step=1
             )
-            dim_t = gr.Number(
-                label=i18n("dim_t: 时间维度"),
-                value=None
-            )
-            chunk_size = gr.Number(
-                label=i18n("chunk_size: 分块大小"),
-                value=None
+            chunk_size = gr.Slider(
+                label="chunk_size",
+                info=i18n("分块大小, 增大此值可以提高分离效果, 但会增加处理时间和显存占用"),
+                value=None,
+                minimum=44100,
+                maximum=1323000,
+                step=22050
             )
         with gr.Row():
             normalize = gr.Checkbox(
-                label=i18n("normalize: 是否归一化"),
+                label="normalize",
+                info=i18n("音频归一化, 对音频进行归一化输入和输出, 部分模型没有此功能"),
                 value=False,
                 interactive=False
             )
             use_tta = gr.Checkbox(
-                label=i18n("use_tta: 是否使用TTA, 若使用, 推理时间x3"),
+                label="use_tta",
+                info=i18n("启用TTA, 能小幅提高分离质量, 若使用, 推理时间x3"),
                 value=False,
                 interactive=True
             )
@@ -240,8 +259,8 @@ def msst():
     folder_tab.select(fn=change_to_folder_infer, outputs=[inference_audio, inference_folder])
     inference_audio.click(fn=cloud_msst_infer_audio,inputs=[selected_model,audio_input,store_dir,extract_instrumental,gpu_id,output_format,force_cpu,use_tta,],outputs=output_message)
     inference_folder.click(fn=cloud_msst_infer_folder,inputs=[selected_model,folder_input,store_dir,extract_instrumental,gpu_id,output_format,force_cpu,use_tta,],outputs=output_message)
-    selected_model.change(fn=update_inference_settings,inputs=selected_model,outputs=[batch_size,dim_t,num_overlap,chunk_size,normalize,extract_instrumental,])
-    save_config_button.click(fn=save_model_config,inputs=[selected_model,batch_size,dim_t,num_overlap,chunk_size,normalize],outputs=output_message)
+    selected_model.change(fn=update_inference_settings,inputs=selected_model,outputs=[batch_size,num_overlap,chunk_size,normalize,extract_instrumental,])
+    save_config_button.click(fn=save_model_config,inputs=[selected_model,batch_size,num_overlap,chunk_size,normalize],outputs=output_message)
     select_model_type.change(fn=load_msst_cloud_model, inputs=select_model_type, outputs=selected_model)
     reset_config_button.click(fn=reset_model_config,inputs=selected_model,outputs=output_message)
     stop_msst.click(fn=stop_msst_inference)
@@ -310,10 +329,11 @@ def vr():
             interactive=False,
             scale=4
         )
-    with gr.Accordion(i18n("以下是一些高级设置, 一般保持默认即可"), open=False):
+    with gr.Accordion(i18n("[点击展开] 以下是一些高级设置, 一般保持默认即可"), open=False):
         with gr.Row():
             vr_batch_size = gr.Slider(
-                label=i18n("Batch Size: 一次要处理的批次数, 越大占用越多RAM, 处理速度加快"),
+                label="Batch Size",
+                info=i18n("批次大小, 减小此值可以降低显存占用"),
                 minimum=1,
                 maximum=32,
                 step=1,
@@ -321,7 +341,8 @@ def vr():
                 interactive=True
             )
             vr_post_process_threshold = gr.Slider(
-                label=i18n("Post Process Threshold: 后处理特征阈值, 取值为0.1-0.3"),
+                label="Post Process Threshold",
+                info=i18n("后处理特征阈值, 取值为0.1-0.3, 默认0.2"),
                 minimum=0.1,
                 maximum=0.3,
                 step=0.01,
@@ -330,22 +351,26 @@ def vr():
             )
         with gr.Row():
             vr_invert_spect = gr.Checkbox(
-                label=i18n("Invert Spectrogram: 二级步骤将使用频谱图而非波形进行反转, 可能会提高质量, 但速度稍慢"),
+                label="Invert Spectrogram",
+                info=i18n("次级输出使用频谱而非波形进行反转, 可能会提高质量, 但速度稍慢"),
                 value=False,
                 interactive=True
             )
             vr_enable_tta = gr.Checkbox(
-                label=i18n("Enable TTA: 启用“测试时增强”, 可能会提高质量, 但速度稍慢"),
+                label="Enable TTA",
+                info=i18n("启用“测试时增强”, 可能会提高质量, 但速度稍慢"),
                 value=False,
                 interactive=True
             )
             vr_high_end_process = gr.Checkbox(
-                label=i18n("High End Process: 将输出音频缺失的频率范围镜像输出"),
+                label="High End Process",
+                info=i18n("将输出音频缺失的频率范围镜像输出, 作用不大"),
                 value=False,
                 interactive=True
             )
             vr_enable_post_process = gr.Checkbox(
-                label=i18n("Enable Post Process: 识别人声输出中残留的人工痕迹, 可改善某些歌曲的分离效果"),
+                label="Enable Post Process",
+                info=i18n("识别人声输出中残留的人工痕迹, 可改善某些歌曲的分离效果"),
                 value=False,
                 interactive=True
             )
@@ -887,7 +912,7 @@ def train():
                             interactive=True
                         )
                         valid_use_tta = gr.Checkbox(
-                            label=i18n("使用TTA (测试时增强), 可能会提高质量, 但时间x3"),
+                            label=i18n("启用TTA, 能小幅提高分离质量, 若使用, 推理时间x3"),
                             value=False,
                             interactive=True
                         )
@@ -987,10 +1012,10 @@ def tools():
             compute_sdr_button = gr.Button(i18n("计算SDR"), variant="primary")
             output_message_sdr = gr.Textbox(label="Output Message")
         with gr.TabItem(label=i18n("歌声转MIDI")):
-            gr.Markdown(value=i18n("歌声转MIDI功能使用开源项目[SOME](https://github.com/openvpi/SOME/), 可以将分离得到的**干净的歌声**转换成.mid文件。<br>【必须】若想要使用此功能, 请先下载权重文件[model_steps_64000_simplified.ckpt](https://hf-mirror.com/Sucial/MSST-WebUI/resolve/main/SOME_weights/model_steps_64000_simplified.ckpt)并将其放置在程序目录下的`tools/SOME_weights`文件夹内。文件命名不可随意更改! <br>【重要】只能上传wav格式的音频! "))
+            gr.Markdown(value=i18n("歌声转MIDI功能使用开源项目[SOME](https://github.com/openvpi/SOME/), 可以将分离得到的**干净的歌声**转换成.mid文件。<br>【必须】若想要使用此功能, 请先下载权重文件[model_steps_64000_simplified.ckpt](https://hf-mirror.com/Sucial/MSST-WebUI/resolve/main/SOME_weights/model_steps_64000_simplified.ckpt)并将其放置在程序目录下的`tools/SOME_weights`文件夹内。文件命名不可随意更改!"))
             gr.Markdown(value=i18n("如果不知道如何测量歌曲BPM, 可以尝试这两个在线测量工具: [bpmdetector](https://bpmdetector.kniffen.dev/) | [key-bpm-finder](https://vocalremover.org/zh/key-bpm-finder), 测量时建议上传原曲或伴奏, 若干声可能导致测量结果不准确。"))
             with gr.Row():
-                some_input_audio = gr.File(label=i18n("上传wav格式音频"), type="filepath")
+                some_input_audio = gr.File(label=i18n("上传音频"), type="filepath")
                 with gr.Column():
                     audio_bpm = gr.Number(
                         label=i18n("输入音频BPM"),
@@ -1083,11 +1108,4 @@ if __name__ == "__main__":
     import multiprocessing
     multiprocessing.set_start_method('spawn', force=True)
 
-    debug = webui_config["settings"].get("debug", False)
-    if debug:
-        log_level_debug(True)
-    else:
-        log_level_debug(False)
-
-    setup()
-    app().launch(share=True)
+    launch()

@@ -1,3 +1,8 @@
+import os
+import sys
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
+
 import argparse
 import warnings
 import logging
@@ -14,6 +19,8 @@ def msst_inference(args):
 
     if type(args.device_ids) == int:
         device_ids = [args.device_ids]
+    else:
+        device_ids = args.device_ids
 
     start_time = time()
 
@@ -46,14 +53,14 @@ if __name__ == '__main__':
     parser.add_argument("--device_ids", nargs='+', type=int, default=0, help='List of gpu ids, only used when device is cuda (default: %(default)s). Example: --device_ids 0 1')
 
     io_params = parser.add_argument_group("Separation I/O Params")
-    io_params.add_argument("-i", "--input_folder", type=str, help="Folder with mixtures to process. [required]")
-    io_params.add_argument("-o", "--output_folder", default="results", help="Folder to store separated files. str for single folder, dict with instrument keys for multiple folders. Example: --output_folder=results or --output_folder=\"{'vocals': 'results/vocals', 'instrumental': 'results/instrumental'}\"")
+    io_params.add_argument("-i", "--input_folder", type=str, default="input", help="Folder with mixtures to process. (default: %(default)s). Example: --input_folder=input")
+    io_params.add_argument("-o", "--output_folder", type=str, default="results", help="Folder to store separated files. Only can be str when using cli (default: %(default)s). Example: --output_folder=results")
     io_params.add_argument("--output_format", choices=['wav', 'flac', 'mp3'], default="wav", help="Output format for separated files (default: %(default)s). Example: --output_format=wav")
 
     model_params = parser.add_argument_group("Model Params")
-    model_params.add_argument("--model_type", type=str, default='mdx23c', help=f"One of {MODEL_TYPE}. [required]")
-    model_params.add_argument("--model_path", type=str, help="Path to model checkpoint. [required]")
-    model_params.add_argument("--config_path", type=str, help="Path to config file. [required]")
+    model_params.add_argument("--model_type", type=str, help=f"One of {MODEL_TYPE}.", required=True)
+    model_params.add_argument("--model_path", type=str, help="Path to model checkpoint.", required=True)
+    model_params.add_argument("--config_path", type=str, help="Path to config file.", required=True)
     model_params.add_argument("--use_tta", action='store_true', help="Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality (default: %(default)s). Example: --use_tta")
 
     audio_params = parser.add_argument_group("Audio Params")

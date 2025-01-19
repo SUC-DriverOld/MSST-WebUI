@@ -517,8 +517,9 @@ class MelBandRoformer(Module):
         stft_repr = torch.view_as_real(stft_repr)
 
         stft_repr = unpack_one(stft_repr, batch_audio_channel_packed_shape, '* f t c')
-        stft_repr = rearrange(stft_repr,
-                              'b s f t c -> b (f s) t c')  # merge stereo / mono into the frequency, with frequency leading dimension, for band splitting
+
+        # merge stereo / mono into the frequency, with frequency leading dimension, for band splitting
+        stft_repr = rearrange(stft_repr,'b s f t c -> b (f s) t c')
 
         # index out all frequencies for all frequency ranges across bands ascending in one go
 

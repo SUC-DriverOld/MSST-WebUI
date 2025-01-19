@@ -47,7 +47,7 @@ class Separator:
         # These are parameters which users may want to configure so we expose them to the top-level Separator class,
         # even though they are specific to a single model architecture
         self.vr_params_params = vr_params
-        self.sample_rate = 44100
+        self.sample_rate = 44100 # do not change this value!
         self.use_cpu = use_cpu
         self.torch_device = None
         self.torch_device_cpu = None
@@ -124,7 +124,7 @@ class Separator:
             hardware_acceleration_enabled = True
 
         if not hardware_acceleration_enabled:
-            self.logger.info("No hardware acceleration could be configured, running in CPU mode")
+            self.logger.warning("No hardware acceleration could be configured, running in CPU mode")
             self.torch_device = self.torch_device_cpu
 
     def configure_cuda(self):
@@ -223,7 +223,10 @@ class Separator:
         if is_numpy:
             tempdir = os.path.join(TEMP_PATH, "tmp_audio")
             os.makedirs(tempdir, exist_ok=True)
-            sf.write(os.path.join(tempdir, "tmp_audio.wav"), mix.T, 44100, subtype="FLOAT")
+            try:
+                sf.write(os.path.join(tempdir, "tmp_audio.wav"), mix.T, 44100, subtype="FLOAT")
+            except:
+                sf.write(os.path.join(tempdir, "tmp_audio.wav"), mix, 44100, subtype="FLOAT")
 
             mix = os.path.join(tempdir, "tmp_audio.wav")
             self.logger.debug(f"Temporary audio file created: {mix}")

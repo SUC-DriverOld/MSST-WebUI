@@ -47,30 +47,36 @@
       "config_path": "configs/multi_stem_models/config_scnet_large.yaml",
       "model_type": "scnet",
       "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/model_scnet_sdr_9.3244.ckpt"
+    },
+    {
+      "name": "bs_roformer_4stems_ft.ckpt",
+      "config_path": "config_bs_roformer_4stems_ft.yaml",
+      "model_type": "bs_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/bs_roformer_4stems_ft.ckpt"
     }
   ],
   "single_stem_models": [
     {
       "name": "HTDemucs4_FT_bass.th",
-      "config_path": "configs/single_stem_models/config_musdb18_htdemucs_bass.yaml",
+      "config_path": "configs/single_stem_models/config_musdb18_htdemucs_FT.yaml",
       "model_type": "htdemucs",
       "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/HTDemucs4_FT_bass.th"
     },
     {
       "name": "HTDemucs4_FT_drums.th",
-      "config_path": "configs/single_stem_models/config_musdb18_htdemucs_drums.yaml",
+      "config_path": "configs/single_stem_models/config_musdb18_htdemucs_FT.yaml",
       "model_type": "htdemucs",
       "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/HTDemucs4_FT_drums.th"
     },
     {
       "name": "HTDemucs4_FT_other.th",
-      "config_path": "configs/single_stem_models/config_musdb18_htdemucs_other.yaml",
+      "config_path": "configs/single_stem_models/config_musdb18_htdemucs_FT.yaml",
       "model_type": "htdemucs",
       "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/HTDemucs4_FT_other.th"
     },
     {
       "name": "HTDemucs4_FT_vocals_official.th",
-      "config_path": "configs/single_stem_models/config_musdb18_htdemucs_vocals.yaml",
+      "config_path": "configs/single_stem_models/config_musdb18_htdemucs_FT.yaml",
       "model_type": "htdemucs",
       "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/HTDemucs4_FT_vocals_official.th"
     },
@@ -154,9 +160,27 @@
     },
     {
       "name": "model_mdx23c_ep_271_l1_freq_72.2383.ckpt",
-      "config_path": "configs_backup/single_stem_models/config_mdx23c_similarity.yaml",
+      "config_path": "configs/single_stem_models/config_mdx23c_similarity.yaml",
       "model_type": "mdx23c",
       "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/model_mdx23c_ep_271_l1_freq_72.2383.ckpt"
+    },
+    {
+      "name": "dereverb_echo_mbr_fused_0.5_v2_0.25_big_0.25_super.ckpt",
+      "config_path": "configs/single_stem_models/config_dereverb_echo_mbr_v2.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/dereverb_echo_mbr_fused_0.5_v2_0.25_big_0.25_super.ckpt"
+    },
+    {
+      "name": "de_big_reverb_mbr_ep_362.ckpt",
+      "config_path": "configs/single_stem_models/config_dereverb_echo_mbr_v2.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/de_big_reverb_mbr_ep_362.ckpt"
+    },
+    {
+      "name": "apollo_model_uni.ckpt",
+      "config_path": "configs/single_stem_models/config_apollo_uni.yaml",
+      "model_type": "apollo",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/apollo_model_uni.ckpt"
     }
   ],
   "vocal_models": [
@@ -219,6 +243,60 @@
       "config_path": "configs/vocal_models/config_Kim_MelBandRoformer.yaml",
       "model_type": "mel_band_roformer",
       "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/Kim_MelBandRoformer.ckpt"
+    },
+    {
+      "name": "kimmel_unwa_ft.ckpt",
+      "config_path": "configs/vocal_models/config_kimmel_unwa_ft.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/kimmel_unwa_ft.ckpt"
+    },
+    {
+      "name": "melband_roformer_inst_v2.ckpt",
+      "config_path": "configs/vocal_models/config_melbandroformer_inst_v2.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/melband_roformer_inst_v2.ckpt"
+    },
+    {
+      "name": "inst_v1e.ckpt",
+      "config_path": "configs/vocal_models/config_melbandroformer_inst.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/inst_v1e.ckpt"
+    },
+    {
+      "name": "melband_roformer_instvox_duality_v2.ckpt",
+      "config_path": "configs/vocal_models/config_melbandroformer_instvoc_duality.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/melband_roformer_instvox_duality_v2.ckpt"
+    },
+    {
+      "name": "BS-Roformer_LargeV1.ckpt",
+      "config_path": "configs/vocal_models/config_bsrofoL.yaml",
+      "model_type": "bs_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/BS-Roformer_LargeV1.ckpt"
+    },
+    {
+      "name": "big_beta5e.ckpt",
+      "config_path": "configs/vocal_models/big_beta5e.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/big_beta5e.ckpt"
+    },
+    {
+      "name": "mel_band_roformer_instrumental_becruily.ckpt",
+      "config_path": "configs/vocal_models/config_instrumental_becruily.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/mel_band_roformer_instrumental_becruily.ckpt"
+    },
+    {
+      "name": "mel_band_roformer_vocals_becruily.ckpt",
+      "config_path": "configs/vocal_models/config_vocals_becruily.yaml",
+      "model_type": "mel_band_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/mel_band_roformer_vocals_becruily.ckpt"
+    },
+    {
+      "name": "bs_roformer_male_female_by_aufr33_sdr_7.2889.ckpt",
+      "config_path": "configs/vocal_models/config_chorus_male_female_bs_roformer.yaml",
+      "model_type": "bs_roformer",
+      "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/bs_roformer_male_female_by_aufr33_sdr_7.2889.ckpt"
     }
   ]
 }

@@ -5,7 +5,7 @@ import multiprocessing
 import traceback
 
 from utils.constant import *
-from webui.utils import i18n, get_vr_model, load_configs, save_configs, logger
+from webui.utils import i18n, get_vr_model, load_configs, save_configs, logger, detailed_error
 from modules.vocal_remover.separator import Separator
 
 def load_vr_model_stem(model):
@@ -102,7 +102,7 @@ def start_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_fo
             return i18n("处理完成, 结果已保存至: ") + vr_store_dir + i18n(", 耗时: ") + \
                 str(round(time.time() - start_time, 2)) + "s"
         elif result[0] == "error":
-            return i18n("处理失败: ") + result[1]
+            return i18n("处理失败: ") + detailed_error(result[1])
     else:
         return i18n("用户强制终止")
 

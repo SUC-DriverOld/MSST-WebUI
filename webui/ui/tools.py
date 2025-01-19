@@ -72,7 +72,7 @@ def tools(webui_config):
             convert_audio_button = gr.Button(i18n("转换音频"), variant="primary")
             output_message_ffmpeg = gr.Textbox(label="Output Message")
         with gr.TabItem(label=i18n("合并音频")):
-            gr.Markdown(value=i18n("点击合并音频按钮后, 将自动把输入文件夹中的所有音频文件合并为一整个音频文件<br>目前支持的格式包括 .mp3, .flac, .wav, .ogg, m4a 这五种<br>合并后的音频会保存至输出目录中, 文件名为merged_audio_<文件夹名字>.wav"))
+            gr.Markdown(value=i18n("点击合并音频按钮后, 将自动把输入文件夹中的所有音频文件合并为一整个音频文件<br>合并后的音频会保存至输出目录中, 文件名为merged_audio_<文件夹名字>.wav"))
             with gr.Row():
                 merge_audio_input = gr.Textbox(
                     label=i18n("输入目录"),
@@ -101,10 +101,10 @@ def tools(webui_config):
             compute_sdr_button = gr.Button(i18n("计算SDR"), variant="primary")
             output_message_sdr = gr.Textbox(label="Output Message")
         with gr.TabItem(label=i18n("歌声转MIDI")):
-            gr.Markdown(value=i18n("歌声转MIDI功能使用开源项目[SOME](https://github.com/openvpi/SOME/), 可以将分离得到的**干净的歌声**转换成.mid文件。<br>【必须】若想要使用此功能, 请先下载权重文件[model_steps_64000_simplified.ckpt](https://hf-mirror.com/Sucial/MSST-WebUI/resolve/main/SOME_weights/model_steps_64000_simplified.ckpt)并将其放置在程序目录下的`tools/SOME_weights`文件夹内。文件命名不可随意更改! <br>【重要】只能上传wav格式的音频! "))
+            gr.Markdown(value=i18n("歌声转MIDI功能使用开源项目[SOME](https://github.com/openvpi/SOME/), 可以将分离得到的**干净的歌声**转换成.mid文件。<br>【必须】若想要使用此功能, 请先下载权重文件[model_steps_64000_simplified.ckpt](https://hf-mirror.com/Sucial/MSST-WebUI/resolve/main/SOME_weights/model_steps_64000_simplified.ckpt)并将其放置在程序目录下的`tools/SOME_weights`文件夹内。文件命名不可随意更改!"))
             gr.Markdown(value=i18n("如果不知道如何测量歌曲BPM, 可以尝试这两个在线测量工具: [bpmdetector](https://bpmdetector.kniffen.dev/) | [key-bpm-finder](https://vocalremover.org/zh/key-bpm-finder), 测量时建议上传原曲或伴奏, 若干声可能导致测量结果不准确。"))
             with gr.Row():
-                some_input_audio = gr.File(label=i18n("上传wav格式音频"), type="filepath")
+                some_input_audio = gr.File(label=i18n("上传音频"), type="filepath")
                 with gr.Column():
                     audio_bpm = gr.Number(
                         label=i18n("输入音频BPM"),

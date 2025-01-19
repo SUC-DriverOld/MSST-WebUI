@@ -1,10 +1,15 @@
-# Train Music Source Separate Model
-
-Use `train.py`. If you use multi-GPUs, try to use `train_accelerate.py`.
+## Training & Validation
 
 - Refer to [dataset_types.md](dataset_types.md) for details about dataset types. 
 - Refer to [arugments.md](arguments.md) for details about arguments. 
 - Refer to [bs_roformer_info.md](bs_roformer_info.md) for details about `bs_roformer` model.
+- Refer to [mel_roformer_experiments.md](mel_roformer_experiments.md) for details about pretrained `mel_band_roformer` models.
+- Refer ro [pretrained_models.md](pretrained_models.md) for details about all pretrained models.
+
+### Training
+
+First, you need to prepare dataset. You can use [dataset_types.md](dataset_types.md) to prepare dataset.<br>
+Use `train/train.py`. If you use multi-GPUs, try to use `train/train_accelerate.py`.
 
 ```bash
 usage: train.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--results_path RESULTS_PATH] [--data_path DATA_PATH [DATA_PATH ...]]
@@ -34,4 +39,29 @@ options:
                                                             List of metrics to use.
   --metric_for_scheduler {sdr,l1_freq,si_sdr,log_wmse,aura_stft,aura_mrstft,bleedless,fullness}
                                                             Metric which will be used for scheduler.
+```
+
+### Validation
+
+Use `train/valid.py`
+
+```bash
+usage: valid.py [-h] [--model_type MODEL_TYPE] [--config_path CONFIG_PATH] [--start_check_point START_CHECK_POINT] [--valid_path VALID_PATH [VALID_PATH ...]] [--store_dir STORE_DIR]
+                [--device_ids DEVICE_IDS [DEVICE_IDS ...]] [--num_workers NUM_WORKERS] [--pin_memory PIN_MEMORY] [--extension EXTENSION] [--use_tta]
+                [--metrics {sdr,l1_freq,si_sdr,log_wmse,aura_stft,aura_mrstft,bleedless,fullness} [{sdr,l1_freq,si_sdr,log_wmse,aura_stft,aura_mrstft,bleedless,fullness} ...]]
+
+options:
+  -h, --help                                                show this help message and exit
+  --model_type MODEL_TYPE                                   One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit
+  --config_path CONFIG_PATH                                 path to config file
+  --start_check_point START_CHECK_POINT                     Initial checkpoint to valid weights
+  --valid_path VALID_PATH [VALID_PATH ...]                  validate path
+  --store_dir STORE_DIR                                     path to store results as wav file
+  --device_ids DEVICE_IDS [DEVICE_IDS ...]                  list of gpu ids
+  --num_workers NUM_WORKERS                                 dataloader num_workers
+  --pin_memory PIN_MEMORY                                   dataloader pin_memory
+  --extension EXTENSION                                     Choose extension for validation
+  --use_tta                                                 Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality.
+  --metrics {sdr,l1_freq,si_sdr,log_wmse,aura_stft,aura_mrstft,bleedless,fullness} [{sdr,l1_freq,si_sdr,log_wmse,aura_stft,aura_mrstft,bleedless,fullness} ...]
+                                                            List of metrics to use.
 ```

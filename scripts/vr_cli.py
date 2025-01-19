@@ -1,3 +1,8 @@
+import os
+import sys
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
+
 import argparse
 import warnings
 import logging
@@ -47,21 +52,21 @@ if __name__ == "__main__":
     parser.add_argument("--use_cpu", action="store_true", help="Use CPU instead of GPU for inference (default: %(default)s). Example: --use_cpu")
 
     io_params = parser.add_argument_group("Separation I/O Params")
-    io_params.add_argument("-i", "--input_folder", type=str, help="Folder with mixtures to process. [required]")
-    io_params.add_argument("-o", "--output_folder", default="results", help="Folder to store separated files. str for single folder, dict with instrument keys for multiple folders. Example: --output_folder=results or --output_folder=\"{'vocals': 'results/vocals', 'instrumental': 'results/instrumental'}\"")
+    io_params.add_argument("-i", "--input_folder", type=str, default="input", help="Folder with mixtures to process.")
+    io_params.add_argument("-o", "--output_folder", type=str, default="results", help="Folder to store separated files. Only can be str when using cli (default: %(default)s). Example: --output_folder=results")
     io_params.add_argument("--output_format", choices=['wav', 'flac', 'mp3'], default="wav", help="Output format for separated files (default: %(default)s). Example: --output_format=wav")
 
     common_params = parser.add_argument_group("Common Separation Parameters")
-    common_params.add_argument("-m", "--model_path", type=str, help="Path to model checkpoint. [required]")
+    common_params.add_argument("-m", "--model_path", type=str, help="Path to model checkpoint.", required=True)
     common_params.add_argument("--invert_spect", action="store_true", help="Invert secondary stem using spectogram (default: %(default)s). Example: --invert_spect")
 
     vr_params = parser.add_argument_group("VR Architecture Parameters")
     vr_params.add_argument("--batch_size", type=int, default=2, help="Number of batches to process at a time. higher = more RAM, slightly faster processing (default: %(default)s). Example: --batch_size=16")
     vr_params.add_argument("--window_size", type=int, default=512, help="Balance quality and speed. 1024 = fast but lower, 320 = slower but better quality. (default: %(default)s). Example: --window_size=320")
     vr_params.add_argument("--aggression", type=int, default=5, help="Intensity of primary stem extraction, -100 - 100. typically 5 for vocals & instrumentals (default: %(default)s). Example: --aggression=2")
-    vr_params.add_argument("--enable_tta", action="store_true", help="Enable Test-Time-Augmentation; slow but improves quality (default: %(default)s). Example: --enable_tta")
+    vr_params.add_argument("--enable_tta", action="store_true", help="Enable Test-Time-Augmentation, slow but improves quality (default: %(default)s). Example: --enable_tta")
     vr_params.add_argument("--high_end_process", action="store_true", help="Mirror the missing frequency range of the output (default: %(default)s). Example: --high_end_process")
-    vr_params.add_argument("--enable_post_process", action="store_true", help="Identify leftover artifacts within vocal output; may improve separation for some songs (default: %(default)s). Example: --enable_post_process")
+    vr_params.add_argument("--enable_post_process", action="store_true", help="Identify leftover artifacts within vocal output, may improve separation for some songs (default: %(default)s). Example: --enable_post_process")
     vr_params.add_argument("--post_process_threshold", type=float, default=0.2, help="Threshold for post_process feature: 0.1-0.3 (default: %(default)s). Example: --post_process_threshold=0.1")
 
     audio_params = parser.add_argument_group("Audio Params")

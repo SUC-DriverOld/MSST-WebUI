@@ -68,7 +68,7 @@ class MSSeparator:
                 self.logger.debug("Apple Silicon MPS/CoreML is available in Torch, setting Torch device to MPS")
         else:
             self.device = device
-            self.logger.debug("No hardware acceleration could be configured, running in CPU mode")
+            self.logger.warning("No hardware acceleration could be configured, running in CPU mode")
 
         torch.backends.cudnn.benchmark = True
         self.logger.info(f'Using device: {self.device}, device_ids: {self.device_ids}')
@@ -110,7 +110,7 @@ class MSSeparator:
         self.logger.info(f"Separator params: model_type: {self.model_type}, model_path: {self.model_path}, config_path: {self.config_path}, output_folder: {self.store_dirs}")
         self.logger.info(f"Audio params: output_format: {self.output_format}, audio_params: {self.audio_params}")
         self.logger.info(f"Model params: instruments: {config.training.get('instruments', None)}, target_instrument: {config.training.get('target_instrument', None)}")
-        self.logger.debug(f"Model params: batch_size: {config.inference.get('batch_size', None)}, num_overlap: {config.inference.get('num_overlap', None)}, dim_t: {config.inference.get('dim_t', None)}, chunk_size: {config.audio.get('chunk_size', None)}, normalize: {config.inference.get('normalize', None)}, use_tta: {self.use_tta}")
+        self.logger.debug(f"Model params: batch_size: {config.inference.get('batch_size', None)}, num_overlap: {config.inference.get('num_overlap', None)}, chunk_size: {config.audio.get('chunk_size', None)}, normalize: {config.inference.get('normalize', None)}, use_tta: {self.use_tta}")
 
         if self.model_type in ['htdemucs', 'apollo']:
             state_dict = torch.load(self.model_path, map_location=self.device, weights_only=False)

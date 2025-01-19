@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from utils.constant import *
 from webui.utils import i18n, load_configs, save_configs, logger
+from tools.SOME.infer import infer
 
 def convert_audio(uploaded_files, output_format, output_folder, sample_rate, channels, wav_bit_depth, flac_bit_depth, mp3_bit_rate, ogg_bit_rate):
     if not uploaded_files:
@@ -89,14 +90,13 @@ def merge_audios(input_folder, output_folder):
     output_file = os.path.join(output_folder, f"merged_audio_{os.path.basename(input_folder)}.wav")
 
     for filename in sorted(os.listdir(input_folder)):
-        if filename.endswith(('.mp3', '.wav', '.ogg', '.flac', '.m4a')):
-            file_path = os.path.join(input_folder, filename)
-            try:
-                audio = AudioSegment.from_file(file_path)
-                combined_audio += audio
-            except Exception as e:
-                logger.warning(f"Fail to merge file: {file_path}, skip it. Error: {e}")
-                continue
+        file_path = os.path.join(input_folder, filename)
+        try:
+            audio = AudioSegment.from_file(file_path)
+            combined_audio += audio
+        except Exception as e:
+            logger.warning(f"Fail to merge file: {file_path}, skip it. Error: {e}")
+            continue
     try:
         combined_audio.export(output_file, format="wav")
         logger.info(f"Merged audio files completed, saved as: {output_file}")
@@ -113,25 +113,38 @@ def caculate_sdr(reference_path, estimated_path):
     if estimated.ndim == 1:
         estimated = np.vstack((estimated, estimated))
 
-    min_length = min(reference.shape[1], estimated.shape[1])
-    reference = reference[:, :min_length]
-    estimated = estimated[:, :min_length]
+    min_length = min(reference.shape[-1], estimated.shape[-1])
+    reference = reference[..., :min_length]
+    estimated = estimated[..., :min_length]
 
-    sdr_values = []
-    for i in range(reference.shape[0]):
-        num = np.sum(np.square(reference[i])) + 1e-7
-        den = np.sum(np.square(reference[i] - estimated[i])) + 1e-7
-        sdr_values.append(round(10 * np.log10(num / den), 4))
+    def sdr(references, estimates):
+        delta = 1e-7  # avoid numerical errors
+        num = np.sum(np.square(references), axis=1)
+        den = np.sum(np.square(references - estimates), axis=1)
+        num += delta
+        den += delta
+        return 10 * np.log10(num / den)
 
-    average_sdr = np.mean(sdr_values)
-    logger.info(f"SDR Values: {sdr_values}, Average SDR: {average_sdr:.4f}")
-    return f"SDR Values: {sdr_values}, Average SDR: {average_sdr:.4f}"
+    def si_sdr(reference, estimate):
+        eps = 1e-07
+        scale = np.sum(estimate * reference + eps, axis=(0, 1)) / np.sum(reference ** 2 + eps, axis=1)
+        scale = np.expand_dims(scale, axis=1)  # shape - [50, 1]
+        reference = reference * scale
+        sisdr = np.mean(10 * np.log10(
+            np.sum(reference ** 2, axis=1) / (np.sum((reference - estimate) ** 2, axis=1) + eps) + eps))
+        return sisdr
+
+    sdr_value = sdr(reference, estimated)
+    sisdr_value = si_sdr(reference, estimated)
+    avg_sdr = np.mean(sdr_value)
+
+    logger.info(f"References: {reference_path}, Estimates: {estimated_path}")
+    logger.info(f"SDR: {sdr_value}, AVG-SDR: {avg_sdr}, SI-SDR: {sisdr_value}")
+    return f"SDR: {sdr_value},AVG-SDR: {avg_sdr}, SI-SDR: {sisdr_value}"
 
 def some_inference(audio_file, bpm, output_dir):
     if not os.path.isfile(SOME_WEIGHT):
         return i18n("请先下载SOME预处理模型并放置在tools/SOME_weights文件夹下! ")
-    if not audio_file.endswith('.wav'):
-        return i18n("请上传wav格式文件")
 
     os.makedirs(output_dir, exist_ok=True)
 
@@ -139,14 +152,10 @@ def some_inference(audio_file, bpm, output_dir):
     config['tools']['store_dir'] = output_dir
     save_configs(config, WEBUI_CONFIG)
 
-    tempo = int(bpm)
-    file_name = os.path.splitext(os.path.basename(audio_file))[0]
-    midi = os.path.join(output_dir, f"{file_name}.mid")
-    command = f"{PYTHON} tools/SOME/infer.py --model \"{SOME_WEIGHT}\" --wav \"{audio_file}\" --midi \"{midi}\" --tempo {tempo}"
-    logger.info(f"Run SOME inference with command: {command}")
-
+    tempo = float(bpm)
     try:
-        subprocess.run(command, shell=False, check=True)
+        logger.info(f"Running SOME inference with audio file: {audio_file}, output dir: {output_dir}, tempo: {tempo}")
+        midi = infer(SOME_WEIGHT, SOME_CONFIG, audio_file, output_dir, tempo)
         logger.info(f"SOME inference completed, MIDI file saved as: {midi}")
         return i18n("处理完成, 文件已保存为: ") + midi
     except Exception as e:
