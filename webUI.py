@@ -105,7 +105,7 @@ if __name__ == "__main__":
     local_params.add_argument("-s", "--share", action="store_true", help="Enable share link.")
 
     cloud_params = parser.add_argument_group("Cloud Startup Parameters")
-    cloud_params.add_argument("--ues_cloud", action="store_true", help="Enable cloud mode. When using in cloud platforms, enable this option.")
+    cloud_params.add_argument("--use_cloud", action="store_true", help="Enable cloud mode. When using in cloud platforms, enable this option.")
     cloud_params.add_argument("--language", type=str, default="Auto", choices=["Auto", "zh_CN", "zh_TW", "en_US", "ja_JP", "ko_KR"], help="Set cloud WebUI language (Default: Auto).")
     cloud_params.add_argument("--model_download_link", type=str, default="Auto", choices=["Auto", "huggingface.co", "hf-mirror.com"], help="Set cloud model download link (Default: Auto).")
 
@@ -123,9 +123,8 @@ if __name__ == "__main__":
     if not os.path.exists("data"):
         shutil.copytree("data_backup", "data")
 
-    if args.ues_cloud: # if user uses webui in cloud platforms
+    if args.use_cloud: # if user uses webui in cloud platforms
         import json
-        from tools.webUI_for_clouds.webUI_for_clouds import launch
         os.makedirs("input", exist_ok=True)
         os.makedirs("results", exist_ok=True)
         with open("data/webui_config.json", 'r', encoding="utf-8") as f:
@@ -135,6 +134,8 @@ if __name__ == "__main__":
             config['settings']['debug'] = args.debug
         with open("data/webui_config.json", 'w', encoding="utf-8") as f:
             json.dump(config, f, indent=4)
+
+        from tools.webUI_for_clouds.webUI_for_clouds import launch
         launch()
     else: # user uses webui in local environment
         main(args)

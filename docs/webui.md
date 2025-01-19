@@ -20,7 +20,7 @@ Local Startup Parameters:
   -s, --share                                               Enable share link.
 
 Cloud Startup Parameters:
-  --ues_cloud                                               Enable cloud mode. When using in cloud platforms, enable this option.
+  --use_cloud                                               Enable cloud mode. When using in cloud platforms, enable this option.
   --language {Auto,zh_CN,zh_TW,en_US,ja_JP,ko_KR}           Set cloud WebUI language (Default: Auto).
   --model_download_link {Auto,huggingface.co,hf-mirror.com}
                                                             Set cloud model download link (Default: Auto).
@@ -51,13 +51,13 @@ python webui.py -i 192.168.1.100 -p 7860 -s
 For those who want to run the webui on cloud platforms, you can use the following command to start the webui:
 
 ```bash
-python webui.py --ues_cloud
+python webui.py --use_cloud
 ```
 
 If you want to specify the language and model download link, you can use the following command:
 
 ```bash
-python webui.py --ues_cloud --language zh_CN --model_download_link hf-mirror.com
+python webui.py --use_cloud --language zh_CN --model_download_link hf-mirror.com
 ```
 
 ## How to use MSST WebUI on clouds
@@ -103,5 +103,5 @@ language = language_dict[LANGUAGE]
 debug = "--debug" if DEBUG else ""
 
 # using cloud mode to start webui
-!python webUI.py --ues_cloud --language {language} --model_download_link {MODEL_DOWNLOAD_LINK} {debug}
+!python webUI.py --use_cloud --language {language} --model_download_link {MODEL_DOWNLOAD_LINK} {debug}
 ```
