@@ -119,7 +119,7 @@ def launch():
     force_cpu_value = True if (webui_config['inference']['force_cpu'] or force_cpu) else False
 
     logger.info(f"WebUI Version: {PACKAGE_VERSION}, System: {platform.system()}, Machine: {platform.machine()}")
-    app().launch()
+    app().launch(share=True)
 
 def app():
     with gr.Blocks(theme=gr.Theme.load('tools/themes/theme_blue.json')) as webui:
