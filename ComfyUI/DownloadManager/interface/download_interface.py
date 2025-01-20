@@ -7,17 +7,17 @@ from qfluentwidgets import (
 )
 from qfluentwidgets import FluentIcon as FIF
 from huggingface_hub import hf_hub_url
-from ComfyUI.DownloadManager.common.data import msst_model_data, vr_model_data, ARIA2_RPC_URL, HF_ENDPOINT, ARIA2_RPC_SECRET
+from ComfyUI.DownloadManager.common.data import ARIA2_RPC_URL, HF_ENDPOINT, ARIA2_RPC_SECRET, models_info
 from ComfyUI.DownloadManager.common.download_thread import DownloadThread
 from ComfyUI.DownloadManager.widgets.tag_widget import TagWidget
 import requests
 import json
 import os
 
-class downloadInterface(QFrame):
+class DownloadInterface(QFrame):
     def __init__(self, parent = None):
         super().__init__(parent)
-        self.setObjectName('downloadInterface')
+        self.setObjectName('DownloadInterface')
         self.model_to_download = {
             "multi_stem_models": [],
             "single_stem_models": [],
@@ -29,8 +29,6 @@ class downloadInterface(QFrame):
         self.total_files = 0
         self.download_speed = 0
         self.total_downloaded = 0
-        self.msst_model_data = msst_model_data
-        self.vr_model_data = vr_model_data
         self.setupUI()
 
     def setupUI(self):
@@ -126,23 +124,29 @@ class downloadInterface(QFrame):
         model_class_item3 = QTreeWidgetItem(["vocal_models"])
         model_class_item4 = QTreeWidgetItem(["VR_Models"])
 
+        categorized_models = {
+            "multi_stem_models": [],
+            "single_stem_models": [],
+            "vocal_models": [],
+            "VR_Models": []
+        }
+
+        for model_name, model_info in models_info.items():
+            model_class = model_info["model_class"]
+            if model_class in categorized_models:
+                categorized_models[model_class].append(model_name)
+
         for model_class_item in [model_class_item1, model_class_item2, model_class_item3, model_class_item4]:
             self.tree.addTopLevelItem(model_class_item)
             model_class_item.setCheckState(0, Qt.Unchecked)
 
-            if model_class_item.text(0) == "VR_Models":
-                for model in self.vr_model_data:
-                    item = QTreeWidgetItem()
-                    item.setText(0, model)
-                    item.setCheckState(0, Qt.Unchecked)
-                    model_class_item.addChild(item)
-            else:
-                for model in self.msst_model_data[model_class_item.text(0)]:
-                    # print(model)
-                    item = QTreeWidgetItem()
-                    item.setText(0, model["name"])
-                    item.setCheckState(0, Qt.Unchecked)
-                    model_class_item.addChild(item)
+            models = categorized_models[model_class_item.text(0)]
+            
+            for model_name in models:
+                item = QTreeWidgetItem()
+                item.setText(0, model_name)
+                item.setCheckState(0, Qt.Unchecked)
+                model_class_item.addChild(item)
 
     def treeItemChanged(self, item):
         parent_text = item.parent().text(0) if item.parent() else None
