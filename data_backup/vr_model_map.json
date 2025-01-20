@@ -182,5 +182,11 @@
         "vr_model_param": "4band_v4_ms_fullband",
         "nout": 32,
         "nout_lstm": 128
+    },
+    "Harmonic_Noise_Separation_yxlllc.pth": {
+        "primary_stem": "No Aspiration",
+        "secondary_stem": "Aspiration",
+        "download_link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/VR_Models/Harmonic_Noise_Separation_yxlllc.pth",
+        "vr_model_param": "1band_sr44100_hl1024"
     }
 }
