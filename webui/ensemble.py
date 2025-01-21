@@ -1,3 +1,6 @@
+__license__= "AGPL-3.0"
+__author__ = "Sucial https://github.com/SUC-DriverOld"
+
 import gradio as gr
 import pandas as pd
 import traceback

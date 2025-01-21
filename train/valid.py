@@ -123,7 +123,7 @@ def proc_list_of_files(
                         track = np.expand_dims(track, axis=-1)
 
                 except Exception as e:
-                    logger.info('No data for stem: {}. Skip!'.format(instr))
+                    logger.warning('No data for stem: {}. Skip!'.format(instr))
                     continue
             else:
                 # other is actually instrumental
@@ -189,7 +189,7 @@ def valid(model, args, config, device, verbose=False):
         part = sorted(glob.glob(valid_path + '/*/mixture.{}'.format(extension)))
         if len(part) == 0:
             if verbose:
-                logger.info('No validation data found in: {}'.format(valid_path))
+                logger.warning('No validation data found in: {}'.format(valid_path))
         all_mixtures_path += part
     if verbose:
         logger.info('Total mixtures: {}'.format(len(all_mixtures_path)))
@@ -282,7 +282,7 @@ def valid_multi_gpu(model, args, config, device_ids, verbose=False):
         part = sorted(glob.glob(valid_path + '/*/mixture.{}'.format(extension)))
         if len(part) == 0:
             if verbose:
-                logger.info('No validation data found in: {}'.format(valid_path))
+                logger.warning('No validation data found in: {}'.format(valid_path))
         all_mixtures_path += part
     if verbose:
         logger.info('Total mixtures: {}'.format(len(all_mixtures_path)))
@@ -400,7 +400,7 @@ def check_validation(args):
         device = torch.device('cuda:0')
     else:
         device = 'cpu'
-        logger.info('CUDA is not available. Run validation on CPU. It will be very slow...')
+        logger.warning('CUDA is not available. Run validation on CPU. It will be very slow...')
 
     if torch.cuda.is_available() and len(device_ids) > 1:
         valid_multi_gpu(model, args, config, device_ids, verbose=False)

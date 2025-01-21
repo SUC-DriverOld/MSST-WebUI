@@ -1,3 +1,6 @@
+__license__= "AGPL-3.0"
+__author__ = "Sucial https://github.com/SUC-DriverOld"
+
 import gradio as gr
 import pandas as pd
 import shutil
@@ -115,9 +118,9 @@ def load_preset(preset_name):
     if preset_name in os.listdir(PRESETS):
         preset_data = load_configs(os.path.join(PRESETS, preset_name))
 
-        version = preset_data.get("version", None)
+        version = preset_data.get("version", "Unknown version")
         if version not in SUPPORTED_PRESET_VERSION:
-            gr.Warning(i18n("不支持的预设版本: ") + str(version)) + i18n(", 请重新制作预设。")
+            gr.Warning(i18n("不支持的预设版本: ") + str(version) + i18n(", 请重新制作预设。"))
             logger.error(f"Load preset: {preset_name} failed, unsupported version: {version}, supported version: {SUPPORTED_PRESET_VERSION}")
             return gr.Dataframe(
                 pd.DataFrame({"model_type": [i18n("预设版本不支持")], "model_name": [i18n("预设版本不支持")], "input_to_next": [i18n("预设版本不支持")], "output_to_storage": [i18n("预设版本不支持")]}),

@@ -1,3 +1,6 @@
+__license__= "AGPL-3.0"
+__author__ = "Sucial https://github.com/SUC-DriverOld"
+
 import os.path
 import gradio as gr
 import multiprocessing
@@ -99,7 +102,7 @@ def validate_model(valid_model_type, valid_config_path, valid_model_path, valid_
     if len(valid_device_ids) == 0:
         return i18n("请选择GPU")
     for gpu in valid_device_ids:
-        gpu_ids.append(int(gpu[:gpu.index(":")]))
+        gpu_ids.append(str(gpu[:gpu.index(":")]))
 
     device = " ".join(gpu_ids)
     pin_memory = "--pin_memory" if valid_pin_memory else ""

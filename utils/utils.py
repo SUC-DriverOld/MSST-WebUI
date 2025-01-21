@@ -13,6 +13,8 @@ from tqdm.auto import tqdm
 from numpy.typing import NDArray
 from typing import Dict
 
+from utils.logger import get_logger
+logger = get_logger()
 
 def get_model_from_config(model_type, config_path):
     with open(config_path) as f:
@@ -73,7 +75,7 @@ def get_model_from_config(model_type, config_path):
         from modules.ts_bs_mamba2 import Separator
         model = Separator(**config.model)
     else:
-        print('Unknown model: {}'.format(model_type))
+        logger.error('Unknown model: {}'.format(model_type))
         model = None
 
     return model, config
@@ -121,7 +123,7 @@ def demix_track(config, model, mix, device, pbar=False):
             progress_bar = tqdm(total=mix.shape[1], desc="Processing audio chunks", leave=False) if pbar else None
 
             while i < mix.shape[1]:
-                # print(i, i + C, mix.shape[1])
+                # logger.info(i, i + C, mix.shape[1])
                 part = mix[:, i:i + C].to(device)
                 length = part.shape[-1]
                 if length < C:
@@ -177,7 +179,7 @@ def demix_track_demucs(config, model, mix, device, pbar=False):
     N = config.inference.num_overlap
     batch_size = config.inference.batch_size
     step = C // N
-    # print(S, C, N, step, mix.shape, mix.device)
+    # logger.info(S, C, N, step, mix.shape, mix.device)
 
     with torch.cuda.amp.autocast(enabled=config.training.get('use_amp', True)):
         with torch.inference_mode():
@@ -190,7 +192,7 @@ def demix_track_demucs(config, model, mix, device, pbar=False):
             progress_bar = tqdm(total=mix.shape[1], desc="Processing audio chunks", leave=False) if pbar else None
 
             while i < mix.shape[1]:
-                # print(i, i + C, mix.shape[1])
+                # logger.info(i, i + C, mix.shape[1])
                 part = mix[:, i:i + C].to(device)
                 length = part.shape[-1]
                 if length < C:
@@ -280,7 +282,7 @@ def LogWMSE_metric(
     reference = torch.from_numpy(reference).unsqueeze(0).unsqueeze(0).to(device)
     estimate = torch.from_numpy(estimate).unsqueeze(0).unsqueeze(0).to(device)
     mixture = torch.from_numpy(mixture).unsqueeze(0).to(device)
-    # print(reference.shape, estimate.shape, mixture.shape)
+    # logger.info(reference.shape, estimate.shape, mixture.shape)
     res = log_wmse(mixture, reference, estimate)
     return float(res.cpu().numpy())
 

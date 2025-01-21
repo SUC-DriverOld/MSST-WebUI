@@ -1,3 +1,6 @@
+__license__= "AGPL-3.0"
+__author__ = "Sucial https://github.com/SUC-DriverOld"
+
 import subprocess
 import numpy as np
 import librosa
@@ -140,7 +143,7 @@ def caculate_sdr(reference_path, estimated_path):
 
     logger.info(f"References: {reference_path}, Estimates: {estimated_path}")
     logger.info(f"SDR: {sdr_value}, AVG-SDR: {avg_sdr}, SI-SDR: {sisdr_value}")
-    return f"SDR: {sdr_value},AVG-SDR: {avg_sdr}, SI-SDR: {sisdr_value}"
+    return f"SDR: {sdr_value}\nAverage SDR: {avg_sdr}\nSI-SDR: {sisdr_value}"
 
 def some_inference(audio_file, bpm, output_dir):
     if not os.path.isfile(SOME_WEIGHT):

@@ -1,3 +1,6 @@
+__license__= "AGPL-3.0"
+__author__ = "Sucial https://github.com/SUC-DriverOld"
+
 import gradio as gr
 import pandas as pd
 import platform
@@ -119,7 +122,7 @@ def launch():
     force_cpu_value = True if (webui_config['inference']['force_cpu'] or force_cpu) else False
 
     logger.info(f"WebUI Version: {PACKAGE_VERSION}, System: {platform.system()}, Machine: {platform.machine()}")
-    app().launch(share=True)
+    app().launch(share=True, show_api=False)
 
 def app():
     with gr.Blocks(theme=gr.Theme.load('tools/themes/theme_blue.json')) as webui:

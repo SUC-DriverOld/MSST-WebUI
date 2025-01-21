@@ -95,7 +95,7 @@ def load_not_compatible_weights(model, weights, verbose=False):
                     new_model[el] = max_matrix[slices_new]
         else:
             if verbose:
-                logger.info('Match not found for {}!'.format(el))
+                logger.warning('Match not found for {}!'.format(el))
     model.load_state_dict(
         new_model
     )
@@ -184,7 +184,7 @@ def train_model(args):
             model = nn.DataParallel(model, device_ids=device_ids).to(device)
     else:
         device = 'cpu'
-        logger.info('CUDA is not avilable. Run training on CPU. It will be very slow...')
+        logger.warning('CUDA is not avilable. Run training on CPU. It will be very slow...')
         model = model.to(device)
 
     if args.pre_valid:
@@ -215,7 +215,7 @@ def train_model(args):
         logger.info('Use SGD optimizer')
         optimizer = SGD(model.parameters(), lr=config.training.lr, **optim_params)
     else:
-        logger.info('Unknown optimizer: {}'.format(config.training.optimizer))
+        logger.error('Unknown optimizer: {}'.format(config.training.optimizer))
         exit()
 
     gradient_accumulation_steps = 1

@@ -1,3 +1,6 @@
+__license__= "AGPL-3.0"
+__author__ = "Sucial https://github.com/SUC-DriverOld"
+
 import gradio as gr
 
 from webui.utils import i18n, select_folder, open_folder

@@ -37,7 +37,7 @@
 
 ### 文档
 
-我们为中文用户提供了一些详细的中文文档，点击 [这里](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc) 跳转。对于其他语言的用户，前往 `docs` 文件夹查看部分文档。你也可以参考 deton24 的 [Instrumental and vocal & stems separation & mastering guide](https://docs.google.com/document/d/17fjNvJzj8ZGSer7c7OFe_CNfUKbAxEh_OBv94ZdRG5c)。
+我们为中文用户提供了一些详细的中文文档，点击 [这里](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc) 跳转。对于其他语言的用户，前往 `docs` 文件夹查看部分文档。你也可以参考 [deton24](https://github.com/deton24) 的 [Instrumental and vocal & stems separation & mastering guide](https://docs.google.com/document/d/17fjNvJzj8ZGSer7c7OFe_CNfUKbAxEh_OBv94ZdRG5c)。
 
 ## 从源码运行
 
@@ -84,12 +84,14 @@
 
 ## 参考
 
-- [ZFTurbo's code] [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)<br>
-- [python-audio-separator] [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator)<br>
-- [Ultimate Vocal Remover] [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui)<br>
-- [Vocals to MIDI] [SOME](https://github.com/openvpi/SOME/)<br>
-- [@KitsuneX07] [Github](https://github.com/KitsuneX07) | [Bilibili](https://space.bilibili.com/403335715)<br>
-- [@SUC-DriverOld] [Github](https://github.com/SUC-DriverOld) | [Bilibili](https://space.bilibili.com/445022409)
+- [deton24's Documents] [Instrumental and vocal & stems separation & mastering guide](https://docs.google.com/document/d/17fjNvJzj8ZGSer7c7OFe_CNfUKbAxEh_OBv94ZdRG5c)
+- [KitsuneX07's ComfyMSS] [ComfyMSS](https://github.com/KitsuneX07/ComfyMSS)
+- [PyQt-Fluent-Widgets] [PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
+- [Pyside6] [PySide6 documents](https://doc.qt.io/qtforpython-6)
+- [python-audio-separator] [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator)
+- [Singing-Oriented MIDI Extractor] [SOME](https://github.com/openvpi/SOME/)
+- [Ultimate Vocal Remover] [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui)
+- [ZFTurbo's MSST code] [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)
 
 ### 感谢所有贡献者的共同努力
 

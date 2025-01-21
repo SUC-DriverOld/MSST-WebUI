@@ -1,7 +1,7 @@
-"""
-LICENSE: AGPL-3.0
-AUTHOR: Sucial, KitsuneX07
+__license__= "AGPL-3.0"
+__author__ = "Sucial https://github.com/SUC-DriverOld"
 
+"""
 This file is responsible for initializing and launching the WebUI for the project. It performs multiple setup tasks,
 including configuring system paths, setting up multiprocessing, verifying the existence of necessary directories,
 and parsing command-line arguments for custom configurations. 
@@ -85,7 +85,8 @@ def main(args):
     app.app(
         platform=platform_info, device=devices, force_cpu=force_cpu, theme=theme_path
     ).launch(
-        inbrowser=True, share=share, server_name=server_name, server_port=server_port
+        inbrowser=True, share=share, server_name=server_name, server_port=server_port,
+        show_api=False, favicon_path="docs/logo.png"
     )
 
 

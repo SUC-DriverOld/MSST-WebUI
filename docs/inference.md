@@ -1,5 +1,7 @@
 # Inference Usage
 
+English | [简体中文](https://r1kc63iz15l.feishu.cn/wiki/WvcDwDfXniFzyzkhxPncV2SHnzc)
+
 We provide two calling methods: API and CLI. For API calls, We provide two Python class interfaces for MSST separation and VR separation. For CLI, we have provided following CLI scripts in the `scripts` folder.
 
 - [scripts/ensemble_audio_cli.py](../scripts/ensemble_audio_cli.py): Use multiple audio of the same duration for ensemble.

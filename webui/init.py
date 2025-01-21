@@ -1,3 +1,6 @@
+__license__= "AGPL-3.0"
+__author__ = "Sucial https://github.com/SUC-DriverOld"
+
 from utils.constant import *
 from webui.utils import i18n, load_configs, get_msst_model, get_vr_model
 
