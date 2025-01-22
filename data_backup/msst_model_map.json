@@ -50,7 +50,7 @@
     },
     {
       "name": "bs_roformer_4stems_ft.ckpt",
-      "config_path": "config_bs_roformer_4stems_ft.yaml",
+      "config_path": "configs/multi_stem_models/config_bs_roformer_4stems_ft.yaml",
       "model_type": "bs_roformer",
       "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/bs_roformer_4stems_ft.ckpt"
     }
