@@ -5,60 +5,32 @@ Use `webui.py` to start the webui. There are two modes: local mode and cloud mod
 ### Options
 
 ```
-usage: webUI.py [-h] [-d] [--factory_reset] [-i IP_ADDRESS] [-p PORT] [-s] [--ues_cloud] [--language {Auto,zh_CN,zh_TW,en_US,ja_JP,ko_KR}] [--model_download_link {Auto,huggingface.co,hf-mirror.com}]
+usage: webUI.py [-h] [-d] [-i IP_ADDRESS] [-p PORT] [-s] [--use_cloud] [--language {None,Auto,zh_CN,zh_TW,en_US,ja_JP,ko_KR}] [--model_download_link {None,Auto,huggingface.co,hf-mirror.com}]
+                [--factory_reset]
 
 WebUI for Music Source Separation Training
 
 options:
   -h, --help                                                show this help message and exit
   -d, --debug                                               Enable debug mode.
-  --factory_reset                                           Reset WebUI settings and model seetings to default, clear cache and exit.
-
-Local Startup Parameters:
   -i IP_ADDRESS, --ip_address IP_ADDRESS                    Server IP address (Default: Auto).
   -p PORT, --port PORT                                      Server port (Default: Auto).
   -s, --share                                               Enable share link.
-
-Cloud Startup Parameters:
-  --use_cloud                                               Enable cloud mode. When using in cloud platforms, enable this option.
-  --language {Auto,zh_CN,zh_TW,en_US,ja_JP,ko_KR}           Set cloud WebUI language (Default: Auto).
-  --model_download_link {Auto,huggingface.co,hf-mirror.com}
-                                                            Set cloud model download link (Default: Auto).
+  --use_cloud                                               Use special WebUI in cloud platforms.
+  --language {None,Auto,zh_CN,zh_TW,en_US,ja_JP,ko_KR}      Set WebUI language (Default: Auto).
+  --model_download_link {None,Auto,huggingface.co,hf-mirror.com}
+                                                            Set model download link (Default: Auto).
+  --factory_reset                                           Reset WebUI settings and model seetings to default, clear cache and exit.
 ```
 
-To Factory Reset the WebUI settings and model settings to default, clear the cache and exit, use the following command:
-
-```bash
-python webui.py --factory_reset
-```
-
-### Local Mode
-
-For those who want to run the webui on their own PC, you can simply use the following command to start the webui:
-
-```bash
-python webui.py
-```
-
-If you want to specify the IP address and port or you want to enable share link (gradio povided, expired in 72 hours), you can use the following command:
-
-```bash
-python webui.py -i 192.168.1.100 -p 7860 -s
-```
-
-### Cloud Mode
-
-For those who want to run the webui on cloud platforms, you can use the following command to start the webui:
-
-```bash
-python webui.py --use_cloud
-```
-
-If you want to specify the language and model download link, you can use the following command:
-
-```bash
-python webui.py --use_cloud --language zh_CN --model_download_link hf-mirror.com
-```
+- `-d` or `--debug`: Enable debug mode.
+- `-i` or `--ip_address`: Server IP address (Default: Auto).
+- `-p` or `--port`: Server port (Default: Auto).
+- `-s` or `--share`: Use Gradio's intranet penetration service to penetrate WebUI to the public network. If your localhost cannot be accessed, please enable this option.
+- `--use_cloud`: Use the special WebUI in cloud platforms. Having the functions of uploading files, packaging, and downloading.
+- `--language`: Set the language of the cloud WebUI.
+- `--model_download_link`: Set the model download link.
+- `--factory_reset`: Reset the WebUI settings and model settings to default, clear the cache and exit.
 
 ## How to use MSST WebUI on clouds
 
@@ -97,11 +69,13 @@ wget https://huggingface.co/Sucial/MSST-WebUI/resolve/main/SOME_weights/model_st
 LANGUAGE = "English" #@param ["Auto", "English", "简体中文", "繁體中文", "日本語", "😊", "한국어"]
 MODEL_DOWNLOAD_LINK = "huggingface.co" #@param ["Auto", "huggingface.co", "hf-mirror.com"]
 DEBUG = False #@param {type:"boolean"}
+IP_ADDRESS = "0.0.0.0" #@param {type:"string"}
+PORT = 7860 #@param {type:"integer"}
 
 language_dict = {"Auto": "Auto", "简体中文": "zh_CN", "繁體中文": "zh_TW", "English": "en_US", "日本語": "ja_JP", "😊": "emoji", "한국어": "ko_KR"}
 language = language_dict[LANGUAGE]
 debug = "--debug" if DEBUG else ""
 
-# using cloud mode to start webui
-!python webUI.py --use_cloud --language {language} --model_download_link {MODEL_DOWNLOAD_LINK} {debug}
+# Using cloud mode to start webui
+!python webui.py --use_cloud --share --language {language} --model_download_link {MODEL_DOWNLOAD_LINK} {debug} --ip_address {IP_ADDRESS} --port {PORT}
 ```

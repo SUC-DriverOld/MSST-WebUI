@@ -5,10 +5,8 @@ import json
 import locale
 import platform
 import yaml
-import tkinter as tk
 import gradio as gr
 import logging
-from tkinter import filedialog
 from ml_collections import ConfigDict
 
 from utils.constant import *
@@ -243,8 +241,13 @@ following 4 functions are used for file and folder selection and open selected f
 - select_yaml_file: use tkinter to select a yaml file and return the selected file path
 - select_file: use tkinter to select a file and return the selected file path
 - open_folder: open the selected folder in file explorer according to the selected folder path
+
+**Must put import modules in functions to avoid import error when running on cloud plantform.**
 '''
 def select_folder():
+    import tkinter as tk
+    from tkinter import filedialog
+
     root = tk.Tk()
     root.withdraw()
     root.attributes('-topmost', True)
@@ -253,6 +256,9 @@ def select_folder():
     return selected_dir
 
 def select_yaml_file():
+    import tkinter as tk
+    from tkinter import filedialog
+
     root = tk.Tk()
     root.withdraw()
     root.attributes('-topmost', True)
@@ -262,6 +268,9 @@ def select_yaml_file():
     return selected_file
 
 def select_file():
+    import tkinter as tk
+    from tkinter import filedialog
+
     root = tk.Tk()
     root.withdraw()
     root.attributes('-topmost', True)

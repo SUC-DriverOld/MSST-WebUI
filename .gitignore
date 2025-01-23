@@ -32,6 +32,7 @@ go-webui.bat
 DownloadManager.exe
 go-DownloadManager.bat
 webui_no_admin.exe
+results.zip
 
 *.ckpt
 *.pt

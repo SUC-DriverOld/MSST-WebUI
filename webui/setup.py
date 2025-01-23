@@ -34,9 +34,9 @@ def update_configs_folder():
                 shutil.copyfile(source_file, target_file)
 
 
-def set_debug(args):
+def set_debug(args, iswebui=False):
     debug = False
-    if os.path.isfile(WEBUI_CONFIG):
+    if iswebui and os.path.exists(WEBUI_CONFIG):
         debug = load_configs(WEBUI_CONFIG)["settings"].get("debug", False)
     if args.debug or debug:
         os.environ["CUDA_LAUNCH_BLOCKING"] = '1'

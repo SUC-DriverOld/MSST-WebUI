@@ -99,8 +99,11 @@ def cloud_ensemble_infer_folder(ensemble_mode, output_format, force_cpu, use_tta
     assert check_preset(ensemble_data), i18n("模型下载失败, 请重试!")
     return inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, store_dir, input_folder, extract_inst)
 
-def launch():
+def launch(server_name=None, server_port=None, share=True):
     global device, force_cpu_value
+
+    os.makedirs("input", exist_ok=True)
+    os.makedirs("results", exist_ok=True)
 
     debug = webui_config["settings"].get("debug", False)
     if debug:
@@ -122,7 +125,7 @@ def launch():
     force_cpu_value = True if (webui_config['inference']['force_cpu'] or force_cpu) else False
 
     logger.info(f"WebUI Version: {PACKAGE_VERSION}, System: {platform.system()}, Machine: {platform.machine()}")
-    app().launch(share=True, show_api=False)
+    app().launch(share=share, show_api=False, server_name=server_name, server_port=server_port)
 
 def app():
     with gr.Blocks(theme=gr.Theme.load('tools/themes/theme_blue.json')) as webui:
@@ -131,6 +134,8 @@ def app():
         gr.Markdown(value=i18n("**请将需要处理的音频放置到input文件夹内, 处理完成后的音频将会保存到results文件夹内! 云端输入输出目录不可更改!**"))
 
         with gr.Tabs():
+            with gr.TabItem(label=i18n("文件管理")):
+                files()
             with gr.TabItem(label=i18n("MSST分离")):
                 msst()
             with gr.TabItem(label=i18n("UVR分离")):
@@ -146,6 +151,36 @@ def app():
             with gr.TabItem(label=i18n("设置")):
                 settings()
     return webui
+
+def files():
+    from webui.file_manager import (
+        delete_input_files,
+        delete_results_files,
+        reflash_files,
+        download_results_files,
+        upload_files_to_input
+    )
+
+    gr.Markdown(value=i18n("文件管理页面是云端WebUI特有的页面, 用于上传, 下载, 删除文件。<br>1. 上传文件: 将文件上传到input文件夹内。可以勾选是否自动解压zip文件<br>2. 下载文件: 以zip格式打包results文件夹内的文件, 输出至WebUI以供下载。注意: 打包不会删除results文件夹, 若打包后不再需要分离结果, 请点击按钮手动删除。<br>3. 删除文件: 删除input和results文件夹内的文件。"))
+    with gr.Row():
+        with gr.Column():
+            with gr.Row():
+                delete_input = gr.Button(i18n("删除input文件夹内所有文件"), variant="primary")
+                delete_results = gr.Button(i18n("删除results文件夹内所有文件"), variant="primary")
+            reflash = gr.Button(i18n("刷新input和results文件列表"), variant="primary")
+            download_results = gr.Button(i18n("打包results文件夹内所有文件"), variant="primary")
+            upload_files = gr.Files(label=i18n("上传一个或多个文件至input文件夹"), type="filepath")
+            auto_unzip = gr.Checkbox(label=i18n("自动解压zip文件(仅支持zip, 压缩包内文件名若含有非ASCII字符, 解压后文件名可能为乱码)"), value=True, interactive=True)
+            upload_button = gr.Button(i18n("上传文件"), variant="primary")
+        with gr.Column():
+            file_lists = gr.Textbox(label=i18n("input和results文件列表"), value=i18n("请先点击刷新按钮"), lines=4, interactive=False)
+            results_zip = gr.File(label=i18n("下载results文件夹内所有文件"), type="filepath", interactive=False)
+
+    delete_input.click(fn=delete_input_files, outputs=file_lists)
+    delete_results.click(fn=delete_results_files, outputs=file_lists)
+    reflash.click(fn=reflash_files, outputs=file_lists)
+    download_results.click(fn=download_results_files, outputs=results_zip)
+    upload_button.click(fn=upload_files_to_input, inputs=[upload_files, auto_unzip], outputs=file_lists)
 
 def msst():
     from webui.msst import stop_msst_inference, save_model_config, reset_model_config, update_inference_settings
@@ -1106,9 +1141,3 @@ def settings():
     set_language.change(fn=change_language,inputs=set_language,outputs=setting_output_message)
     debug_mode.change(fn=log_level_debug,inputs=debug_mode,outputs=setting_output_message)
     save_audio_setting.click(fn=save_audio_setting_fn,inputs=[wav_bit_depth,flac_bit_depth,mp3_bit_rate], outputs=audio_setting_output_message)
-
-if __name__ == "__main__":
-    import multiprocessing
-    multiprocessing.set_start_method('spawn', force=True)
-
-    launch()

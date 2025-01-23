@@ -61,7 +61,7 @@ def main(args):
     logger.info(f"WebUI Version: {PACKAGE_VERSION}, {platform_info}")
 
     # set debug mode and setup WebUI
-    set_debug(args)
+    set_debug(args, iswebui=True)
     webui_config = setup_webui()
 
     # setup WebUI launch parameters
@@ -94,22 +94,19 @@ if __name__ == "__main__":
     import multiprocessing
     import argparse
     import shutil
+    import json
+    from utils.constant import WEBUI_CONFIG
     multiprocessing.set_start_method('spawn', force=True)
 
     parser = argparse.ArgumentParser(description="WebUI for Music Source Separation Training", formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=60))
     parser.add_argument("-d", "--debug", action="store_true", help="Enable debug mode.")
+    parser.add_argument("-i", "--ip_address", type=str, default=None, help="Server IP address (Default: Auto).")
+    parser.add_argument("-p", "--port", type=int, default=None, help="Server port (Default: Auto).")
+    parser.add_argument("-s", "--share", action="store_true", help="Enable share link.")
+    parser.add_argument("--use_cloud", action="store_true", help="Use special WebUI in cloud platforms.")
+    parser.add_argument("--language", type=str, default=None, choices=[None, "Auto", "zh_CN", "zh_TW", "en_US", "ja_JP", "ko_KR"], help="Set WebUI language (Default: Auto).")
+    parser.add_argument("--model_download_link", type=str, default=None, choices=[None, "Auto", "huggingface.co", "hf-mirror.com"], help="Set model download link (Default: Auto).")
     parser.add_argument("--factory_reset", action="store_true", help="Reset WebUI settings and model seetings to default, clear cache and exit.")
-
-    local_params = parser.add_argument_group("Local Startup Parameters")
-    local_params.add_argument("-i", "--ip_address", type=str, default=None, help="Server IP address (Default: Auto).")
-    local_params.add_argument("-p", "--port", type=int, default=None, help="Server port (Default: Auto).")
-    local_params.add_argument("-s", "--share", action="store_true", help="Enable share link.")
-
-    cloud_params = parser.add_argument_group("Cloud Startup Parameters")
-    cloud_params.add_argument("--use_cloud", action="store_true", help="Enable cloud mode. When using in cloud platforms, enable this option.")
-    cloud_params.add_argument("--language", type=str, default="Auto", choices=["Auto", "zh_CN", "zh_TW", "en_US", "ja_JP", "ko_KR"], help="Set cloud WebUI language (Default: Auto).")
-    cloud_params.add_argument("--model_download_link", type=str, default="Auto", choices=["Auto", "huggingface.co", "hf-mirror.com"], help="Set cloud model download link (Default: Auto).")
-
     args = parser.parse_args()
 
     if args.factory_reset:
@@ -124,19 +121,20 @@ if __name__ == "__main__":
     if not os.path.exists("data"):
         shutil.copytree("data_backup", "data")
 
-    if args.use_cloud: # if user uses webui in cloud platforms
-        import json
-        os.makedirs("input", exist_ok=True)
-        os.makedirs("results", exist_ok=True)
-        with open("data/webui_config.json", 'r', encoding="utf-8") as f:
+    if os.path.exists(WEBUI_CONFIG) and (args.language or args.model_download_link or args.debug):
+        with open(WEBUI_CONFIG, "r", encoding="utf-8") as f:
             config = json.load(f)
+        if args.language:
             config['settings']['language'] = args.language
+        if args.model_download_link:
             config['settings']['download_link'] = args.model_download_link
+        if args.use_cloud and args.debug:
             config['settings']['debug'] = args.debug
-        with open("data/webui_config.json", 'w', encoding="utf-8") as f:
+        with open(WEBUI_CONFIG, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=4)
 
+    if args.use_cloud: # if user uses webui in cloud platforms
         from tools.webUI_for_clouds.webUI_for_clouds import launch
-        launch()
+        launch(server_name=args.ip_address, server_port=args.port, share=args.share)
     else: # user uses webui in local environment
         main(args)
