@@ -77,5 +77,5 @@ language = language_dict[LANGUAGE]
 debug = "--debug" if DEBUG else ""
 
 # Using cloud mode to start webui
-!python webui.py --use_cloud --share --language {language} --model_download_link {MODEL_DOWNLOAD_LINK} {debug} --ip_address {IP_ADDRESS} --port {PORT}
+!python webUI.py --use_cloud --share --language {language} --model_download_link {MODEL_DOWNLOAD_LINK} {debug} --ip_address {IP_ADDRESS} --port {PORT}
 ```
