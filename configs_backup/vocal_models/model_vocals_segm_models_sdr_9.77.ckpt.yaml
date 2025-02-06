@@ -1,0 +1,72 @@
+audio:
+  chunk_size: 261632
+  dim_f: 4096
+  dim_t: 512
+  hop_length: 512
+  min_mean_abs: 0.001
+  n_fft: 8192
+  num_channels: 2
+  sample_rate: 44100
+augmentations:
+  enable: true
+  loudness: true
+  loudness_max: 1.5
+  loudness_min: 0.5
+  mixup: true
+  mixup_loudness_max: 1.5
+  mixup_loudness_min: 0.5
+  mixup_probs: !!python/tuple
+  - 0.2
+  - 0.02
+inference:
+  batch_size: 1
+  dim_t: 512
+  num_overlap: 4
+loss_multistft:
+  fft_sizes:
+  - 1024
+  - 2048
+  - 4096
+  hop_sizes:
+  - 512
+  - 1024
+  - 2048
+  mag_distance: L1
+  n_bins: 128
+  perceptual_weighting: true
+  sample_rate: 44100
+  scale: mel
+  w_lin_mag: 0.0
+  w_log_mag: 1.0
+  w_phs: 0.0
+  w_sc: 1.0
+  win_lengths:
+  - 1024
+  - 2048
+  - 4096
+  window: hann_window
+model:
+  act: gelu
+  decoder_type: unet
+  encoder_name: tu-maxvit_large_tf_512
+  num_channels: 128
+  num_subbands: 8
+training:
+  batch_size: 8
+  coarse_loss_clip: true
+  ema_momentum: 0.999
+  grad_clip: 0
+  gradient_accumulation_steps: 1
+  instruments:
+  - vocals
+  - other
+  lr: 5.0e-05
+  num_epochs: 1000
+  num_steps: 2000
+  optimizer: adamw
+  other_fix: true
+  patience: 2
+  q: 0.95
+  reduce_factor: 0.95
+  target_instrument: null
+  use_amp: true

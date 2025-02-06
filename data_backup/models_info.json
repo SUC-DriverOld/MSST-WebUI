@@ -237,7 +237,9 @@
         "model_size": 437652699,
         "sha256": "d2a4aa53eb584d21eead358a4e66d1882ad182911be018f052b5da73be9096d0",
         "is_installed": false,
-        "target_position": "./pretrain/multi_stem_models/aufr33-jarredou_DrumSep_model_mdx23c_ep_141_sdr_10.8059.ckpt"
+        "target_position": "./pretrain/multi_stem_models/aufr33-jarredou_DrumSep_model_mdx23c_ep_141_sdr_10.8059.ckpt",
+        "model_type": "mdx23c",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/aufr33-jarredou_DrumSep_model_mdx23c_ep_141_sdr_10.8059.ckpt"
     },
     "model_bandit_plus_dnr_sdr_11.47.chpt": {
         "model_class": "multi_stem_models",
@@ -245,7 +247,9 @@
         "model_size": 148891175,
         "sha256": "c48284779f7d1258a6527d3aaa18a532d45c1f506e2dcc25d5ab179a8c5e2573",
         "is_installed": false,
-        "target_position": "./pretrain/multi_stem_models/model_bandit_plus_dnr_sdr_11.47.chpt"
+        "target_position": "./pretrain/multi_stem_models/model_bandit_plus_dnr_sdr_11.47.chpt",
+        "model_type": "bandit",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/model_bandit_plus_dnr_sdr_11.47.chpt"
     },
     "model_drumsep.th": {
         "model_class": "multi_stem_models",
@@ -253,7 +257,9 @@
         "model_size": 167400043,
         "sha256": "aefaa8543c9b9c75e22f5f32b53ab86dfe416457849af1383ff1aef83401423f",
         "is_installed": false,
-        "target_position": "./pretrain/multi_stem_models/model_drumsep.th"
+        "target_position": "./pretrain/multi_stem_models/model_drumsep.th",
+        "model_type": "htdemucs",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/model_drumsep.th"
     },
     "model_mdx23c_ep_168_sdr_7.0207.ckpt": {
         "model_class": "multi_stem_models",
@@ -261,7 +267,9 @@
         "model_size": 448119834,
         "sha256": "c1d31e3c47a98e8cdb12b3382a1a313c1a95c835da4310dd6350e7e1892f821c",
         "is_installed": false,
-        "target_position": "./pretrain/multi_stem_models/model_mdx23c_ep_168_sdr_7.0207.ckpt"
+        "target_position": "./pretrain/multi_stem_models/model_mdx23c_ep_168_sdr_7.0207.ckpt",
+        "model_type": "mdx23c",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/model_mdx23c_ep_168_sdr_7.0207.ckpt"
     },
     "scnet_checkpoint_musdb18.ckpt": {
         "model_class": "multi_stem_models",
@@ -269,7 +277,9 @@
         "model_size": 42434986,
         "sha256": "1bc0d1abb20bfdf966dcd07637bafd03e4bc13653d09ef18bc9b3e342eafe2aa",
         "is_installed": false,
-        "target_position": "./pretrain/multi_stem_models/scnet_checkpoint_musdb18.ckpt"
+        "target_position": "./pretrain/multi_stem_models/scnet_checkpoint_musdb18.ckpt",
+        "model_type": "scnet",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/scnet_checkpoint_musdb18.ckpt"
     },
     "HTDemucs4.th": {
         "model_class": "multi_stem_models",
@@ -277,7 +287,9 @@
         "model_size": 84141911,
         "sha256": "8726e21a993978c7ba086d3872e7608d7d5bfca646ca4aca459ffda844faa8b4",
         "is_installed": false,
-        "target_position": "./pretrain/multi_stem_models/HTDemucs4.th"
+        "target_position": "./pretrain/multi_stem_models/HTDemucs4.th",
+        "model_type": "htdemucs",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/HTDemucs4.th"
     },
     "HTDemucs4_6stems.th": {
         "model_class": "multi_stem_models",
@@ -285,7 +297,9 @@
         "model_size": 54996327,
         "sha256": "34c22ccb381c6f9fdbf324f04e1e2fe21aaaf293f5ded163a162697ff9a02ddd",
         "is_installed": false,
-        "target_position": "./pretrain/multi_stem_models/HTDemucs4_6stems.th"
+        "target_position": "./pretrain/multi_stem_models/HTDemucs4_6stems.th",
+        "model_type": "htdemucs",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/HTDemucs4_6stems.th"
     },
     "model_scnet_sdr_9.3244.ckpt": {
         "model_class": "multi_stem_models",
@@ -293,7 +307,9 @@
         "model_size": 168868194,
         "sha256": "fe550315a76e8f4aed8475d7d5952137504a3b6c63b3adcef2443bfe73aac540",
         "is_installed": false,
-        "target_position": "./pretrain/multi_stem_models/model_scnet_sdr_9.3244.ckpt"
+        "target_position": "./pretrain/multi_stem_models/model_scnet_sdr_9.3244.ckpt",
+        "model_type": "scnet",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/model_scnet_sdr_9.3244.ckpt"
     },
     "bs_roformer_4stems_ft.ckpt": {
         "model_class": "multi_stem_models",
@@ -301,7 +317,9 @@
         "model_size": 527245586,
         "sha256": "a64c61c5972fe3fdf331d98f06bb4d6e237147c83a4bc71fd4e00e254c9b7652",
         "is_installed": false,
-        "target_position": "./pretrain/multi_stem_models/bs_roformer_4stems_ft.ckpt"
+        "target_position": "./pretrain/multi_stem_models/bs_roformer_4stems_ft.ckpt",
+        "model_type": "bs_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/multi_stem_models/bs_roformer_4stems_ft.ckpt"
     },
     "HTDemucs4_FT_bass.th": {
         "model_class": "single_stem_models",
@@ -309,7 +327,9 @@
         "model_size": 84141271,
         "sha256": "e57c48e6b0e38af4f7118d7bd08c49f0a0c0edf7d09143bdd902ea0d237303e6",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_bass.th"
+        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_bass.th",
+        "model_type": "htdemucs",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/HTDemucs4_FT_bass.th"
     },
     "HTDemucs4_FT_drums.th": {
         "model_class": "single_stem_models",
@@ -317,7 +337,9 @@
         "model_size": 84141271,
         "sha256": "ba3fe64ae8ef66ac9a4857222ce48efbdc5eb3ad375cb79dd13debee5aaa4066",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_drums.th"
+        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_drums.th",
+        "model_type": "htdemucs",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/HTDemucs4_FT_drums.th"
     },
     "HTDemucs4_FT_other.th": {
         "model_class": "single_stem_models",
@@ -325,7 +347,9 @@
         "model_size": 84141271,
         "sha256": "ef3bcb9c8b40d14ae5d51b6db2587339cc12c6b77c0be151ce6d69002e087bf2",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_other.th"
+        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_other.th",
+        "model_type": "htdemucs",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/HTDemucs4_FT_other.th"
     },
     "HTDemucs4_FT_vocals_official.th": {
         "model_class": "single_stem_models",
@@ -333,7 +357,9 @@
         "model_size": 84141271,
         "sha256": "f3cf25b222c4eed7cd49dd8b2c9597d50c18bd154090f7b919cfa5f93cf22c49",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_vocals_official.th"
+        "target_position": "./pretrain/single_stem_models/HTDemucs4_FT_vocals_official.th",
+        "model_type": "htdemucs",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/HTDemucs4_FT_vocals_official.th"
     },
     "mel_band_roformer_crowd_aufr33_viperx_sdr_8.7144.ckpt": {
         "model_class": "single_stem_models",
@@ -341,7 +367,9 @@
         "model_size": 913096801,
         "sha256": "ca8799531fe51c94172cc047226209ed48bf7d8c02e04671795a15d2a1c318af",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/mel_band_roformer_crowd_aufr33_viperx_sdr_8.7144.ckpt"
+        "target_position": "./pretrain/single_stem_models/mel_band_roformer_crowd_aufr33_viperx_sdr_8.7144.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/mel_band_roformer_crowd_aufr33_viperx_sdr_8.7144.ckpt"
     },
     "model_bs_roformer_ep_937_sdr_10.5309.ckpt": {
         "model_class": "single_stem_models",
@@ -349,7 +377,9 @@
         "model_size": 393068365,
         "sha256": "a2e825a03bc908cb04dbd88eddeefbf5147dd1cf1f95cebf453d9dbfabec494b",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/model_bs_roformer_ep_937_sdr_10.5309.ckpt"
+        "target_position": "./pretrain/single_stem_models/model_bs_roformer_ep_937_sdr_10.5309.ckpt",
+        "model_type": "bs_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/model_bs_roformer_ep_937_sdr_10.5309.ckpt"
     },
     "denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt": {
         "model_class": "single_stem_models",
@@ -357,7 +387,9 @@
         "model_size": 913097300,
         "sha256": "7c1c39191edc34e942ca7f2346ce6b6c0e1208a5f76349ffce6f696bd12910de",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt"
+        "target_position": "./pretrain/single_stem_models/denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt"
     },
     "denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt": {
         "model_class": "single_stem_models",
@@ -365,7 +397,9 @@
         "model_size": 913097300,
         "sha256": "a25e3b233722cd81e2de7b8e798a3fef29d4b9799ccacda60b0dc958a1e2a5bb",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt"
+        "target_position": "./pretrain/single_stem_models/denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt"
     },
     "deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt": {
         "model_class": "single_stem_models",
@@ -373,7 +407,9 @@
         "model_size": 489578757,
         "sha256": "29c311f2f3561c73f2084d59aa5dc2a077d907293bbbb1ce6548247ddb0671ff",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt"
+        "target_position": "./pretrain/single_stem_models/deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/deverb_mel_band_roformer_ep_27_sdr_10.4567.ckpt"
     },
     "deverb_bs_roformer_8_256dim_8depth.ckpt": {
         "model_class": "single_stem_models",
@@ -381,7 +417,9 @@
         "model_size": 170770820,
         "sha256": "ee204fc59fa4111674536d47bd1ef3759acb9f7cf5a759ec4b867a828bb76c64",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/deverb_bs_roformer_8_256dim_8depth.ckpt"
+        "target_position": "./pretrain/single_stem_models/deverb_bs_roformer_8_256dim_8depth.ckpt",
+        "model_type": "bs_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/deverb_bs_roformer_8_256dim_8depth.ckpt"
     },
     "deverb_bs_roformer_8_384dim_10depth.ckpt": {
         "model_class": "single_stem_models",
@@ -389,7 +427,9 @@
         "model_size": 361499604,
         "sha256": "9c38653aaa5e49f2f7b84dd3be2b6b679e0cbea23978e6b48389ee6f0a914768",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/deverb_bs_roformer_8_384dim_10depth.ckpt"
+        "target_position": "./pretrain/single_stem_models/deverb_bs_roformer_8_384dim_10depth.ckpt",
+        "model_type": "bs_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/deverb_bs_roformer_8_384dim_10depth.ckpt"
     },
     "dereverb_mdx23c_sdr_6.9096.ckpt": {
         "model_class": "single_stem_models",
@@ -397,7 +437,9 @@
         "model_size": 448098867,
         "sha256": "eae2471b707758d74db38ac1b1d5800e12f57c4e9d1ebbb2faf004b8e086e914",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/dereverb_mdx23c_sdr_6.9096.ckpt"
+        "target_position": "./pretrain/single_stem_models/dereverb_mdx23c_sdr_6.9096.ckpt",
+        "model_type": "mdx23c",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/dereverb_mdx23c_sdr_6.9096.ckpt"
     },
     "dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt": {
         "model_class": "single_stem_models",
@@ -405,7 +447,9 @@
         "model_size": 913107578,
         "sha256": "9262877b87e9ebb0fb808a456b0a411fa677f5df31c8383c1254af531c078970",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt"
+        "target_position": "./pretrain/single_stem_models/dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt"
     },
     "dereverb_mel_band_roformer_less_aggressive_anvuew_sdr_18.8050.ckpt": {
         "model_class": "single_stem_models",
@@ -413,7 +457,9 @@
         "model_size": 913107578,
         "sha256": "0db8f1b41c00cead1112e967262a12802fd32e76c0c3a8eb207e772bae25d07b",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/dereverb_mel_band_roformer_less_aggressive_anvuew_sdr_18.8050.ckpt"
+        "target_position": "./pretrain/single_stem_models/dereverb_mel_band_roformer_less_aggressive_anvuew_sdr_18.8050.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/dereverb_mel_band_roformer_less_aggressive_anvuew_sdr_18.8050.ckpt"
     },
     "Apollo_LQ_MP3_restoration.ckpt": {
         "model_class": "single_stem_models",
@@ -421,7 +467,9 @@
         "model_size": 66541845,
         "sha256": "99d9af7f1ff20e63c393035513a655392818d66b4d7fc23d658175c1f15e8d76",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/Apollo_LQ_MP3_restoration.ckpt"
+        "target_position": "./pretrain/single_stem_models/Apollo_LQ_MP3_restoration.ckpt",
+        "model_type": "apollo",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/Apollo_LQ_MP3_restoration.ckpt"
     },
     "aspiration_mel_band_roformer_sdr_18.9845.ckpt": {
         "model_class": "single_stem_models",
@@ -429,7 +477,9 @@
         "model_size": 835983746,
         "sha256": "9e791258c866c6c8da66052693d8cc3b64f1f42c01e052dbdc570cd278380cc5",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/aspiration_mel_band_roformer_sdr_18.9845.ckpt"
+        "target_position": "./pretrain/single_stem_models/aspiration_mel_band_roformer_sdr_18.9845.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/aspiration_mel_band_roformer_sdr_18.9845.ckpt"
     },
     "aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt": {
         "model_class": "single_stem_models",
@@ -437,7 +487,9 @@
         "model_size": 835982664,
         "sha256": "83bfe991cec4fbadde9f30d1f79cd5293ad0b1f936256be327bba5cbb4883374",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt"
+        "target_position": "./pretrain/single_stem_models/aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt"
     },
     "model_mdx23c_ep_271_l1_freq_72.2383.ckpt": {
         "model_class": "single_stem_models",
@@ -445,7 +497,9 @@
         "model_size": 437613512,
         "sha256": "1227f8d97c7436004d03e46091427393abefebcc08ce53ef30082742c4e482f7",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/model_mdx23c_ep_271_l1_freq_72.2383.ckpt"
+        "target_position": "./pretrain/single_stem_models/model_mdx23c_ep_271_l1_freq_72.2383.ckpt",
+        "model_type": "mdx23c",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/model_mdx23c_ep_271_l1_freq_72.2383.ckpt"
     },
     "dereverb_echo_mbr_fused_0.5_v2_0.25_big_0.25_super.ckpt": {
         "model_class": "single_stem_models",
@@ -453,7 +507,9 @@
         "model_size": 455776577,
         "sha256": "1596b1063238f487d54a0510a8c92cb28c000c803a271dd618ac49efc99ef3f7",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/dereverb_echo_mbr_fused_0.5_v2_0.25_big_0.25_super.ckpt"
+        "target_position": "./pretrain/single_stem_models/dereverb_echo_mbr_fused_0.5_v2_0.25_big_0.25_super.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/dereverb_echo_mbr_fused_0.5_v2_0.25_big_0.25_super.ckpt"
     },
     "de_big_reverb_mbr_ep_362.ckpt": {
         "model_class": "single_stem_models",
@@ -461,7 +517,9 @@
         "model_size": 455864012,
         "sha256": "0506455e74ffc02bbec700df9863ae243597034003815f1418227c6dee33b6ea",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/de_big_reverb_mbr_ep_362.ckpt"
+        "target_position": "./pretrain/single_stem_models/de_big_reverb_mbr_ep_362.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/de_big_reverb_mbr_ep_362.ckpt"
     },
     "apollo_model_uni.ckpt": {
         "model_class": "single_stem_models",
@@ -469,7 +527,9 @@
         "model_size": 146867952,
         "sha256": "11433256eca90143d32f1108d156ac756fd0201fbc69e5f736def4062fb52186",
         "is_installed": false,
-        "target_position": "./pretrain/single_stem_models/apollo_model_uni.ckpt"
+        "target_position": "./pretrain/single_stem_models/apollo_model_uni.ckpt",
+        "model_type": "apollo",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/single_stem_models/apollo_model_uni.ckpt"
     },
     "model_bs_roformer_ep_317_sdr_12.9755.ckpt": {
         "model_class": "vocal_models",
@@ -477,7 +537,9 @@
         "model_size": 639331213,
         "sha256": "5b84f37e8d444c8cb30c79d77f613a41c05868ff9c9ac6c7049c00aefae115aa",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/model_bs_roformer_ep_317_sdr_12.9755.ckpt"
+        "target_position": "./pretrain/vocal_models/model_bs_roformer_ep_317_sdr_12.9755.ckpt",
+        "model_type": "bs_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/model_bs_roformer_ep_317_sdr_12.9755.ckpt"
     },
     "model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt": {
         "model_class": "vocal_models",
@@ -485,7 +547,9 @@
         "model_size": 1007816988,
         "sha256": "21b9d0958e35b8ebfbe2afe69bbd5444e5ffe2f5d80ae0d583b833d2f3c0d139",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt"
+        "target_position": "./pretrain/vocal_models/model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt"
     },
     "model_swin_upernet_ep_56_sdr_10.6703.ckpt": {
         "model_class": "vocal_models",
@@ -493,7 +557,9 @@
         "model_size": 939903161,
         "sha256": "d59fa555bfcfc909b1aa9f7f961ad2ab41bfecd9d8d224defdd380cd3225c916",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/model_swin_upernet_ep_56_sdr_10.6703.ckpt"
+        "target_position": "./pretrain/vocal_models/model_swin_upernet_ep_56_sdr_10.6703.ckpt",
+        "model_type": "swin_upernet",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/model_swin_upernet_ep_56_sdr_10.6703.ckpt"
     },
     "model_vocals_htdemucs_sdr_8.78.ckpt": {
         "model_class": "vocal_models",
@@ -501,7 +567,9 @@
         "model_size": 168124336,
         "sha256": "0ea6e9495685045e6b4e66174131be5d19808bb0d6d1a1ba717d238f9380e8d0",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/model_vocals_htdemucs_sdr_8.78.ckpt"
+        "target_position": "./pretrain/vocal_models/model_vocals_htdemucs_sdr_8.78.ckpt",
+        "model_type": "htdemucs",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/model_vocals_htdemucs_sdr_8.78.ckpt"
     },
     "model_vocals_mdx23c_sdr_10.17.ckpt": {
         "model_class": "vocal_models",
@@ -509,7 +577,9 @@
         "model_size": 448101203,
         "sha256": "49d51472769e34a2501cd1da782346a3212555c3a5619fc2c53507445528d816",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/model_vocals_mdx23c_sdr_10.17.ckpt"
+        "target_position": "./pretrain/vocal_models/model_vocals_mdx23c_sdr_10.17.ckpt",
+        "model_type": "mdx23c",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/model_vocals_mdx23c_sdr_10.17.ckpt"
     },
     "model_vocals_mel_band_roformer_sdr_8.42.ckpt": {
         "model_class": "vocal_models",
@@ -517,7 +587,9 @@
         "model_size": 134917909,
         "sha256": "d9ce706b49cebf0af018590d8deb47ad5434987bf8f7bd3a87a4e5e8c30acb26",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/model_vocals_mel_band_roformer_sdr_8.42.ckpt"
+        "target_position": "./pretrain/vocal_models/model_vocals_mel_band_roformer_sdr_8.42.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/model_vocals_mel_band_roformer_sdr_8.42.ckpt"
     },
     "model_vocals_segm_models_sdr_9.77.ckpt": {
         "model_class": "vocal_models",
@@ -525,7 +597,9 @@
         "model_size": 863683537,
         "sha256": "9cb6e969309f96602318fcf5970a6973899db86e5fd9d8f9cf8f15bacdd299bb",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/model_vocals_segm_models_sdr_9.77.ckpt"
+        "target_position": "./pretrain/vocal_models/model_vocals_segm_models_sdr_9.77.ckpt",
+        "model_type": "segm_models",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/model_vocals_segm_models_sdr_9.77.ckpt"
     },
     "model_bs_roformer_ep_368_sdr_12.9628.ckpt": {
         "model_class": "vocal_models",
@@ -533,7 +607,9 @@
         "model_size": 639317465,
         "sha256": "f6c94864adfb73bbb0ca58ec14d58dd0b364549e9fb61433ae51916f3e2f8d0b",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/model_bs_roformer_ep_368_sdr_12.9628.ckpt"
+        "target_position": "./pretrain/vocal_models/model_bs_roformer_ep_368_sdr_12.9628.ckpt",
+        "model_type": "bs_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/model_bs_roformer_ep_368_sdr_12.9628.ckpt"
     },
     "model_mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt": {
         "model_class": "vocal_models",
@@ -541,7 +617,9 @@
         "model_size": 913096801,
         "sha256": "1de20d459332fe8869aeb01327a31df0032262706e1365114e852dc271779813",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/model_mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt"
+        "target_position": "./pretrain/vocal_models/model_mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/model_mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt"
     },
     "Kim_MelBandRoformer.ckpt": {
         "model_class": "vocal_models",
@@ -549,7 +627,9 @@
         "model_size": 913106900,
         "sha256": "87201f4d31afb5bc79993230fc49446918425574db48c01c405e44f365c7559e",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/Kim_MelBandRoformer.ckpt"
+        "target_position": "./pretrain/vocal_models/Kim_MelBandRoformer.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/Kim_MelBandRoformer.ckpt"
     },
     "kimmel_unwa_ft.ckpt": {
         "model_class": "vocal_models",
@@ -557,7 +637,9 @@
         "model_size": 913100690,
         "sha256": "e6bd8d333880191254a6ef6be3cb0ffa4dda9d3282e36b0cce2e88a660e00d39",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/kimmel_unwa_ft.ckpt"
+        "target_position": "./pretrain/vocal_models/kimmel_unwa_ft.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/kimmel_unwa_ft.ckpt"
     },
     "melband_roformer_inst_v2.ckpt": {
         "model_class": "vocal_models",
@@ -565,7 +647,9 @@
         "model_size": 1574477088,
         "sha256": "bd19766620f7d6f58fdf7aaada7e89907fe41bc64490ce3faa9a6dab15d6e1f2",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/melband_roformer_inst_v2.ckpt"
+        "target_position": "./pretrain/vocal_models/melband_roformer_inst_v2.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/melband_roformer_inst_v2.ckpt"
     },
     "inst_v1e.ckpt": {
         "model_class": "vocal_models",
@@ -573,7 +657,9 @@
         "model_size": 913102724,
         "sha256": "df2bcdb8838b88264f5381dbb0ccd84a9926c9775cf548c34d8846f5cd20fe96",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/inst_v1e.ckpt"
+        "target_position": "./pretrain/vocal_models/inst_v1e.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/inst_v1e.ckpt"
     },
     "melband_roformer_instvox_duality_v2.ckpt": {
         "model_class": "vocal_models",
@@ -581,7 +667,9 @@
         "model_size": 1719116358,
         "sha256": "b4a69558708f2857e36ac86a0e03ed95c4e3d8b9c5b8113963987d0d7df7e20f",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/melband_roformer_instvox_duality_v2.ckpt"
+        "target_position": "./pretrain/vocal_models/melband_roformer_instvox_duality_v2.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/melband_roformer_instvox_duality_v2.ckpt"
     },
     "BS-Roformer_LargeV1.ckpt": {
         "model_class": "vocal_models",
@@ -589,7 +677,9 @@
         "model_size": 740263433,
         "sha256": "3d1334565bb9e4c08f4b3891d5ac39e269b511baf66024a3fd8a10112d52b945",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/BS-Roformer_LargeV1.ckpt"
+        "target_position": "./pretrain/vocal_models/BS-Roformer_LargeV1.ckpt",
+        "model_type": "bs_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/BS-Roformer_LargeV1.ckpt"
     },
     "big_beta5e.ckpt": {
         "model_class": "vocal_models",
@@ -597,7 +687,9 @@
         "model_size": 1479749810,
         "sha256": "32b876e1163716a9a007438b5a5107069586aa9b9ca653a5f63013b1edf6920c",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/big_beta5e.ckpt"
+        "target_position": "./pretrain/vocal_models/big_beta5e.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/big_beta5e.ckpt"
     },
     "mel_band_roformer_instrumental_becruily.ckpt": {
         "model_class": "vocal_models",
@@ -605,7 +697,9 @@
         "model_size": 913106900,
         "sha256": "a8da6632a1c25efb1c9be783ce9ea367d226d4b918cd6c3717c8b1d7a396041d",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/mel_band_roformer_instrumental_becruily.ckpt"
+        "target_position": "./pretrain/vocal_models/mel_band_roformer_instrumental_becruily.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/mel_band_roformer_instrumental_becruily.ckpt"
     },
     "mel_band_roformer_vocals_becruily.ckpt": {
         "model_class": "vocal_models",
@@ -613,7 +707,9 @@
         "model_size": 913107578,
         "sha256": "a05961310cc55fbb901290c2e8be02682942f73522b6ac76bf2ec11e347ed95a",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/mel_band_roformer_vocals_becruily.ckpt"
+        "target_position": "./pretrain/vocal_models/mel_band_roformer_vocals_becruily.ckpt",
+        "model_type": "mel_band_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/mel_band_roformer_vocals_becruily.ckpt"
     },
     "bs_roformer_male_female_by_aufr33_sdr_7.2889.ckpt": {
         "model_class": "vocal_models",
@@ -621,6 +717,8 @@
         "model_size": 527119779,
         "sha256": "3cf11736d1b42a11ae55d8299316585921477dd2a671b24b663660846ca9861b",
         "is_installed": false,
-        "target_position": "./pretrain/vocal_models/bs_roformer_male_female_by_aufr33_sdr_7.2889.ckpt"
+        "target_position": "./pretrain/vocal_models/bs_roformer_male_female_by_aufr33_sdr_7.2889.ckpt",
+        "model_type": "bs_roformer",
+        "link": "https://huggingface.co/Sucial/MSST-WebUI/resolve/main/All_Models/vocal_models/bs_roformer_male_female_by_aufr33_sdr_7.2889.ckpt"
     }
 }

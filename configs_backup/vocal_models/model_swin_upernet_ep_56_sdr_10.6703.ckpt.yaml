@@ -1,0 +1,46 @@
+audio:
+  chunk_size: 261632
+  dim_f: 4096
+  dim_t: 512
+  hop_length: 512
+  min_mean_abs: 0.001
+  n_fft: 8192
+  num_channels: 2
+  sample_rate: 44100
+augmentations:
+  enable: true
+  loudness: true
+  loudness_max: 1.5
+  loudness_min: 0.5
+  mixup: true
+  mixup_loudness_max: 1.5
+  mixup_loudness_min: 0.5
+  mixup_probs: !!python/tuple
+  - 0.2
+  - 0.02
+inference:
+  batch_size: 1
+  dim_t: 512
+  num_overlap: 4
+model:
+  act: gelu
+  num_channels: 16
+  num_subbands: 8
+training:
+  batch_size: 14
+  coarse_loss_clip: true
+  ema_momentum: 0.999
+  grad_clip: 0
+  gradient_accumulation_steps: 4
+  instruments:
+  - vocals
+  - other
+  lr: 3.0e-05
+  num_epochs: 1000
+  num_steps: 1000
+  optimizer: adamw
+  other_fix: true
+  patience: 2
+  q: 0.95
+  reduce_factor: 0.95
+  target_instrument: null

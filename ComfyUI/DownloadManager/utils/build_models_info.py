@@ -86,7 +86,8 @@ def create_models_info():
                         "is_installed": False,
                         "target_position": f"./pretrain/{category}/{model_name}",
                         # "config_path": model["config_path"],
-                        # "model_type": model["model_type"]
+                        "model_type": model["model_type"],
+                        "link": model["link"]
                     }
     
     try:

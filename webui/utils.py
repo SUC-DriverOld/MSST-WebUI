@@ -122,9 +122,9 @@ def load_selected_model(model_type=None):
     return None
 
 def load_msst_model():
-    config = load_configs(MSST_MODEL)
     model_list = []
-    model_dir = [os.path.join(MODEL_FOLDER, keys) for keys in config.keys()]
+    model_classes = ["multi_stem_models", "single_stem_models", "vocal_models"]
+    model_dir = [os.path.join(MODEL_FOLDER, keys) for keys in model_classes]
     for dirs in model_dir:
         for files in os.listdir(dirs):
             if files.endswith(('.ckpt', '.th', '.chpt')):
@@ -132,34 +132,52 @@ def load_msst_model():
     return model_list
 
 def get_msst_model(model_name, model_type=None):
-    config = load_configs(MSST_MODEL)
+    # config = load_configs(MSST_MODEL)
+    # main_link = get_main_link()
+    # model_type = [model_type] if model_type else config.keys()
+
+    # for keys in model_type:
+    #     for model in config[keys]:
+    #         if model["name"] == model_name:
+    #             model_type = model["model_type"]
+    #             model_path = os.path.join(MODEL_FOLDER, keys, model_name)
+    #             config_path = model["config_path"]
+    #             download_link = model["link"]
+    #             try:
+    #                 download_link = download_link.replace("huggingface.co", main_link)
+    #             except:
+    #                 pass
+    #             return model_path, config_path, model_type, download_link
+
+    # if os.path.isfile(os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json")):
+    #     unofficial_config = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
+    #     for keys in model_type:
+    #         for model in unofficial_config[keys]:
+    #             if model["name"] == model_name:
+    #                 model_type = model["model_type"]
+    #                 model_path = os.path.join(MODEL_FOLDER, keys, model_name)
+    #                 config_path = model["config_path"]
+    #                 download_link = model["link"]
+    #                 return model_path, config_path, model_type, download_link
+    # raise gr.Error(i18n("模型不存在!"))
+
+    config = load_configs(MODELS_INFO)
     main_link = get_main_link()
-    model_type = [model_type] if model_type else config.keys()
+    model_type = [model_type] if model_type else ["multi_stem_models", "single_stem_models", "vocal_models"]
+    if not model_name in config.keys():
+        # print(model_name, config.keys())
+        raise gr.Error(i18n("模型不存在!"))
+    model = config[model_name]
+    model_path = model["target_position"]
+    config_path = model_path.replace("pretrain", "configs") + ".yaml"
+    download_link = model["link"]
+    model_type = model["model_type"]
+    try:
+        download_link = download_link.replace("huggingface.co", main_link)
+    except:
+        pass
 
-    for keys in model_type:
-        for model in config[keys]:
-            if model["name"] == model_name:
-                model_type = model["model_type"]
-                model_path = os.path.join(MODEL_FOLDER, keys, model_name)
-                config_path = model["config_path"]
-                download_link = model["link"]
-                try:
-                    download_link = download_link.replace("huggingface.co", main_link)
-                except:
-                    pass
-                return model_path, config_path, model_type, download_link
-
-    if os.path.isfile(os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json")):
-        unofficial_config = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
-        for keys in model_type:
-            for model in unofficial_config[keys]:
-                if model["name"] == model_name:
-                    model_type = model["model_type"]
-                    model_path = os.path.join(MODEL_FOLDER, keys, model_name)
-                    config_path = model["config_path"]
-                    download_link = model["link"]
-                    return model_path, config_path, model_type, download_link
-    raise gr.Error(i18n("模型不存在!"))
+    return model_path, config_path, model_type, download_link
 
 def load_vr_model():
     downloaded_model = []

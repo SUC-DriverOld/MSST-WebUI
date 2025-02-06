@@ -17,7 +17,6 @@ from webui.settings import (
     change_local_link,
     save_port_to_config,
     save_auto_clean_cache,
-    rename_name,
     save_audio_setting_fn,
     update_rename_model_name,
     change_theme
@@ -143,30 +142,6 @@ def settings(webui_config, language_dict, platform, device):
             )
             save_audio_setting = gr.Button(i18n("保存设置"), variant="primary")
             audio_setting_output_message = gr.Textbox(label="Output Message")
-        with gr.TabItem(label=i18n("模型改名")):
-            gr.Markdown(i18n("此页面支持用户自定义修改模型名字, 以便记忆和使用。修改完成后, 需要重启WebUI以刷新模型列表。<br>【注意】此操作不可逆 (无法恢复至默认命名), 请谨慎命名。输入新模型名字时, 需保留后缀!"))
-            with gr.Row():
-                rename_model_type = gr.Dropdown(
-                    label=i18n("选择模型类型"),
-                    choices=MODEL_CHOICES,
-                    value=None,
-                    interactive=True,
-                    scale=1
-                )
-                rename_model_name = gr.Dropdown(
-                    label=i18n("选择模型"),
-                    choices=[i18n("请先选择模型类型")],
-                    value=i18n("请先选择模型类型"),
-                    interactive=True,
-                    scale=4
-                )
-            rename_new_name = gr.Textbox(
-                label=i18n("新模型名"),
-                placeholder=i18n("请输入新模型名字, 需保留后缀!"),
-                interactive=True
-            )
-            rename_model = gr.Button(i18n("确认修改"), variant="primary")
-            rename_output_message = gr.Textbox(label="Output Message")
 
     restart_webui.click(fn=webui_restart, outputs=setting_output_message)
     check_update.click(fn=check_webui_update, outputs=update_message)
@@ -209,11 +184,6 @@ def settings(webui_config, language_dict, platform, device):
         inputs=open_local_link,
         outputs=setting_output_message
     )
-    rename_model_type.change(
-        fn=update_rename_model_name,
-        inputs=rename_model_type,
-        outputs=rename_model_name
-    )
     debug_mode.change(
         fn=log_level_debug,
         inputs=debug_mode,
@@ -232,16 +202,4 @@ def settings(webui_config, language_dict, platform, device):
             mp3_bit_rate
         ], 
         outputs=audio_setting_output_message
-    )
-    rename_model.click(
-        fn=rename_name,
-        inputs=[
-            rename_model_type,
-            rename_model_name,
-            rename_new_name
-        ], outputs=[
-            rename_output_message,
-            rename_model_type,
-            rename_model_name
-        ]
     )

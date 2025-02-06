@@ -1,6 +1,6 @@
 import json
 import os
-from utils.constant import WEBUI_CONFIG, MSST_MODEL, VR_MODEL
+from utils.constant import WEBUI_CONFIG, VR_MODEL, MODELS_INFO
 from webui.utils import load_configs, logger
 
 def load_configs(config_path):
@@ -14,9 +14,9 @@ def load_vr_model():
     return vr_models
 
 def load_msst_model():
-    config = load_configs(MSST_MODEL)
+    keys = ["multi_stem_models", "single_stem_models", "vocal_models"]
     model_list = []
-    model_dir = [os.path.join("pretrain", keys) for keys in config.keys()]
+    model_dir = [os.path.join("pretrain", key) for key in keys]
     for dirs in model_dir:
         for files in os.listdir(dirs):
             if files.endswith(('.ckpt', '.pth', '.th', '.chpt')):
@@ -24,13 +24,17 @@ def load_msst_model():
     return model_list
 
 def get_msst_model(model_name):
-    config = load_configs(MSST_MODEL)
-    for keys in config.keys():
-        for model in config[keys]:
-            if model["name"] == model_name:
-                model_path = os.path.join("pretrain", keys, model_name)
-                download_link = model["link"]
-                return model_path, download_link
+    config = load_configs(MODELS_INFO)
+    # for keys in config.keys():
+    #     for model in config[keys]:
+    #         if model["name"] == model_name:
+    #             model_path = os.path.join("pretrain", keys, model_name)
+    #             download_link = model["link"]
+    #             return model_path, download_link
+    if config[model_name]:
+        model_path = os.path.join("pretrain", config[model_name]["model_class"], model_name)
+        download_link = config[model_name]["download_link"]
+        return model_path, download_link
 
 def get_uvr_models(model_name):
     config = load_configs(VR_MODEL)
@@ -55,11 +59,16 @@ def download(url, path):
         return 0
 
 def download_model(model_type, model_name):
-    msst_config = load_configs(MSST_MODEL)
+    # msst_config = load_configs(MSST_MODEL)
+    # msst_models = []
+    # for keys in msst_config.keys():
+    #     for model in msst_config[keys]:
+    #         msst_models.append(model["name"])
+    msst_config = load_configs(MODELS_INFO)
     msst_models = []
-    for keys in msst_config.keys():
-        for model in msst_config[keys]:
-            msst_models.append(model["name"])
+    for key, model in msst_config.items():
+        if not model["model_class"] == "VR_Models":
+            msst_models.append(key)
     uvr_config = load_configs(VR_MODEL)
     uvr_models = uvr_config.keys()
     downloaded_msst_models = load_msst_model()

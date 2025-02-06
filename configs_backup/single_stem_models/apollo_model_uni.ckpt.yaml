@@ -1,0 +1,31 @@
+audio:
+  chunk_size: 882000
+  min_mean_abs: 0.0
+  num_channels: 2
+  sample_rate: 44100
+augmentations:
+  enable: false
+inference:
+  batch_size: 1
+  num_overlap: 4
+model:
+  feature_dim: 384
+  layer: 6
+  sr: 44100
+  win: 20
+training:
+  batch_size: 2
+  coarse_loss_clip: true
+  grad_clip: 0
+  instruments:
+  - restored
+  - addition
+  lr: 1.0
+  num_epochs: 1000
+  num_steps: 1000
+  optimizer: prodigy
+  patience: 2
+  q: 0.95
+  reduce_factor: 0.95
+  target_instrument: restored
+  use_amp: true
