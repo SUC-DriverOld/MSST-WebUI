@@ -193,7 +193,7 @@ def load_vr_model():
     return downloaded_model
 
 def get_vr_model(model):
-    config = load_configs(VR_MODEL)
+    config = load_configs(MODELS_INFO)
     model_path = load_configs(WEBUI_CONFIG)['settings']['uvr_model_dir']
     main_link = get_main_link()
 
@@ -201,21 +201,12 @@ def get_vr_model(model):
         if keys == model:
             primary_stem = config[keys]["primary_stem"]
             secondary_stem = config[keys]["secondary_stem"]
-            model_url = config[keys]["download_link"]
+            model_url = config[keys]["link"]
             try:
                 model_url = model_url.replace("huggingface.co", main_link)
             except: 
                 pass
             return primary_stem, secondary_stem, model_url, model_path
-
-    if os.path.isfile(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json")):
-        unofficial_config = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
-        for keys in unofficial_config.keys():
-            if keys == model:
-                primary_stem = unofficial_config[keys]["primary_stem"]
-                secondary_stem = unofficial_config[keys]["secondary_stem"]
-                model_url = unofficial_config[keys]["download_link"]
-                return primary_stem, secondary_stem, model_url, model_path
     raise gr.Error(i18n("模型不存在!"))
 
 

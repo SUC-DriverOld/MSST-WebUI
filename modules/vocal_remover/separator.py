@@ -14,7 +14,7 @@ from pydub import AudioSegment
 from tqdm import tqdm
 from modules.vocal_remover.vr_separator import VRSeparator
 from utils.logger import get_logger, set_log_level
-from utils.constant import TEMP_PATH, VR_MODEL, UNOFFICIAL_MODEL
+from utils.constant import TEMP_PATH, MODELS_INFO, UNOFFICIAL_MODEL
 
 class Separator:
     def __init__(
@@ -137,16 +137,15 @@ class Separator:
         self.torch_device = self.torch_device_mps
 
     def load_model_data(self, model_name):
-        vr_model_data_object = json.load(open(VR_MODEL, encoding="utf-8"))
+        with open(MODELS_INFO, "r") as f:
+            vr_model_data_object = json.load(f)
         if model_name in vr_model_data_object.keys():
             model_data = vr_model_data_object[model_name]
             self.logger.debug(f"Model data loaded from UVR JSON: {model_data}")
             return model_data
         else:
-            unofficial_model_data = json.load(open(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"), encoding="utf-8"))
-            model_data = unofficial_model_data[model_name]
-            self.logger.debug(f"Model data loaded from unofficial UVR JSON: {model_data}")
-            return model_data
+            self.logger.error(f"Model data not found in UVR JSON for model: {model_name}")
+            raise ValueError(f"Model data not found in UVR JSON for model: {model_name}")
 
     def load_model(self, model_path):
         model_filename = os.path.basename(model_path)

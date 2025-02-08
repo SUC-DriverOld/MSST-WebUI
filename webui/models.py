@@ -37,11 +37,14 @@ def open_download_manager():
     os.system(command)
 
 def upgrade_download_model_name(model_type_dropdown):
+    model_map = load_configs(MODELS_INFO)
     if model_type_dropdown == "UVR_VR_Models":
-        model_map = load_configs(VR_MODEL)
+        list = []
+        for model in model_map.values():
+            if model["model_class"] == "VR_Models":
+                list.append(model["model_name"])
         return gr.Dropdown(label=i18n("选择模型"), choices=[keys for keys in model_map.keys()])
     else:
-        model_map = load_configs(MODELS_INFO)
         list = []
         for model in model_map.values():
             if model["model_class"] == model_type_dropdown:
@@ -255,13 +258,14 @@ def install_unmsst_model(unmsst_model, unmsst_config, unmodel_class, unmodel_typ
 
 
 def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model_param, is_karaoke_model, is_BV_model, is_VR51_model, balance_value, out_channels, out_channels_lstm, upload_param, unvr_model_link):
-    os.makedirs(UNOFFICIAL_MODEL, exist_ok=True)
+    # os.makedirs(UNOFFICIAL_MODEL, exist_ok=True)
 
-    try:
-        model_map = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
-    except FileNotFoundError:
-        model_map = {}
+    # try:
+    #     model_map = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
+    # except FileNotFoundError:
+    #     model_map = {}
 
+    model_map = load_configs(MODELS_INFO)
     try:
         model_name = os.path.basename(unvr_model)
         model_map[model_name] = {}
@@ -287,7 +291,7 @@ def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model
 
         if model_param == i18n("上传参数"):
             os.makedirs(os.path.join(UNOFFICIAL_MODEL, "vr_modelparams"), exist_ok=True)
-            shutil.copy(upload_param, os.path.join(UNOFFICIAL_MODEL, "vr_modelparams"))
+            shutil.copy(upload_param, VR_MODELPARAMS)
             model_map[model_name]["vr_model_param"] = os.path.basename(upload_param)[:-5]
         else: 
             model_map[model_name]["vr_model_param"] = model_param
@@ -301,7 +305,7 @@ def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model
             model_map[model_name]["nout"] = out_channels
             model_map[model_name]["nout_lstm"] = out_channels_lstm
 
-        save_configs(model_map, os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
+        save_configs(model_map, MODELS_INFO)
         logger.info(f"Unofficial VR model {model_name} installed successfully. Model config: {model_map[model_name]}")
         return i18n("模型") + os.path.basename(unvr_model) + i18n("安装成功。重启WebUI以刷新模型列表")
     except Exception as e:

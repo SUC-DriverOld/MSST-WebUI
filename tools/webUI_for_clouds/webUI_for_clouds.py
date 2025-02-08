@@ -31,8 +31,12 @@ def msst_cloud_model(model_type):
             msst_models.append(key)
 
 def load_vr_cloud_model():
-    model_map = load_configs(VR_MODEL)
-    return model_map.keys()
+    model_map = load_configs(MODELS_INFO)
+    list = []
+    for key, model in model_map.items():
+        if model["model_class"] == "VR_Models":
+            list.append(key)
+    return list
 
 def load_msst_cloud_model(model_type):
     model_list = msst_cloud_model(model_type)

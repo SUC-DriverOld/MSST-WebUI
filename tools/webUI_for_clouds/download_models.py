@@ -1,6 +1,6 @@
 import json
 import os
-from utils.constant import WEBUI_CONFIG, VR_MODEL, MODELS_INFO
+from utils.constant import WEBUI_CONFIG, MODELS_INFO
 from webui.utils import load_configs, logger
 
 def load_configs(config_path):
@@ -37,11 +37,11 @@ def get_msst_model(model_name):
         return model_path, download_link
 
 def get_uvr_models(model_name):
-    config = load_configs(VR_MODEL)
+    config = load_configs(MODELS_INFO)
     for key in config.keys():
-        if key == model_name:
+        if key == model_name and config[key]["model_class"] == "VR_Models":
             model_path = os.path.join("pretrain", "VR_Models", model_name)
-            download_link = config[key]["download_link"]
+            download_link = config[key]["link"]
             return model_path, download_link
 
 def download(url, path):
@@ -69,8 +69,12 @@ def download_model(model_type, model_name):
     for key, model in msst_config.items():
         if not model["model_class"] == "VR_Models":
             msst_models.append(key)
-    uvr_config = load_configs(VR_MODEL)
-    uvr_models = uvr_config.keys()
+    # uvr_config = load_configs(VR_MODEL)
+    model_map = load_configs(MODELS_INFO)
+    uvr_models = []
+    for key, model in model_map.items():
+        if model["model_class"] == "VR_Models":
+            uvr_models.append(key)
     downloaded_msst_models = load_msst_model()
     downloaded_uvr_models = load_vr_model()
     if model_name not in msst_models and model_name not in uvr_models:
