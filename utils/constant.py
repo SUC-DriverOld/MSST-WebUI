@@ -9,8 +9,8 @@ Key Configurations:
 - WEBUI_CONFIG: Path to the main web UI configuration file.
 - WEBUI_CONFIG_BACKUP: Backup path for the web UI configuration.
 - PRESETS: Path for preset data storage.
-- MSST_MODEL: Path for the MSST model mapping.
-- VR_MODEL: Path for the VR model mapping.
+- MSST_MODEL: Path for the MSST model mapping. (Removed in >1.7)
+- VR_MODEL: Path for the VR model mapping. (Removed in >1.7)
 - LANGUAGE: Path for language data files.
 - BACKUP: Directory for storing backups.
 - MODEL_FOLDER: Directory for pre-trained models.
@@ -55,13 +55,13 @@ PRESETS_BACKUP = "presets_backup"
 PRESET_VERSION = "1.0.0"
 SUPPORTED_PRESET_VERSION = ["1.0.0"]
 
-# msst model map path
-MSST_MODEL = "data/msst_model_map.json"
-MSST_MODEL_BACKUP = "data_backup/msst_model_map.json"
+# # msst model map path
+# MSST_MODEL = "data/msst_model_map.json"
+# MSST_MODEL_BACKUP = "data_backup/msst_model_map.json"
 
 # vr model map path
-VR_MODEL = "data/vr_model_map.json"
-VR_MODEL_BACKUP = "data_backup/vr_model_map.json"
+# VR_MODEL = "data/vr_model_map.json"
+# VR_MODEL_BACKUP = "data_backup/vr_model_map.json"
 
 # language data path
 LANGUAGE = "data/language.json"

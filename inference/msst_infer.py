@@ -27,13 +27,22 @@ class MSSeparator:
             store_dirs = 'results', # str for single folder, dict with instrument keys for multiple folders
             audio_params = {"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
             logger = get_logger(),
-            debug = False
+            debug = False,
+            inference_params = {
+                "batch_size": None,
+                "num_overlap": None,
+                "chunk_size": None,
+                "normalize": None
+            }
     ):
+        
+        self.logger = logger
 
         if not model_type:
             raise ValueError('model_type is required')
         if not config_path:
-            raise ValueError('config_path is required')
+            config_path = model_path.replace('pretrain', 'configs') + '.yaml'
+            logger.info(f"config_path is not provided, using default config_path: {config_path}")
         if not model_path:
             raise ValueError('model_path is required')
 
@@ -44,13 +53,14 @@ class MSSeparator:
         self.use_tta = use_tta
         self.store_dirs = store_dirs
         self.audio_params = audio_params
-        self.logger = logger
         self.debug = debug
 
         if self.debug:
             set_log_level(logger, logging.DEBUG)
         else:
             set_log_level(logger, logging.INFO)
+
+        self.inference_params = inference_params    
 
         self.log_system_info()
         self.check_ffmpeg_installed()
@@ -106,6 +116,8 @@ class MSSeparator:
     def load_model(self):
         start_time = time()
         model, config = get_model_from_config(self.model_type, self.config_path)
+
+        self.update_inference_params(config, self.inference_params)
 
         self.logger.info(f"Separator params: model_type: {self.model_type}, model_path: {self.model_path}, config_path: {self.config_path}, output_folder: {self.store_dirs}")
         self.logger.info(f"Audio params: output_format: {self.output_format}, audio_params: {self.audio_params}")
@@ -295,3 +307,14 @@ class MSSeparator:
         if "cuda" in self.device:
             self.logger.debug("Clearing CUDA cache...")
             torch.cuda.empty_cache()
+
+    def update_inference_params(self, config, params):
+        for key, value in {
+            'batch_size': 'inference',
+            'num_overlap': 'inference', 
+            'chunk_size': 'audio',
+            'normalize': 'inference'
+        }.items():
+            if config[value].get(key) and params[key] is not None:
+                config[value][key] = int(params[key]) if key != 'normalize' else params[key]
+        return config        

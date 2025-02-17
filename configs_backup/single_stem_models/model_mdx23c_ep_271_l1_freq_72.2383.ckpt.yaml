@@ -1,0 +1,82 @@
+audio:
+  chunk_size: 130560
+  dim_f: 1024
+  dim_t: 256
+  hop_length: 512
+  min_mean_abs: 0.001
+  n_fft: 2048
+  num_channels: 2
+  sample_rate: 44100
+augmentations:
+  all:
+    channel_shuffle: 0.5
+    mp3_compression: 0.0
+    mp3_compression_backend: lameenc
+    mp3_compression_max_bitrate: 320
+    mp3_compression_min_bitrate: 32
+    pitch_shift: 0.1
+    pitch_shift_max_semitones: 3
+    pitch_shift_min_semitones: -3
+    random_inverse: 0.01
+    random_polarity: 0.5
+    seven_band_parametric_eq: 0.5
+    seven_band_parametric_eq_max_gain_db: 6
+    seven_band_parametric_eq_min_gain_db: -6
+    tanh_distortion: 0.2
+    tanh_distortion_max: 0.5
+    tanh_distortion_min: 0.1
+  enable: true
+  loudness: true
+  loudness_max: 1.5
+  loudness_min: 0.5
+difference:
+  pedalboard_reverb: 0.01
+  pedalboard_reverb_damping_max: 0.9
+  pedalboard_reverb_damping_min: 0.1
+  pedalboard_reverb_dry_level_max: 0.9
+  pedalboard_reverb_dry_level_min: 0.5
+  pedalboard_reverb_room_size_max: 0.9
+  pedalboard_reverb_room_size_min: 0.1
+  pedalboard_reverb_wet_level_max: 0.5
+  pedalboard_reverb_wet_level_min: 0.1
+  pedalboard_reverb_width_max: 1.0
+  pedalboard_reverb_width_min: 0.3
+inference:
+  batch_size: 1
+  dim_t: 256
+  num_overlap: 4
+model:
+  act: gelu
+  bottleneck_factor: 4
+  growth: 128
+  norm: InstanceNorm
+  num_blocks_per_scale: 2
+  num_channels: 128
+  num_scales: 5
+  num_subbands: 4
+  scale:
+  - 2
+  - 2
+similarity:
+  gaussian_noise: 0.1
+  gaussian_noise_max_amplitude: 0.015
+  gaussian_noise_min_amplitude: 0.001
+training:
+  batch_size: 2
+  coarse_loss_clip: true
+  ema_momentum: 0.999
+  grad_clip: 0
+  gradient_accumulation_steps: 3
+  instruments:
+  - similarity
+  - difference
+  lr: 1.0
+  num_epochs: 1000
+  num_steps: 2235
+  optimizer: prodigy
+  other_fix: false
+  patience: 15
+  q: 0.95
+  reduce_factor: 0.95
+  target_instrument: similarity
+  use_amp: true

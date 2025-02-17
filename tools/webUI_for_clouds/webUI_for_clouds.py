@@ -17,17 +17,26 @@ device = []
 force_cpu_value = False
 
 def msst_cloud_model(model_type):
-    if not model_type:
-        return None
-    model_map = load_configs(MSST_MODEL)
-    model_list = []
-    for model in model_map[model_type]:
-        model_list.append(model["name"])
-    return model_list
+    # if not model_type:
+    #     return None
+    # model_map = load_configs(MSST_MODEL)
+    # model_list = []
+    # for model in model_map[model_type]:
+    #     model_list.append(model["name"])
+    # return model_list
+    msst_config = load_configs(MODELS_INFO)
+    msst_models = []
+    for key, model in msst_config.items():
+        if model["model_class"] == model_type:
+            msst_models.append(key)
 
 def load_vr_cloud_model():
-    model_map = load_configs(VR_MODEL)
-    return model_map.keys()
+    model_map = load_configs(MODELS_INFO)
+    list = []
+    for key, model in model_map.items():
+        if model["model_class"] == "VR_Models":
+            list.append(key)
+    return list
 
 def load_msst_cloud_model(model_type):
     model_list = msst_cloud_model(model_type)

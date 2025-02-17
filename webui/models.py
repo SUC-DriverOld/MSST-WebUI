@@ -37,14 +37,21 @@ def open_download_manager():
     os.system(command)
 
 def upgrade_download_model_name(model_type_dropdown):
+    model_map = load_configs(MODELS_INFO)
     if model_type_dropdown == "UVR_VR_Models":
-        model_map = load_configs(VR_MODEL)
+        list = []
+        for model in model_map.values():
+            if model["model_class"] == "VR_Models":
+                list.append(model["model_name"])
         return gr.Dropdown(label=i18n("选择模型"), choices=[keys for keys in model_map.keys()])
     else:
-        model_map = load_configs(MSST_MODEL)
-        return gr.Dropdown(label=i18n("选择模型"), choices=[model["name"] for model in model_map[model_type_dropdown]])
+        list = []
+        for model in model_map.values():
+            if model["model_class"] == model_type_dropdown:
+                list.append(model["model_name"])
+        return gr.Dropdown(label=i18n("选择模型"), choices=list)
 
-def caculate_sha256(file_path):
+def calculate_sha256(file_path):
     sha256 = hashlib.sha256()
     with open(file_path, "rb") as f:
         while True:
@@ -73,7 +80,7 @@ def show_model_info(model_type, model_name):
         info += i18n("模型已安装") + ", "
         if sha256 == "Unknown":
             info += i18n("无法校验sha256")
-        elif sha256 != caculate_sha256(model_path):
+        elif sha256 != calculate_sha256(model_path):
             info += i18n("sha256校验失败")
             gr.Warning(i18n("模型sha256校验失败, 请重新下载"))
             logger.warning(f"Model {model_name} sha256 check failed, please redownload")
@@ -128,7 +135,7 @@ def download_file(url, path, model_name):
                         last_update_time = current_time
                 progress_bar.update(bytes_written)
 
-        current_sha256 = caculate_sha256(path)
+        current_sha256 = calculate_sha256(path)
         _, target_sha256 = load_model_info(model_name)
         logger.debug(f"Model {model_name} sha256: {current_sha256}, target sha256: {target_sha256}")
         if target_sha256 != "Unknown":
@@ -173,16 +180,47 @@ def update_vr_param(is_BV_model, is_VR51_model, model_param):
     return balance_value, out_channels, out_channels_lstm, upload_param
 
 def install_unmsst_model(unmsst_model, unmsst_config, unmodel_class, unmodel_type, unmsst_model_link):
-    os.makedirs(os.path.join(UNOFFICIAL_MODEL, "msst_config"), exist_ok=True)
+    # os.makedirs(os.path.join(UNOFFICIAL_MODEL, "msst_config"), exist_ok=True)
 
-    try:
-        model_map = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
-    except FileNotFoundError:
-        model_map = {"multi_stem_models": [], "single_stem_models": [], "vocal_models": []}
+    # try:
+    #     model_map = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
+    # except FileNotFoundError:
+    #     model_map = {"multi_stem_models": [], "single_stem_models": [], "vocal_models": []}
 
+    # try:
+    #     model_name = os.path.basename(unmsst_model)
+
+    #     if not unmsst_config.endswith(".yaml"):
+    #         return i18n("请上传'.yaml'格式的配置文件")
+    #     if not unmsst_model.endswith((".ckpt", ".chpt", ".th")):
+    #         return i18n("请上传'ckpt', 'chpt', 'th'格式的模型文件")
+    #     if unmodel_class == "" or unmodel_type == "":
+    #         return i18n("请输入正确的模型类别和模型类型")
+
+    #     if model_name in load_msst_model():
+    #         os.remove(os.path.join(MODEL_FOLDER, unmodel_class, model_name))
+    #         logger.warning(f"Find existing model with the same name: {model_name}, overwriting.")
+
+    #     shutil.copy(unmsst_model, os.path.join(MODEL_FOLDER, unmodel_class))
+    #     shutil.copy(unmsst_config, os.path.join(UNOFFICIAL_MODEL, "msst_config"))
+
+    #     config = {
+    #         "name": model_name,
+    #         "config_path": os.path.join(UNOFFICIAL_MODEL, "msst_config", os.path.basename(unmsst_config)),
+    #         "model_type": unmodel_type,
+    #         "link": unmsst_model_link
+    #     }
+
+    #     model_map[unmodel_class].append(config)
+    #     save_configs(model_map, os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
+    #     logger.info(f"Unofficial MSST model {model_name} installed successfully. Model config: {config}")
+    #     return i18n("模型") + os.path.basename(unmsst_model) + i18n("安装成功。重启WebUI以刷新模型列表")
+    # except Exception as e:
+    #     logger.error(f"Failed to install unofficial MSST model: {str(e)}\n{traceback.format_exc()}")
+    #     return i18n("模型") + os.path.basename(unmsst_model) + i18n("安装失败") + str(e)
+    models_info = load_configs(MODELS_INFO)
     try:
         model_name = os.path.basename(unmsst_model)
-
         if not unmsst_config.endswith(".yaml"):
             return i18n("请上传'.yaml'格式的配置文件")
         if not unmsst_model.endswith((".ckpt", ".chpt", ".th")):
@@ -194,32 +232,40 @@ def install_unmsst_model(unmsst_model, unmsst_config, unmodel_class, unmodel_typ
             os.remove(os.path.join(MODEL_FOLDER, unmodel_class, model_name))
             logger.warning(f"Find existing model with the same name: {model_name}, overwriting.")
 
-        shutil.copy(unmsst_model, os.path.join(MODEL_FOLDER, unmodel_class))
-        shutil.copy(unmsst_config, os.path.join(UNOFFICIAL_MODEL, "msst_config"))
+        target_position = os.path.join(MODEL_FOLDER, unmodel_class, model_name)
+        config_path = target_position.replace("pretrain", "configs") + ".yaml"
+        shutil.copy(unmsst_model, target_position)
+        shutil.copy(unmsst_config, config_path)
 
         config = {
-            "name": model_name,
-            "config_path": os.path.join(UNOFFICIAL_MODEL, "msst_config", os.path.basename(unmsst_config)),
+            "model_class": unmodel_class,
+            "model_name": model_name,
+            "model_size": os.path.getsize(target_position),
+            "sha256": calculate_sha256(target_position),
+            "is_installed": True,
+            "target_position": target_position,
             "model_type": unmodel_type,
-            "link": unmsst_model_link
+            "link": unmsst_model_link if unmsst_model_link else ""
         }
 
-        model_map[unmodel_class].append(config)
-        save_configs(model_map, os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
+        models_info[model_name] = config
+        save_configs(models_info, MODELS_INFO)
         logger.info(f"Unofficial MSST model {model_name} installed successfully. Model config: {config}")
         return i18n("模型") + os.path.basename(unmsst_model) + i18n("安装成功。重启WebUI以刷新模型列表")
     except Exception as e:
         logger.error(f"Failed to install unofficial MSST model: {str(e)}\n{traceback.format_exc()}")
         return i18n("模型") + os.path.basename(unmsst_model) + i18n("安装失败") + str(e)
 
+
 def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model_param, is_karaoke_model, is_BV_model, is_VR51_model, balance_value, out_channels, out_channels_lstm, upload_param, unvr_model_link):
-    os.makedirs(UNOFFICIAL_MODEL, exist_ok=True)
+    # os.makedirs(UNOFFICIAL_MODEL, exist_ok=True)
 
-    try:
-        model_map = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
-    except FileNotFoundError:
-        model_map = {}
+    # try:
+    #     model_map = load_configs(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
+    # except FileNotFoundError:
+    #     model_map = {}
 
+    model_map = load_configs(MODELS_INFO)
     try:
         model_name = os.path.basename(unvr_model)
         model_map[model_name] = {}
@@ -245,7 +291,7 @@ def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model
 
         if model_param == i18n("上传参数"):
             os.makedirs(os.path.join(UNOFFICIAL_MODEL, "vr_modelparams"), exist_ok=True)
-            shutil.copy(upload_param, os.path.join(UNOFFICIAL_MODEL, "vr_modelparams"))
+            shutil.copy(upload_param, VR_MODELPARAMS)
             model_map[model_name]["vr_model_param"] = os.path.basename(upload_param)[:-5]
         else: 
             model_map[model_name]["vr_model_param"] = model_param
@@ -259,7 +305,7 @@ def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model
             model_map[model_name]["nout"] = out_channels
             model_map[model_name]["nout_lstm"] = out_channels_lstm
 
-        save_configs(model_map, os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"))
+        save_configs(model_map, MODELS_INFO)
         logger.info(f"Unofficial VR model {model_name} installed successfully. Model config: {model_map[model_name]}")
         return i18n("模型") + os.path.basename(unvr_model) + i18n("安装成功。重启WebUI以刷新模型列表")
     except Exception as e:

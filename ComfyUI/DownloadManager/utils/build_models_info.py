@@ -47,6 +47,9 @@ def create_models_info():
         info = get_file_info_from_hub(repo_id, filepath)
         
         if info:
+            is_karaoke_model = model_data.get("is_karaoke", False)
+            is_BV_model = model_data.get("is_bv_model", False)
+            is_VR51_model = "nout" in model_data and "nout_lstm" in model_data
             models_info[model_name] = {
                 "model_class": "VR_Models",
                 "model_name": model_name,
@@ -54,17 +57,19 @@ def create_models_info():
                 "sha256": info["sha256"],
                 "is_installed": False,
                 "target_position": f"./pretrain/VR_Models/{model_name}",
-                # "primary_stem": model_data["primary_stem"],
-                # "secondary_stem": model_data["secondary_stem"],
-                # "vr_model_param": model_data["vr_model_param"]
+                "primary_stem": model_data["primary_stem"],
+                "secondary_stem": model_data["secondary_stem"],
+                "vr_model_param": model_data["vr_model_param"],
+                "link": model_data["download_link"],
             }
-            
-            # 可选字段
-            # optional_fields = ["is_karaoke", "nout", "nout_lstm", "is_bv_model", "is_bv_model_rebalanced"]
-            # for field in optional_fields:
-            #     if field in model_data:
-            #         models_info[model_name][field] = model_data[field]
-        
+            if is_karaoke_model:
+                models_info[model_name]["is_karaoke"] = True
+            if is_BV_model:
+                models_info[model_name]["is_bv_model"] = True
+                models_info[model_name]["is_bv_model_rebalanced"] = model_data["is_bv_model_rebalanced"] 
+            if is_VR51_model:
+                models_info[model_name]["nout"] = model_data["nout"]
+                models_info[model_name]["nout_lstm"] = model_data["nout_lstm"]
         else:
             pass
     
@@ -86,7 +91,8 @@ def create_models_info():
                         "is_installed": False,
                         "target_position": f"./pretrain/{category}/{model_name}",
                         # "config_path": model["config_path"],
-                        # "model_type": model["model_type"]
+                        "model_type": model["model_type"],
+                        "link": model["link"]
                     }
     
     try:
