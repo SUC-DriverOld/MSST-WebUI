@@ -65,6 +65,11 @@ def vr(webui_config, force_cpu_flag=False):
             value=webui_config['inference']['vr_secondary_stem_only'] if webui_config['inference']['vr_secondary_stem_only'] else False,
             interactive=True
         )
+        vr_jump_failures = gr.Checkbox(
+            label=i18n("跳过处理失败的音频, 而非停止整个处理过程"),
+            value=webui_config['inference']['jump_failures'] if webui_config['inference']['jump_failures'] else False,
+            interactive=True
+        )
     with gr.Tabs():
         with gr.TabItem(label=i18n("输入音频")) as audio_tab:
             audio_input = gr.Files(label="上传一个或多个音频文件", type="filepath")
@@ -163,7 +168,8 @@ def vr(webui_config, force_cpu_flag=False):
             vr_invert_spect,
             vr_enable_tta,
             vr_high_end_process,
-            vr_enable_post_process
+            vr_enable_post_process,
+            vr_jump_failures
         ],
         outputs=vr_output_message
     )
@@ -184,7 +190,8 @@ def vr(webui_config, force_cpu_flag=False):
             vr_invert_spect,
             vr_enable_tta,
             vr_high_end_process,
-            vr_enable_post_process
+            vr_enable_post_process,
+            vr_jump_failures
         ],
         outputs=vr_output_message
     )

@@ -63,12 +63,17 @@ def msst(webui_config, device, force_cpu_flag=False):
             value=webui_config['inference']['instrumental'] if webui_config['inference']['instrumental'] else None,
             interactive=True
         )
-        force_cpu = gr.Checkbox(
-            info=i18n("强制使用CPU推理, 注意: 使用CPU推理速度非常慢!"),
-            label=i18n("使用CPU"),
-            value=force_cpu_value,
-            interactive=False if force_cpu_flag else True
-        )
+        with gr.Column():
+            force_cpu = gr.Checkbox(
+                label=i18n("强制使用CPU推理, 注意: 使用CPU推理速度非常慢!"),
+                value=force_cpu_value,
+                interactive=False if force_cpu_flag else True
+            )
+            jump_failures = gr.Checkbox(
+                label=i18n("跳过处理失败的音频, 而非停止整个处理过程"),
+                value=webui_config['inference']['jump_failures'] if webui_config['inference']['jump_failures'] else False,
+                interactive=True
+            )
     with gr.Tabs():
         with gr.TabItem(label=i18n("输入音频")) as audio_tab:
             audio_input = gr.Files(
@@ -157,6 +162,7 @@ def msst(webui_config, device, force_cpu_flag=False):
             output_format,
             force_cpu,
             use_tta,
+            jump_failures
         ],
         outputs=output_message
     )
@@ -171,6 +177,7 @@ def msst(webui_config, device, force_cpu_flag=False):
             output_format,
             force_cpu,
             use_tta,
+            jump_failures
         ],
         outputs=output_message
     )

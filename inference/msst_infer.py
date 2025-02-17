@@ -7,6 +7,7 @@ import torch
 import numpy as np
 import platform
 import subprocess
+import traceback
 from time import time
 from tqdm import tqdm
 from pydub import AudioSegment
@@ -27,6 +28,7 @@ class MSSeparator:
             store_dirs = 'results', # str for single folder, dict with instrument keys for multiple folders
             audio_params = {"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
             logger = get_logger(),
+            jump_failures = False,
             debug = False
     ):
 
@@ -45,6 +47,7 @@ class MSSeparator:
         self.store_dirs = store_dirs
         self.audio_params = audio_params
         self.logger = logger
+        self.jump_failures = jump_failures
         self.debug = debug
 
         if self.debug:
@@ -143,19 +146,27 @@ class MSSeparator:
         if not self.debug:
             all_mixtures_path = tqdm(all_mixtures_path, desc="Total progress")
 
-        success_files = []
+        success_files, failed_files = [], []
         for path in all_mixtures_path:
             if not self.debug:
                 all_mixtures_path.set_postfix({'track': os.path.basename(path)})
             try:
                 mix, sr = librosa.load(path, sr=sample_rate, mono=False)
             except Exception as e:
-                self.logger.warning(f'Cannot process track: {path}, error: {str(e)}')
+                self.logger.warning(f'Cannot load audio_file: {path}, error: {str(e)}')
                 continue
 
-            self.logger.debug(f"Starting separation process for audio_file: {path}")
-            results = self.separate(mix)
-            self.logger.debug(f"Separation audio_file: {path} completed. Starting to save results.")
+            try:
+                self.logger.debug(f"Starting separation process for audio_file: {path}")
+                results = self.separate(mix)
+                self.logger.debug(f"Separation audio_file: {path} completed. Starting to save results.")
+            except Exception as e:
+                if self.jump_failures:
+                    self.logger.error(f"Cannot separate audio_file: {path}, jump to next file. Separation failed: {str(e)}\n{traceback.format_exc()}")
+                    failed_files.append(os.path.basename(path))
+                    continue
+                else:
+                    raise e
 
             file_name, _ = os.path.splitext(os.path.basename(path))
 
@@ -174,6 +185,9 @@ class MSSeparator:
             success_files.append(os.path.basename(path))
             del mix, results
             gc.collect()
+
+        if self.jump_failures and failed_files:
+            self.logger.warning(f"Failed files: {failed_files}")
         return success_files
 
     def separate(self, mix):
@@ -181,15 +195,15 @@ class MSSeparator:
         if self.model_type in ['bs_roformer', 'mel_band_roformer']:
             isstereo = self.config.model.get("stereo", True)
 
-        if isstereo and len(mix.shape) == 1:
+        if isstereo and len(mix.shape) == 1: # if model is stereo, but track is mono, add a second channel
             mix = np.stack([mix, mix], axis=0)
             self.logger.warning(f"Track is mono, but model is stereo, adding a second channel.")
-        elif isstereo and len(mix.shape) > 2:
-            mix = np.mean(mix, axis=0) # if more than 2 channels, take mean
+        elif isstereo and len(mix.shape) != 1 and mix.shape[0] > 2: # fi model is stereo, but track has more than 2 channels, take mean
+            mix = np.mean(mix, axis=0)
             mix = np.stack([mix, mix], axis=0)
             self.logger.warning(f"Track has more than 2 channels, taking mean of all channels and adding a second channel.")
-        elif not isstereo and len(mix.shape) != 1:
-            mix = np.mean(mix, axis=0) # if more than 2 channels, take mean
+        elif not isstereo and len(mix.shape) != 1: # if model is mono, but track has more than 1 channels, take mean
+            mix = np.mean(mix, axis=0)
             self.logger.warning(f"Track has more than 1 channels, but model is mono, taking mean of all channels.")
 
         instruments = self.config.training.instruments.copy()

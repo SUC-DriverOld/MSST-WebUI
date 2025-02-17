@@ -139,7 +139,7 @@ def demix_track(config, model, mix, device, pbar=False):
                     arr = torch.stack(batch_data, dim=0)
                     x = model(arr)
 
-                    window = windowingArray
+                    window = windowingArray.clone()
                     if i - step == 0:  # First audio chunk, no fadein
                         window[:fade_size] = 1
                     elif i >= mix.shape[1]:  # Last audio chunk, no fadeout

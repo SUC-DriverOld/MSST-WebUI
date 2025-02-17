@@ -190,12 +190,14 @@ class Presets:
             presets,
             force_cpu=False,
             use_tta=False,
+            jump_failures=False,
             logger=get_logger()
     ):
         self.presets = presets.get("flow", [])
         self.device = "auto" if not force_cpu else "cpu"
         self.force_cpu = force_cpu
         self.use_tta = use_tta
+        self.jump_failures = jump_failures
         self.logger = logger
         self.total_steps = len(self.presets)
         self.preset_version = presets.get("version", "Unknown version")
@@ -244,8 +246,8 @@ class Presets:
             target=run_inference,
             args=(
                 model_type, config_path, model_path, self.device, self.gpu_ids, output_format,
-                self.use_tta, store_dict, self.debug, self.wav_bit_depth, self.flac_bit_depth,
-                self.mp3_bit_rate, input_folder, result_queue
+                self.use_tta, self.jump_failures, store_dict, self.debug, self.wav_bit_depth, 
+                self.flac_bit_depth, self.mp3_bit_rate, input_folder, result_queue
             ),
             name="msst_preset_inference"
         )
@@ -268,10 +270,10 @@ class Presets:
         vr_inference = multiprocessing.Process(
             target=run_inference,
             args=(
-                self.debug, model_file, output_dir, output_format, self.invert_using_spec, self.force_cpu,
-                self.batch_size, self.window_size, self.aggression, self.use_tta, self.enable_post_process,
-                self.post_process_threshold, self.high_end_process, self.wav_bit_depth, self.flac_bit_depth,
-                self.mp3_bit_rate, input_folder, result_queue
+                self.debug, self.jump_failures, model_file, output_dir, output_format, self.invert_using_spec, 
+                self.force_cpu, self.batch_size, self.window_size, self.aggression, self.use_tta, 
+                self.enable_post_process, self.post_process_threshold, self.high_end_process, self.wav_bit_depth, 
+                self.flac_bit_depth, self.mp3_bit_rate, input_folder, result_queue
             ),
             name="vr_preset_inference"
         )
@@ -286,7 +288,7 @@ class Presets:
         elif result[0] == "error":
             return 0, result[1]
 
-def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir):
+def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir=False, jump_failures=False):
     if not input_audio:
         return i18n("请上传至少一个音频文件!")
     if os.path.exists(TEMP_PATH):
@@ -296,10 +298,10 @@ def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_for
     for audio in input_audio:
         shutil.copy(audio, os.path.join(TEMP_PATH, "step_0_output"))
     input_folder = os.path.join(TEMP_PATH, "step_0_output")
-    msg = preset_inference(input_folder, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir, is_audio=True)
+    msg = preset_inference(input_folder, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir, jump_failures, is_audio=True)
     return msg
 
-def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir: bool, is_audio=False):
+def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_format, use_tta, extra_output_dir=False, jump_failures=False, is_audio=False):
     if preset_name not in os.listdir(PRESETS):
         return i18n("预设") + preset_name + i18n("不存在")
 
@@ -316,6 +318,7 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
     config['inference']['preset_use_tta'] = use_tta
     config['inference']['store_dir'] = store_dir
     config['inference']['extra_output_dir'] = extra_output_dir
+    config['inference']['jump_failures'] = jump_failures
     if not is_audio:
         config['inference']['input_dir'] = input_folder
     save_configs(config, WEBUI_CONFIG)
@@ -332,7 +335,7 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
         shutil.rmtree(TEMP_PATH)
     tmp_store_dir = os.path.join(TEMP_PATH, "step_1_output")
 
-    preset = Presets(preset_data, force_cpu, use_tta, logger)
+    preset = Presets(preset_data, force_cpu, use_tta, jump_failures, logger)
 
     logger.info(f"Starting preset inference process, use presets: {preset_name}")
     logger.debug(f"presets: {preset.presets}")

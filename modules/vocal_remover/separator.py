@@ -10,6 +10,7 @@ import torch
 import librosa
 import numpy as np
 import soundfile as sf
+import traceback
 from pydub import AudioSegment
 from tqdm import tqdm
 from modules.vocal_remover.vr_separator import VRSeparator
@@ -27,7 +28,8 @@ class Separator:
         invert_using_spec=False,
         use_cpu=False,
         vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
-        audio_params={"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"}
+        audio_params={"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
+        jump_failures = False
     ):
         if debug:
             set_log_level(logger, logging.DEBUG)
@@ -54,6 +56,7 @@ class Separator:
         self.torch_device_mps = None
         self.model_instance = None
         self.audio_params = audio_params
+        self.jump_failures = jump_failures
 
         self.setup_accelerated_inferencing_device()
         self.load_model(self.model_file)
@@ -185,7 +188,7 @@ class Separator:
         if not self.debug:
             all_audio_files = tqdm(all_audio_files, desc="Total progress")
 
-        success_files = []
+        success_files, failed_files = [], []
         for file_path in all_audio_files:
             if not self.debug:
                 all_audio_files.set_postfix({"track": file_path})
@@ -193,12 +196,20 @@ class Separator:
             try:
                 mix, sr = librosa.load(file_path, sr=44100, mono=False)
             except Exception as e:
-                self.logger.warning(f'Cannot process track: {file_path}, error: {str(e)}')
+                self.logger.warning(f'Cannot load audio_file: {file_path}, error: {str(e)}')
                 continue
 
-            self.logger.debug(f"Starting separation process for audio_file: {file_path}")
-            results = self.separate(file_path)
-            self.logger.debug(f"Separation audio_file: {file_path} completed. Starting to save results.")
+            try:
+                self.logger.debug(f"Starting separation process for audio_file: {file_path}")
+                results = self.separate(file_path)
+                self.logger.debug(f"Separation audio_file: {file_path} completed. Starting to save results.")
+            except Exception as e:
+                if self.jump_failures:
+                    self.logger.error(f"Cannot separate audio_file: {file_path}, jump to next file. Separation failed: {str(e)}\n{traceback.format_exc()}")
+                    failed_files.append(os.path.basename(file_path))
+                    continue
+                else:
+                    raise e
 
             base_name = os.path.splitext(os.path.basename(file_path))[0]
             for stem in results.keys():
@@ -216,6 +227,9 @@ class Separator:
             success_files.append(os.path.basename(file_path))
             del mix, results
             gc.collect()
+
+        if self.jump_failures and failed_files:
+            self.logger.warning(f"Failed files: {failed_files}")
         return success_files
 
     def separate(self, mix):

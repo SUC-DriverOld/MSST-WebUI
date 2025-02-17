@@ -26,8 +26,8 @@ from webui.utils import (
 )
 
 class EnsembleFlow(Presets):
-    def __init__(self, presets={}, force_cpu=False, use_tta=False, logger=get_logger()):
-        super().__init__(presets, force_cpu, use_tta, logger)
+    def __init__(self, presets={}, force_cpu=False, use_tta=False, jump_failures=False, logger=get_logger()):
+        super().__init__(presets, force_cpu, use_tta, jump_failures, logger)
         self.presets = presets.get("flow", [])
 
     def save_audio(self, audio, sr, output_format, file_name, store_dir):
@@ -154,7 +154,7 @@ def inference_folder_func(ensemble_mode, output_format, force_cpu, use_tta, stor
     if os.path.exists(TEMP_PATH) and not is_audio:
         shutil.rmtree(TEMP_PATH)
 
-    preset = EnsembleFlow(preset_data, force_cpu, use_tta, logger)
+    preset = EnsembleFlow(preset_data, force_cpu, use_tta, jump_failures=False, logger=logger)
     if preset.total_steps < 2:
         return i18n("请至少添加2个模型到合奏流程")
     if not preset.is_exist_models()[0]:

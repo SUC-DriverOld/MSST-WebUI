@@ -1,5 +1,5 @@
 {
-    "version": "1.7.0 v2",
+    "version": "1.7.1",
     "inference": {
         "model_type": null,
         "selected_model": null,
@@ -8,6 +8,7 @@
         "device": null,
         "output_format": "wav",
         "force_cpu": false,
+        "jump_failures": false,
         "instrumental": null,
         "use_tta": false,
         "preset": null,

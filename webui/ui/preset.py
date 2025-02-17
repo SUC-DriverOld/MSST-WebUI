@@ -59,6 +59,11 @@ def preset(webui_config, force_cpu_flag=False):
                     value=webui_config['inference']['preset_use_tta'] if webui_config['inference']['preset_use_tta'] else False,
                     interactive=True
                 )
+                jump_failures = gr.Checkbox(
+                    label=i18n("跳过处理失败的音频, 而非停止整个处理过程"),
+                    value=webui_config['inference']['jump_failures'] if webui_config['inference']['jump_failures'] else False,
+                    interactive=True
+                )
                 extra_output_dir = gr.Checkbox(
                     label=i18n("将次级输出保存至输出目录的单独文件夹内"),
                     value=webui_config['inference']['extra_output_dir'] if webui_config['inference']['extra_output_dir'] else False,
@@ -181,7 +186,8 @@ def preset(webui_config, force_cpu_flag=False):
             force_cpu,
             output_format_flow,
             use_tta,
-            extra_output_dir
+            extra_output_dir,
+            jump_failures
         ],
         outputs=output_message_flow
     )
@@ -194,7 +200,8 @@ def preset(webui_config, force_cpu_flag=False):
             force_cpu,
             output_format_flow,
             use_tta,
-            extra_output_dir
+            extra_output_dir,
+            jump_failures
         ],
         outputs=output_message_flow
     )
