@@ -14,9 +14,7 @@ webui.vmp.exe
 backup/
 tools/SOME_weights/model_steps_64000_simplified.ckpt
 input/
-output/
 results/
-tmp/
 test.py
 config_unofficial/
 cache/
@@ -24,16 +22,17 @@ tmpdir/
 pretrain/hub
 build/
 logs/
-data/presets
-data/presets_backup
+presets/
+presets_backup/
 
 !pretrain/*.json
 !.gitkeep
-setup.py
-app.c
+setup_app.py
 go-webui.bat
-
-build/
+DownloadManager.exe
+go-DownloadManager.bat
+webui_no_admin.exe
+results.zip
 
 *.ckpt
 *.pt
@@ -41,5 +40,4 @@ build/
 *.th
 *.chpt
 *.pyd
-*.exe
-*.preset
+*.c

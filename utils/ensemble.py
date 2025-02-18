@@ -5,7 +5,6 @@ import os
 import librosa
 import soundfile as sf
 import numpy as np
-import argparse
 
 from utils.logger import get_logger
 logger = get_logger()
@@ -125,35 +124,27 @@ def average_waveforms(pred_track, weights, algorithm):
     return pred_track
 
 
-def ensemble_files(files, type, weights, output):
-    logger.info(f'Ensemble type: {type}, Number of input files: {len(files)}, Weights: {weights}, Output file: {output}')
+def ensemble_audios(files, type, weights):
+    logger.info(f'Ensemble type: {type}, Number of input files: {len(files)}, Weights: {weights}')
     if weights is None:
         weights = np.ones(len(files))
     data = []
     sr = 44100
     for f in files:
         if not os.path.isfile(f):
-            logger.info(f'Error. Can\'t find file: {f}. Check paths.')
+            logger.error(f"Can't find file: {f}. Check paths.")
             return None
         wav, sr = librosa.load(f, sr=None, mono=False)
-        logger.info(f"Reading file: {f}, waveform shape: {wav.shape} sample rate: {sr}")
+        logger.debug(f"Reading file: {f}, waveform shape: {wav.shape}, sample rate: {sr}")
         data.append(wav)
+
+    lengths = [d.shape[-1] for d in data]
+    min_length = min(lengths)
+    if len(set(lengths)) > 1:
+        logger.warning("Input audio files have different lengths. Truncating all to the shortest length.")
+        data = [d[..., :min_length] for d in data]
+
     data = np.array(data)
     res = average_waveforms(data, weights, type)
-    logger.info('Result shape: {}'.format(res.shape))
-    sf.write(output, res.T, sr, 'FLOAT')
-    logger.info(f'Ensemble result saved to: {output}')
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--files", type=str, required=True, nargs='+', help="Path to all audio-files to ensemble")
-    parser.add_argument("--type", type=str, default='avg_wave',
-                        help="One of avg_wave, median_wave, min_wave, max_wave, avg_fft, median_fft, min_fft, max_fft")
-    parser.add_argument("--weights", type=float, nargs='+',
-                        help="Weights to create ensemble. Number of weights must be equal to number of files")
-    parser.add_argument("--output", default="res.wav", type=str,
-                        help="Path to wav file where ensemble result will be stored")
-    args = parser.parse_args()
-
-    ensemble_files(args.files, args.type, args.weights, args.output)
+    logger.debug('Result shape: {}'.format(res.shape))
+    return res.T, sr

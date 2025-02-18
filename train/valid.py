@@ -10,6 +10,7 @@ parrent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parrent_dir)
 import glob
 import torch
+import librosa
 import soundfile as sf
 import numpy as np
 
@@ -59,6 +60,13 @@ def proc_list_of_files(
         start_time = time.time()
         mix, sr = sf.read(path)
         mix_orig = mix.copy()
+
+        if 'sample_rate' in config.audio:
+            if sr != config.audio['sample_rate']:
+                orig_length = mix.shape[0]
+                if verbose:
+                    logger.warning('Sample rate is different. In config: {} in file {}: {}, resample to {}'.format(config.audio['sample_rate'], path, sr, config.audio['sample_rate']))
+                mix = librosa.resample(mix, orig_sr=sr, target_sr=config.audio['sample_rate'], res_type='kaiser_best')
 
         # Fix for mono
         if len(mix.shape) == 1:
@@ -115,14 +123,20 @@ def proc_list_of_files(
                         track = np.expand_dims(track, axis=-1)
 
                 except Exception as e:
-                    logger.info('No data for stem: {}. Skip!'.format(instr))
+                    logger.warning('No data for stem: {}. Skip!'.format(instr))
                     continue
             else:
                 # other is actually instrumental
                 track, sr1 = sf.read(folder + '/{}.{}'.format('vocals', extension))
                 track = mix_orig - track
 
-            estimates = waveforms[instr].T
+            estimates = waveforms[instr]
+
+            if 'sample_rate' in config.audio:
+                if sr != config.audio['sample_rate']:
+                    estimates = librosa.resample(estimates, orig_sr=config.audio['sample_rate'], target_sr=sr, res_type='kaiser_best')
+                    estimates = librosa.util.fix_length(estimates, size=orig_length)
+
             # logger.info(estimates.shape)
             if 'normalize' in config.inference:
                 if config.inference['normalize'] is True:
@@ -130,12 +144,12 @@ def proc_list_of_files(
 
             if store_dir != "":
                 out_wav_name = "{}/{}_{}.wav".format(store_dir, os.path.basename(folder), instr)
-                sf.write(out_wav_name, estimates, sr, subtype='FLOAT')
+                sf.write(out_wav_name, estimates.T, sr, subtype='FLOAT')
 
             track_metrics = get_metrics(
                 args.metrics,
                 track.T,
-                estimates.T,
+                estimates,
                 mix_orig.T,
                 device=device,
             )
@@ -175,7 +189,7 @@ def valid(model, args, config, device, verbose=False):
         part = sorted(glob.glob(valid_path + '/*/mixture.{}'.format(extension)))
         if len(part) == 0:
             if verbose:
-                logger.info('No validation data found in: {}'.format(valid_path))
+                logger.warning('No validation data found in: {}'.format(valid_path))
         all_mixtures_path += part
     if verbose:
         logger.info('Total mixtures: {}'.format(len(all_mixtures_path)))
@@ -268,7 +282,7 @@ def valid_multi_gpu(model, args, config, device_ids, verbose=False):
         part = sorted(glob.glob(valid_path + '/*/mixture.{}'.format(extension)))
         if len(part) == 0:
             if verbose:
-                logger.info('No validation data found in: {}'.format(valid_path))
+                logger.warning('No validation data found in: {}'.format(valid_path))
         all_mixtures_path += part
     if verbose:
         logger.info('Total mixtures: {}'.format(len(all_mixtures_path)))
@@ -346,7 +360,7 @@ def valid_multi_gpu(model, args, config, device_ids, verbose=False):
 
 
 def check_validation(args):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=60))
     parser.add_argument("--model_type", type=str, default='mdx23c', help="One of mdx23c, htdemucs, segm_models, mel_band_roformer, bs_roformer, swin_upernet, bandit")
     parser.add_argument("--config_path", type=str, help="path to config file")
     parser.add_argument("--start_check_point", type=str, default='', help="Initial checkpoint to valid weights")
@@ -386,7 +400,7 @@ def check_validation(args):
         device = torch.device('cuda:0')
     else:
         device = 'cpu'
-        logger.info('CUDA is not available. Run validation on CPU. It will be very slow...')
+        logger.warning('CUDA is not available. Run validation on CPU. It will be very slow...')
 
     if torch.cuda.is_available() and len(device_ids) > 1:
         valid_multi_gpu(model, args, config, device_ids, verbose=False)

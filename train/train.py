@@ -24,7 +24,7 @@ import torch.nn.functional as F
 
 from utils.dataset import MSSDataset
 from utils.utils import demix, sdr, get_model_from_config
-from train.valid import valid_multi_gpu
+from train.valid import valid_multi_gpu, valid
 from utils.logger import get_logger
 logger = get_logger()
 
@@ -95,7 +95,7 @@ def load_not_compatible_weights(model, weights, verbose=False):
                     new_model[el] = max_matrix[slices_new]
         else:
             if verbose:
-                logger.info('Match not found for {}!'.format(el))
+                logger.warning('Match not found for {}!'.format(el))
     model.load_state_dict(
         new_model
     )
@@ -184,7 +184,7 @@ def train_model(args):
             model = nn.DataParallel(model, device_ids=device_ids).to(device)
     else:
         device = 'cpu'
-        logger.info('CUDA is not avilable. Run training on CPU. It will be very slow...')
+        logger.warning('CUDA is not avilable. Run training on CPU. It will be very slow...')
         model = model.to(device)
 
     if args.pre_valid:
@@ -215,7 +215,7 @@ def train_model(args):
         logger.info('Use SGD optimizer')
         optimizer = SGD(model.parameters(), lr=config.training.lr, **optim_params)
     else:
-        logger.info('Unknown optimizer: {}'.format(config.training.optimizer))
+        logger.error('Unknown optimizer: {}'.format(config.training.optimizer))
         exit()
 
     gradient_accumulation_steps = 1
@@ -329,7 +329,10 @@ def train_model(args):
             store_path
         )
 
-        metrics_avg = valid_multi_gpu(model, args, config, args.device_ids, verbose=False)
+        if torch.cuda.is_available() and len(device_ids) > 1:
+            metrics_avg = valid_multi_gpu(model, args, config, args.device_ids, verbose=False)
+        else:
+            metrics_avg = valid(model, args, config, device, verbose=False)
         metric_avg = metrics_avg[args.metric_for_scheduler]
         if metric_avg > best_metric:
             store_path = args.results_path + '/model_{}_ep_{}_{}_{:.4f}.ckpt'.format(args.model_type, epoch, args.metric_for_scheduler, metric_avg)

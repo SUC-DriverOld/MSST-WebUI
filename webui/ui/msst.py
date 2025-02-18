@@ -1,6 +1,9 @@
+__license__= "AGPL-3.0"
+__author__ = "Sucial https://github.com/SUC-DriverOld"
+
 import gradio as gr
 
-from webui.utils import i18n, select_folder, open_folder
+from webui.utils import i18n, select_folder, open_folder, change_to_audio_infer, change_to_folder_infer
 from webui.init import init_selected_model, init_selected_msst_model
 from webui.msst import (
     run_inference_single,
@@ -11,19 +14,17 @@ from webui.msst import (
     save_model_config,
     reset_model_config,
     update_inference_settings,
-    change_to_audio_infer,
-    change_to_folder_infer
 )
 
-def msst(webui_config, device, force_cpu):
+def msst(webui_config, device, force_cpu_flag=False):
     device = [value for _, value in device.items()]
 
-    if webui_config['inference']['force_cpu'] or force_cpu:
+    if webui_config['inference']['force_cpu'] or force_cpu_flag:
         force_cpu_value = True
     else:
         force_cpu_value = False
 
-    batch_size_number, dim_t_number, num_overlap_number, is_normalize = init_selected_model()
+    batch_size_number, num_overlap_number, chunk_size_number, is_normalize = init_selected_model()
 
 
     gr.Markdown(value=i18n("MSST音频分离原项目地址: [https://github.com/ZFTurbo/Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)"))
@@ -51,29 +52,23 @@ def msst(webui_config, device, force_cpu):
         )
         output_format = gr.Radio(
             label=i18n("输出格式"),
-            choices=["wav", "mp3", "flac"],
+            choices=["wav", "flac", "mp3"],
             value=webui_config['inference']['output_format'] if webui_config['inference']['output_format'] else "wav",
             interactive=True
         )
     with gr.Row():
-        with gr.Column():
-            force_cpu = gr.Checkbox(
-                label=i18n("使用CPU (注意: 使用CPU会导致速度非常慢) "),
-                value=force_cpu_value,
-                interactive=False if force_cpu_value else True
-            )
-            use_tta = gr.Checkbox(
-                label=i18n("使用TTA (测试时增强), 可能会提高质量, 但速度稍慢"),
-                value=webui_config['inference']['use_tta'] if webui_config['inference']['use_tta'] else False,
-                interactive=True
-            )
-        with gr.Column():
-            extract_instrumental = gr.CheckboxGroup(
-                label=i18n("选择输出音轨"),
-                choices=init_selected_msst_model(),
-                value=webui_config['inference']['instrumental'] if webui_config['inference']['instrumental'] else None,
-                interactive=True
-            )
+        extract_instrumental = gr.CheckboxGroup(
+            label=i18n("选择输出音轨"),
+            choices=init_selected_msst_model(),
+            value=webui_config['inference']['instrumental'] if webui_config['inference']['instrumental'] else None,
+            interactive=True
+        )
+        force_cpu = gr.Checkbox(
+            info=i18n("强制使用CPU推理, 注意: 使用CPU推理速度非常慢!"),
+            label=i18n("使用CPU"),
+            value=force_cpu_value,
+            interactive=False if force_cpu_flag else True
+        )
     with gr.Tabs():
         with gr.TabItem(label=i18n("输入音频")) as audio_tab:
             audio_input = gr.Files(
@@ -99,25 +94,45 @@ def msst(webui_config, device, force_cpu):
         )
         select_store_btn = gr.Button(i18n("选择文件夹"), scale=1)
         open_store_btn = gr.Button(i18n("打开文件夹"), scale=1)
-    with gr.Accordion(i18n("推理参数设置, 不同模型之间参数相互独立 (一般不需要动) "), open=False):
+    with gr.Accordion(i18n("[点击展开] 推理参数设置, 不同模型之间参数相互独立"), open=False):
         gr.Markdown(value=i18n("只有在点击保存后才会生效。参数直接写入配置文件, 无法撤销。假如不知道如何设置, 请保持默认值。<br>请牢记自己修改前的参数数值, 防止出现问题以后无法恢复。请确保输入正确的参数, 否则可能会导致模型无法正常运行。<br>假如修改后无法恢复, 请点击``重置``按钮, 这会使得配置文件恢复到默认值。"))
         with gr.Row():
-            batch_size = gr.Number(
-                label=i18n("batch_size: 批次大小, 一般不需要改"),
-                value=batch_size_number
+            batch_size = gr.Slider(
+                label="batch_size",
+                info=i18n("批次大小, 减小此值可以降低显存占用, 此参数对推理效果影响不大"),
+                value=batch_size_number,
+                minimum=1,
+                maximum=16,
+                step=1
             )
-            dim_t = gr.Number(
-                label=i18n("dim_t: 时序维度大小, 一般不需要改"),
-                value=dim_t_number
+            num_overlap = gr.Slider(
+                label="overlap",
+                info=i18n("重叠数, 增大此值可以提高分离效果, 但会增加处理时间, 建议设置成4"),
+                value=num_overlap_number,
+                minimum=1,
+                maximum=16,
+                step=1
             )
-            num_overlap = gr.Number(
-                label=i18n("num_overlap: 数值越小速度越快, 但会牺牲效果"),
-                value=num_overlap_number
+            chunk_size = gr.Slider(
+                label="chunk_size",
+                info=i18n("分块大小, 增大此值可以提高分离效果, 但会增加处理时间和显存占用"),
+                value=chunk_size_number,
+                minimum=44100,
+                maximum=1323000,
+                step=22050
             )
+        with gr.Row():
             normalize = gr.Checkbox(
-                label=i18n("normalize: 是否对音频进行归一化处理"),
+                label="normalize",
+                info=i18n("音频归一化, 对音频进行归一化输入和输出, 部分模型没有此功能"),
                 value=is_normalize,
                 interactive=False
+            )
+            use_tta = gr.Checkbox(
+                label="use_tta",
+                info=i18n("启用TTA, 能小幅提高分离质量, 若使用, 推理时间x3"),
+                value=webui_config['inference']['use_tta'] if webui_config['inference']['use_tta'] else False,
+                interactive=True
             )
         with gr.Row():
             save_config_button = gr.Button(i18n("保存配置"))
@@ -165,8 +180,8 @@ def msst(webui_config, device, force_cpu):
         inputs=selected_model,
         outputs=[
             batch_size,
-            dim_t,
             num_overlap,
+            chunk_size,
             normalize,
             extract_instrumental,
         ]
@@ -176,8 +191,8 @@ def msst(webui_config, device, force_cpu):
         inputs=[
             selected_model,
             batch_size,
-            dim_t,
             num_overlap,
+            chunk_size,
             normalize
         ],
         outputs=output_message

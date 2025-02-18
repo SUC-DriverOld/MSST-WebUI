@@ -1,0 +1,77 @@
+audio:
+  chunk_size: 264600
+  min_mean_abs: 0.001
+  num_channels: 2
+  sample_rate: 44100
+augmentations:
+  all:
+    channel_shuffle: 0.5
+    random_inverse: 0.1
+    random_polarity: 0.5
+  enable: true
+  loudness: true
+  loudness_max: 1.5
+  loudness_min: 0.5
+  mixup: true
+  mixup_loudness_max: 1.5
+  mixup_loudness_min: 0.5
+  mixup_probs: !!python/tuple
+  - 0.2
+  - 0.02
+inference:
+  batch_size: 1
+  dim_t: 256
+  num_overlap: 4
+model:
+  band_specs: musical
+  bidirectional: true
+  center: true
+  complex_mask: true
+  emb_dim: 128
+  fs: 44100
+  hidden_activation: Tanh
+  hidden_activation_kwargs: null
+  hop_length: 512
+  in_channel: 1
+  mlp_dim: 512
+  n_bands: 64
+  n_fft: 2048
+  n_sqm_modules: 8
+  normalize_channel_independently: false
+  normalized: true
+  onesided: true
+  pad_mode: constant
+  power: null
+  require_no_gap: true
+  require_no_overlap: false
+  rnn_dim: 256
+  rnn_type: GRU
+  stems:
+  - speech
+  - music
+  - effects
+  treat_channel_as_feature: true
+  win_length: 2048
+  window_fn: hann_window
+  wkwargs: null
+name: MultiMaskMultiSourceBandSplitRNN
+training:
+  batch_size: 4
+  coarse_loss_clip: true
+  ema_momentum: 0.999
+  grad_clip: 0
+  gradient_accumulation_steps: 4
+  instruments:
+  - speech
+  - music
+  - effects
+  lr: 9.0e-05
+  num_epochs: 1000
+  num_steps: 1000
+  optimizer: adam
+  other_fix: true
+  patience: 2
+  q: 0.95
+  reduce_factor: 0.95
+  target_instrument: null
+  use_amp: true

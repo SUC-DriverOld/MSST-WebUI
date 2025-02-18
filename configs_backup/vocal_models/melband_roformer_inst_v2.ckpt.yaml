@@ -1,0 +1,48 @@
+audio:
+  chunk_size: 485100
+  dim_f: 1024
+  dim_t: 1101
+  hop_length: 441
+  min_mean_abs: 0.0
+  n_fft: 2048
+  num_channels: 2
+  sample_rate: 44100
+inference:
+  batch_size: 1
+  dim_t: 1101
+  num_overlap: 4
+model:
+  attn_dropout: 0
+  depth: 12
+  dim: 384
+  dim_freqs_in: 1025
+  dim_head: 64
+  ff_dropout: 0
+  flash_attn: true
+  freq_transformer_depth: 1
+  heads: 8
+  mask_estimator_depth: 3
+  multi_stft_hop_size: 147
+  multi_stft_normalized: false
+  multi_stft_resolution_loss_weight: 1.0
+  multi_stft_resolutions_window_sizes: !!python/tuple
+  - 4096
+  - 2048
+  - 1024
+  - 512
+  - 256
+  num_bands: 60
+  num_stems: 1
+  sample_rate: 44100
+  stereo: true
+  stft_hop_length: 441
+  stft_n_fft: 2048
+  stft_normalized: false
+  stft_win_length: 2048
+  time_transformer_depth: 1
+training:
+  instruments:
+  - other
+  - vocals
+  target_instrument: other
+  use_amp: true

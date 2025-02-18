@@ -17,6 +17,9 @@ import pedalboard as PB
 import warnings
 warnings.filterwarnings("ignore")
 
+from utils.logger import get_logger
+logger = get_logger()
+
 
 def load_chunk(path, length, chunk_size, offset=None):
     if chunk_size <= length:
@@ -45,12 +48,12 @@ def get_track_set_length(params):
                 length = len(sf.read(path_to_audio_file)[0])
                 break
         if length == -1:
-            print('Cant find file "{}" in folder {}'.format(instr, path))
+            logger.warning('Cant find file "{}" in folder {}'.format(instr, path))
             continue
         lengths_arr.append(length)
     lengths_arr = np.array(lengths_arr)
     if lengths_arr.min() != lengths_arr.max():
-        print('Warning: lengths of stems are different for path: {}. ({} != {})'.format(
+        logger.warning('lengths of stems are different for path: {}. ({} != {})'.format(
             path,
             lengths_arr.min(),
             lengths_arr.max())
@@ -84,25 +87,25 @@ class MSSDataset(torch.utils.data.Dataset):
         if 'augmentations' in config:
             if config['augmentations'].enable is True:
                 if self.verbose:
-                    print('Use augmentation for training')
+                    logger.info('Use augmentation for training')
                 self.aug = True
         else:
             if self.verbose:
-                print('There is no augmentations block in config. Augmentations disabled for training...')
+                logger.info('There is no augmentations block in config. Augmentations disabled for training...')
 
         metadata = self.get_metadata()
 
         if self.dataset_type in [1, 4]:
             if len(metadata) > 0:
                 if self.verbose:
-                    print('Found tracks in dataset: {}'.format(len(metadata)))
+                    logger.info('Found tracks in dataset: {}'.format(len(metadata)))
             else:
-                print('No tracks found for training. Check paths you provided!')
+                logger.error('No tracks found for training. Check paths you provided!')
                 exit()
         else:
             for instr in self.instruments:
                 if self.verbose:
-                    print('Found tracks for {} in dataset: {}'.format(instr, len(metadata[instr])))
+                    logger.info('Found tracks for {} in dataset: {}'.format(instr, len(metadata[instr])))
         self.metadata = metadata
         self.chunk_size = config.audio.chunk_size
         self.min_mean_abs = config.audio.min_mean_abs
@@ -114,7 +117,7 @@ class MSSDataset(torch.utils.data.Dataset):
         metadata = []
         if os.path.isfile(self.metadata_path):
             if self.verbose:
-                print('Found metadata cache file: {}'.format(self.metadata_path))
+                logger.info('Found metadata cache file: {}'.format(self.metadata_path))
             old_metadata = pickle.load(open(self.metadata_path, 'rb'))
         else:
             return track_paths, metadata
@@ -130,7 +133,7 @@ class MSSDataset(torch.utils.data.Dataset):
                 track_paths_set.remove(old_path)
         track_paths = list(track_paths_set)
         if len(metadata) > 0:
-            print('Old metadata was used for {} tracks.'.format(len(metadata)))
+            logger.info('Old metadata was used for {} tracks.'.format(len(metadata)))
         return track_paths, metadata
 
 
@@ -140,11 +143,8 @@ class MSSDataset(torch.utils.data.Dataset):
             read_metadata_procs = int(self.config['training']['read_metadata_procs'])
 
         if self.verbose:
-            print(
-                'Dataset type:', self.dataset_type,
-                'Processes to use:', read_metadata_procs,
-                '\nCollecting metadata for', str(self.data_path),
-            )
+            logger.info('Dataset type: {}, Processes to use: {}'.format(self.dataset_type, read_metadata_procs))
+            logger.info('Collecting metadata for {}'.format(str(self.data_path)))
 
         if self.dataset_type in [1, 4]:
             track_paths = []
@@ -152,7 +152,7 @@ class MSSDataset(torch.utils.data.Dataset):
                 for tp in self.data_path:
                     tracks_for_folder = sorted(glob(tp + '/*'))
                     if len(tracks_for_folder) == 0:
-                        print('Warning: no tracks found in folder \'{}\'. Please check it!'.format(tp))
+                        logger.warning('No tracks found in folder \'{}\'. Please check it!'.format(tp))
                     track_paths += tracks_for_folder
             else:
                 track_paths += sorted(glob(self.data_path + '/*'))
@@ -208,13 +208,13 @@ class MSSDataset(torch.utils.data.Dataset):
             metadata = dict()
             for i in range(len(self.data_path)):
                 if self.verbose:
-                    print('Reading tracks from: {}'.format(self.data_path[i]))
+                    logger.info('Reading tracks from: {}'.format(self.data_path[i]))
                 df = pd.read_csv(self.data_path[i])
 
                 skipped = 0
                 for instr in self.instruments:
                     part = df[df['instrum'] == instr].copy()
-                    print('Tracks found for {}: {}'.format(instr, len(part)))
+                    logger.info('Tracks found for {}: {}'.format(instr, len(part)))
                 for instr in self.instruments:
                     part = df[df['instrum'] == instr].copy()
                     metadata[instr] = []
@@ -223,21 +223,21 @@ class MSSDataset(torch.utils.data.Dataset):
 
                     for path in tqdm(track_paths):
                         if not os.path.isfile(path):
-                            print('Cant find track: {}'.format(path))
+                            logger.warning('Cant find track: {}'.format(path))
                             skipped += 1
                             continue
-                        # print(path)
+                        # logger.info(path)
                         try:
                             length = len(sf.read(path)[0])
                         except:
-                            print('Problem with path: {}'.format(path))
+                            logger.warning('Problem with path: {}'.format(path))
                             skipped += 1
                             continue
                         metadata[instr].append((path, length))
                 if skipped > 0:
-                    print('Missing tracks: {} from {}'.format(skipped, len(df)))
+                    logger.warning('Missing tracks: {} from {}'.format(skipped, len(df)))
         else:
-            print('Unknown dataset type: {}. Must be 1, 2, 3 or 4'.format(self.dataset_type))
+            logger.error('Unknown dataset type: {}. Must be 1, 2, 3 or 4'.format(self.dataset_type))
             exit()
 
         # Save metadata
@@ -255,7 +255,7 @@ class MSSDataset(torch.utils.data.Dataset):
                             source = load_chunk(path_to_audio_file, track_length, self.chunk_size)
                         except Exception as e:
                             # Sometimes error during FLAC reading, catch it and use zero stem
-                            print('Error: {} Path: {}'.format(e, path_to_audio_file))
+                            logger.error('Error: {} Path: {}'.format(e, path_to_audio_file))
                             source = np.zeros((2, self.chunk_size), dtype=np.float32)
                         break
             else:
@@ -264,7 +264,7 @@ class MSSDataset(torch.utils.data.Dataset):
                     source = load_chunk(track_path, track_length, self.chunk_size)
                 except Exception as e:
                     # Sometimes error during FLAC reading, catch it and use zero stem
-                    print('Error: {} Path: {}'.format(e, track_path))
+                    logger.error('Error: {} Path: {}'.format(e, track_path))
                     source = np.zeros((2, self.chunk_size), dtype=np.float32)
 
             if np.abs(source).mean() >= self.min_mean_abs:  # remove quiet chunks
@@ -312,14 +312,14 @@ class MSSDataset(torch.utils.data.Dataset):
                             source = load_chunk(path_to_audio_file, track_length, self.chunk_size)
                         except Exception as e:
                             # Sometimes error during FLAC reading, catch it and use zero stem
-                            print('Error: {} Path: {}'.format(e, path_to_audio_file))
+                            logger.error('Error: {} Path: {}'.format(e, path_to_audio_file))
                             source = np.zeros((2, self.chunk_size), dtype=np.float32)
                         break
                 if np.abs(source).mean() >= self.min_mean_abs:  # remove quiet chunks
                     break
                 attempts -= 1
                 if attempts <= 0:
-                    print('Attempts max!', track_path)
+                    logger.error('Attempts max!', track_path)
             res.append(source)
         res = np.stack(res, axis=0)
         if self.aug:
@@ -605,7 +605,7 @@ class MSSDataset(torch.utils.data.Dataset):
                     source = board(source, 44100)
                     applied_augs.append('pedalboard_mp3_compressor')
 
-        # print(applied_augs)
+        # logger.info(applied_augs)
         return source
 
     def __getitem__(self, index):

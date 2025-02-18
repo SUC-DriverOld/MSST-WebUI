@@ -1,0 +1,71 @@
+audio:
+  chunk_size: 485100
+  hop_length: 1024
+  min_mean_abs: 0.0
+augmentations:
+  enable: true
+  loudness: true
+  loudness_max: 1.5
+  loudness_min: 0.5
+hdemucs:
+  cac: true
+  channels: 48
+  channels_time: null
+  context: 1
+  context_enc: 0
+  dconv_attn: 4
+  dconv_comp: 4
+  dconv_depth: 2
+  dconv_init: 0.001
+  dconv_lstm: 4
+  dconv_mode: 1
+  depth: 6
+  emb_scale: 10
+  emb_smooth: true
+  end_iters: 0
+  freq_emb: 0.2
+  growth: 2
+  hybrid: true
+  hybrid_old: false
+  kernel_size: 8
+  multi_freqs: []
+  multi_freqs_depth: 3
+  nfft: 4096
+  norm_groups: 4
+  norm_starts: 4
+  rescale: 0.1
+  rewrite: true
+  stride: 4
+  time_stride: 2
+  wiener_iters: 0
+  wiener_residual: false
+inference:
+  batch_size: 1
+  num_overlap: 4
+model: hdemucs
+training:
+  batch_size: 8
+  channels: 2
+  coarse_loss_clip: true
+  ema_momentum: 0.999
+  grad_clip: 0
+  gradient_accumulation_steps: 1
+  instruments:
+  - kick
+  - snare
+  - cymbals
+  - toms
+  lr: 9.0e-05
+  normalize: true
+  num_epochs: 1000
+  num_steps: 1000
+  optimizer: adam
+  other_fix: false
+  patience: 2
+  q: 0.95
+  reduce_factor: 0.95
+  samplerate: 44100
+  segment: 11
+  shift: 1
+  target_instrument: null
+  use_amp: false

@@ -106,7 +106,6 @@ def train_model(args):
     parser.add_argument("--use_multistft_loss", action='store_true', help="Use MultiSTFT Loss (from auraloss package)")
     parser.add_argument("--use_mse_loss", action='store_true', help="Use default MSE loss")
     parser.add_argument("--use_l1_loss", action='store_true', help="Use L1 loss")
-    parser.add_argument("--wandb_key", type=str, default='', help='wandb API Key')
     parser.add_argument("--pre_valid", action='store_true', help='Run validation before training')
     if args is None:
         args = parser.parse_args()

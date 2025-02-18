@@ -13,6 +13,8 @@ from tqdm.auto import tqdm
 from numpy.typing import NDArray
 from typing import Dict
 
+from utils.logger import get_logger
+logger = get_logger()
 
 def get_model_from_config(model_type, config_path):
     with open(config_path) as f:
@@ -73,7 +75,7 @@ def get_model_from_config(model_type, config_path):
         from modules.ts_bs_mamba2 import Separator
         model = Separator(**config.model)
     else:
-        print('Unknown model: {}'.format(model_type))
+        logger.error('Unknown model: {}'.format(model_type))
         model = None
 
     return model, config
@@ -99,6 +101,8 @@ def demix_track(config, model, mix, device, pbar=False):
 
     # Do pad from the beginning and end to account floating window results better
     if length_init > 2 * border and (border > 0):
+        if mix.ndim == 1:
+            mix = mix.unsqueeze(0)  # [1, length]
         mix = nn.functional.pad(mix, (border, border), mode='reflect')
 
     # windowingArray crossfades at segment boundaries to mitigate clicking artifacts
@@ -119,7 +123,7 @@ def demix_track(config, model, mix, device, pbar=False):
             progress_bar = tqdm(total=mix.shape[1], desc="Processing audio chunks", leave=False) if pbar else None
 
             while i < mix.shape[1]:
-                # print(i, i + C, mix.shape[1])
+                # logger.info(i, i + C, mix.shape[1])
                 part = mix[:, i:i + C].to(device)
                 length = part.shape[-1]
                 if length < C:
@@ -175,7 +179,7 @@ def demix_track_demucs(config, model, mix, device, pbar=False):
     N = config.inference.num_overlap
     batch_size = config.inference.batch_size
     step = C // N
-    # print(S, C, N, step, mix.shape, mix.device)
+    # logger.info(S, C, N, step, mix.shape, mix.device)
 
     with torch.cuda.amp.autocast(enabled=config.training.get('use_amp', True)):
         with torch.inference_mode():
@@ -188,7 +192,7 @@ def demix_track_demucs(config, model, mix, device, pbar=False):
             progress_bar = tqdm(total=mix.shape[1], desc="Processing audio chunks", leave=False) if pbar else None
 
             while i < mix.shape[1]:
-                # print(i, i + C, mix.shape[1])
+                # logger.info(i, i + C, mix.shape[1])
                 part = mix[:, i:i + C].to(device)
                 length = part.shape[-1]
                 if length < C:
@@ -278,7 +282,7 @@ def LogWMSE_metric(
     reference = torch.from_numpy(reference).unsqueeze(0).unsqueeze(0).to(device)
     estimate = torch.from_numpy(estimate).unsqueeze(0).unsqueeze(0).to(device)
     mixture = torch.from_numpy(mixture).unsqueeze(0).to(device)
-    # print(reference.shape, estimate.shape, mixture.shape)
+    # logger.info(reference.shape, estimate.shape, mixture.shape)
     res = log_wmse(mixture, reference, estimate)
     return float(res.cpu().numpy())
 
@@ -332,29 +336,47 @@ def bleed_full(
     n_mels=512,
     device='cpu',
 ):
-    # Compute STFTs
-    D1 = np.abs(librosa.stft(reference, n_fft=n_fft, hop_length=hop_length))
-    D2 = np.abs(librosa.stft(estimate, n_fft=n_fft, hop_length=hop_length))
-    # Convert to mel spectrograms
+    from torchaudio.transforms import AmplitudeToDB
+
+    # Move tensors to GPU if available
+    reference = torch.from_numpy(reference).float().to(device)
+    estimate = torch.from_numpy(estimate).float().to(device)
+
+    # Create a Hann window
+    window = torch.hann_window(n_fft).to(device)
+
+    # Compute STFTs with the Hann window
+    D1 = torch.abs(torch.stft(reference, n_fft=n_fft, hop_length=hop_length, window=window, return_complex=True, pad_mode="constant"))
+    D2 = torch.abs(torch.stft(estimate, n_fft=n_fft, hop_length=hop_length, window=window, return_complex=True, pad_mode="constant"))
+
+    # create mel filterbank
     mel_basis = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels)
-    S1_mel = np.dot(mel_basis, D1)
-    S2_mel = np.dot(mel_basis, D2)
+    mel_filter_bank = torch.from_numpy(mel_basis).to(device)  # (melbandroformer is doing it that way) edit: sent to right device now
+
+    # apply mel scale
+    S1_mel = torch.matmul(mel_filter_bank, D1)
+    S2_mel = torch.matmul(mel_filter_bank, D2)
+
     # Convert to decibels
-    S1_db = librosa.amplitude_to_db(S1_mel)
-    S2_db = librosa.amplitude_to_db(S2_mel)
+    S1_db = AmplitudeToDB(stype="magnitude", top_db=80)(S1_mel)
+    S2_db = AmplitudeToDB(stype="magnitude", top_db=80)(S2_mel)
+
     # Calculate difference
     diff = S2_db - S1_db
+
     # Separate positive and negative differences
     positive_diff = diff[diff > 0]
     negative_diff = diff[diff < 0]
-    # Calculate averages
-    average_positive = np.mean(positive_diff) if len(positive_diff) > 0 else 0
-    average_negative = np.mean(negative_diff) if len(negative_diff) > 0 else 0
-    # Scale with 100 as best score
-    bleedness = 100 * 1 / (average_positive + 1)  # **0.5 # scaling modulation ratio if needed
-    fullness = 100 * 1 / (-average_negative + 1)  # **0.5
-    return bleedness, fullness
 
+    # Calculate averages
+    average_positive = torch.mean(positive_diff) if positive_diff.numel() > 0 else torch.tensor(0.0).to(device)
+    average_negative = torch.mean(negative_diff) if negative_diff.numel() > 0 else torch.tensor(0.0).to(device)
+
+    # Scale with 100 as best score
+    bleedless = 100 * 1 / (average_positive + 1)
+    fullness = 100 * 1 / (-average_negative + 1)
+
+    return bleedless.cpu().numpy(), fullness.cpu().numpy()
 
 def get_metrics(
     metrics,

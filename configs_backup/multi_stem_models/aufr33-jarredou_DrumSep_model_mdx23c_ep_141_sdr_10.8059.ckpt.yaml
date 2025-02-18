@@ -1,0 +1,80 @@
+audio:
+  chunk_size: 130560
+  dim_f: 1024
+  dim_t: 256
+  hop_length: 512
+  min_mean_abs: 0.001
+  n_fft: 2048
+  num_channels: 2
+  sample_rate: 44100
+augmentations:
+  all:
+    channel_shuffle: 0.5
+    mp3_compression: 0.0
+    mp3_compression_backend: lameenc
+    mp3_compression_max_bitrate: 320
+    mp3_compression_min_bitrate: 32
+    pitch_shift: 0.1
+    pitch_shift_max_semitones: 3
+    pitch_shift_min_semitones: -3
+    random_inverse: 0.01
+    random_polarity: 0.5
+    seven_band_parametric_eq: 0.5
+    seven_band_parametric_eq_max_gain_db: 6
+    seven_band_parametric_eq_min_gain_db: -6
+    tanh_distortion: 0.2
+    tanh_distortion_max: 0.5
+    tanh_distortion_min: 0.1
+  enable: true
+  loudness: true
+  loudness_max: 1.5
+  loudness_min: 0.5
+  mixup: true
+  mixup_loudness_max: 1.5
+  mixup_loudness_min: 0.5
+  mixup_probs: !!python/tuple
+  - 0.2
+  - 0.02
+  mp3_compression_on_mixture: 0.0
+  mp3_compression_on_mixture_backend: lameenc
+  mp3_compression_on_mixture_bitrate_max: 320
+  mp3_compression_on_mixture_bitrate_min: 32
+inference:
+  batch_size: 1
+  dim_t: 256
+  num_overlap: 4
+model:
+  act: gelu
+  bottleneck_factor: 4
+  growth: 128
+  norm: InstanceNorm
+  num_blocks_per_scale: 2
+  num_channels: 128
+  num_scales: 5
+  num_subbands: 4
+  scale:
+  - 2
+  - 2
+training:
+  batch_size: 12
+  coarse_loss_clip: true
+  ema_momentum: 0.999
+  grad_clip: 0
+  gradient_accumulation_steps: 1
+  instruments:
+  - kick
+  - snare
+  - toms
+  - hh
+  - ride
+  - crash
+  lr: 9.0e-05
+  num_epochs: 1000
+  num_steps: 1268
+  optimizer: adam
+  other_fix: false
+  patience: 30
+  q: 0.95
+  reduce_factor: 0.95
+  target_instrument: null
+  use_amp: true

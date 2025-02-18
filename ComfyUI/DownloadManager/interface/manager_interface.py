@@ -8,10 +8,10 @@ from qfluentwidgets import FluentIcon as FIF
 from ComfyUI.DownloadManager.common.data import models_info
 
 
-class managerInterface(QFrame):
+class ManagerInterface(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setObjectName('managerInterface')
+        self.setObjectName('ManagerInterface')
         self.table_data = models_info
         self.setupUI()
         

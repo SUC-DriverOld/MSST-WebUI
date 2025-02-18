@@ -517,8 +517,9 @@ class MelBandRoformer(Module):
         stft_repr = torch.view_as_real(stft_repr)
 
         stft_repr = unpack_one(stft_repr, batch_audio_channel_packed_shape, '* f t c')
-        stft_repr = rearrange(stft_repr,
-                              'b s f t c -> b (f s) t c')  # merge stereo / mono into the frequency, with frequency leading dimension, for band splitting
+
+        # merge stereo / mono into the frequency, with frequency leading dimension, for band splitting
+        stft_repr = rearrange(stft_repr,'b s f t c -> b (f s) t c')
 
         # index out all frequencies for all frequency ranges across bands ascending in one go
 
@@ -533,7 +534,7 @@ class MelBandRoformer(Module):
         x = rearrange(x, 'b f t c -> b t (f c)')
 
         if self.use_torch_checkpoint:
-            x = checkpoint(self.band_split, x)
+            x = checkpoint(self.band_split, x, use_reentrant=False)
         else:
             x = self.band_split(x)
 
@@ -547,7 +548,7 @@ class MelBandRoformer(Module):
 
                 x, ft_ps = pack([x], 'b * d')
                 if self.use_torch_checkpoint:
-                    x = checkpoint(linear_transformer, x)
+                    x = checkpoint(linear_transformer, x, use_reentrant=False)
                 else:
                     x = linear_transformer(x)
                 x, = unpack(x, ft_ps, 'b * d')
@@ -563,7 +564,7 @@ class MelBandRoformer(Module):
             x, ps = pack([x], '* t d')
 
             if self.use_torch_checkpoint:
-                x = checkpoint(time_transformer, x)
+                x = checkpoint(time_transformer, x, use_reentrant=False)
             else:
                 x = time_transformer(x)
 
@@ -572,7 +573,7 @@ class MelBandRoformer(Module):
             x, ps = pack([x], '* f d')
 
             if self.use_torch_checkpoint:
-                x = checkpoint(freq_transformer, x)
+                x = checkpoint(freq_transformer, x, use_reentrant=False)
             else:
                 x = freq_transformer(x)
 

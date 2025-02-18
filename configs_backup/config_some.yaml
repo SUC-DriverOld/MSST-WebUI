@@ -1,0 +1,84 @@
+accumulate_grad_batches: 1
+audio_sample_rate: 44100
+binarization_args:
+  num_workers: 0
+  shuffle: true
+binarizer_cls: preprocessing.MIDIExtractionBinarizer
+binary_data_dir: data/some_ds_fixmel_spk3_aug8/binary
+clip_grad_norm: 1
+dataloader_prefetch_factor: 2
+ddp_backend: nccl
+ds_workers: 4
+finetune_ckpt_path: null
+finetune_enabled: false
+finetune_ignored_params: []
+finetune_strict_shapes: true
+fmax: 8000
+fmin: 40
+freezing_enabled: false
+frozen_params: []
+hop_size: 512
+log_interval: 100
+lr_scheduler_args:
+  min_lr: 1.0e-05
+  scheduler_cls: lr_scheduler.scheduler.WarmupLR
+  warmup_steps: 5000
+max_batch_frames: 80000
+max_batch_size: 8
+max_updates: 10000000
+max_val_batch_frames: 10000
+max_val_batch_size: 1
+midi_extractor_args:
+  attention_drop: 0.1
+  attention_heads: 8
+  attention_heads_dim: 64
+  conv_drop: 0.1
+  dim: 512
+  ffn_latent_drop: 0.1
+  ffn_out_drop: 0.1
+  kernel_size: 31
+  lay: 8
+  use_lay_skip: true
+midi_max: 128
+midi_min: 0
+midi_num_bins: 256
+midi_prob_deviation: 0.5
+midi_shift_proportion: 0.0
+midi_shift_range:
+- -6
+- 6
+model_cls: tools.SOME.modules.model.Gmidi_conform.midi_conforms
+num_ckpt_keep: 5
+num_sanity_val_steps: 1
+num_valid_plots: 300
+optimizer_args:
+  beta1: 0.9
+  beta2: 0.98
+  lr: 0.0001
+  optimizer_cls: torch.optim.AdamW
+  weight_decay: 0
+pe: rmvpe
+pe_ckpt: pretrained/rmvpe/model.pt
+permanent_ckpt_interval: 40000
+permanent_ckpt_start: 200000
+pl_trainer_accelerator: auto
+pl_trainer_devices: auto
+pl_trainer_num_nodes: 1
+pl_trainer_precision: 32-true
+pl_trainer_strategy: auto
+raw_data_dir: []
+rest_threshold: 0.1
+sampler_frame_count_grid: 6
+seed: 114514
+sort_by_len: true
+task_cls: training.MIDIExtractionTask
+test_prefixes: null
+train_set_name: train
+units_dim: 80
+units_encoder: mel
+units_encoder_ckpt: pretrained/contentvec/checkpoint_best_legacy_500.pt
+use_buond_loss: true
+use_midi_loss: true
+val_check_interval: 4000
+valid_set_name: valid
+win_size: 2048

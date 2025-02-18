@@ -2,7 +2,7 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN">
 <context>
-    <name>downloadInterface</name>
+    <name>DownloadInterface</name>
     <message>
         <location filename="../../interface/download_interface.py" line="39"/>
         <source>Download Center</source>
@@ -91,7 +91,7 @@
     </message>
 </context>
 <context>
-    <name>managerInterface</name>
+    <name>ManagerInterface</name>
     <message>
         <location filename="../../interface/manager_interface.py" line="21"/>
         <source>Local Model Library</source>
@@ -187,7 +187,7 @@
     </message>
 </context>
 <context>
-    <name>settingsInterface</name>
+    <name>SettingsInterface</name>
     <message>
         <location filename="../../interface/settings_interface.py" line="21"/>
         <source>Settings</source>

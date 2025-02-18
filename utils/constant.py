@@ -9,8 +9,8 @@ Key Configurations:
 - WEBUI_CONFIG: Path to the main web UI configuration file.
 - WEBUI_CONFIG_BACKUP: Backup path for the web UI configuration.
 - PRESETS: Path for preset data storage.
-- MSST_MODEL: Path for the MSST model mapping.
-- VR_MODEL: Path for the VR model mapping.
+- MSST_MODEL: Path for the MSST model mapping. (Removed in >1.7)
+- VR_MODEL: Path for the VR model mapping. (Removed in >1.7)
 - LANGUAGE: Path for language data files.
 - BACKUP: Directory for storing backups.
 - MODEL_FOLDER: Directory for pre-trained models.
@@ -48,20 +48,27 @@ with open(WEBUI_CONFIG_BACKUP, "r") as f:
     PACKAGE_VERSION = config.get("version", "Unknown version")
 
 # presets data path
-PRESETS = "data/presets"
-PRESETS_BACKUP = "data/presets_backup"
+PRESETS = "presets"
+PRESETS_BACKUP = "presets_backup"
 
-# msst model map path
-MSST_MODEL = "data/msst_model_map.json"
-MSST_MODEL_BACKUP = "data_backup/msst_model_map.json"
+# preset version
+PRESET_VERSION = "1.0.0"
+SUPPORTED_PRESET_VERSION = ["1.0.0"]
+
+# # msst model map path
+# MSST_MODEL = "data/msst_model_map.json"
+# MSST_MODEL_BACKUP = "data_backup/msst_model_map.json"
 
 # vr model map path
-VR_MODEL = "data/vr_model_map.json"
-VR_MODEL_BACKUP = "data_backup/vr_model_map.json"
+# VR_MODEL = "data/vr_model_map.json"
+# VR_MODEL_BACKUP = "data_backup/vr_model_map.json"
 
 # language data path
 LANGUAGE = "data/language.json"
 LANGUAGE_BACKUP = "data_backup/language.json"
+
+# path to models information config
+MODELS_INFO = "data/models_info.json"
 
 # path to pretrain folder
 MODEL_FOLDER = "pretrain"
@@ -83,6 +90,7 @@ UPDATE_URL = "https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest"
 
 # pretrained SOME weight
 SOME_WEIGHT = "tools/SOME_weights/model_steps_64000_simplified.ckpt"
+SOME_CONFIG = "configs_backup/config_some.yaml"
 
 # path to the theme folder
 THEME_FOLDER = "tools/themes"
@@ -114,6 +122,9 @@ MODEL_CHOICES = [
 
 # metrics for model evaluation and training
 METRICS = ['sdr', 'l1_freq', 'si_sdr', 'log_wmse', 'aura_stft', 'aura_mrstft', 'bleedless', 'fullness']
+
+# ensemble modes
+ENSEMBLE_MODES = ["avg_wave", "median_wave", "min_wave", "max_wave", "avg_fft", "median_fft", "min_fft", "max_fft"]
 
 # ffmpeg executable path, if not found, use system ffmpeg
 FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.exe") else "ffmpeg"

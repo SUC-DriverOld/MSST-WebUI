@@ -14,7 +14,7 @@ from pydub import AudioSegment
 from tqdm import tqdm
 from modules.vocal_remover.vr_separator import VRSeparator
 from utils.logger import get_logger, set_log_level
-from utils.constant import TEMP_PATH, VR_MODEL, UNOFFICIAL_MODEL
+from utils.constant import TEMP_PATH, MODELS_INFO, UNOFFICIAL_MODEL
 
 class Separator:
     def __init__(
@@ -27,6 +27,7 @@ class Separator:
         invert_using_spec=False,
         use_cpu=False,
         vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
+        audio_params={"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"}
     ):
         if debug:
             set_log_level(logger, logging.DEBUG)
@@ -46,12 +47,13 @@ class Separator:
         # These are parameters which users may want to configure so we expose them to the top-level Separator class,
         # even though they are specific to a single model architecture
         self.vr_params_params = vr_params
-        self.sample_rate = 44100
+        self.sample_rate = 44100 # do not change this value!
         self.use_cpu = use_cpu
         self.torch_device = None
         self.torch_device_cpu = None
         self.torch_device_mps = None
         self.model_instance = None
+        self.audio_params = audio_params
 
         self.setup_accelerated_inferencing_device()
         self.load_model(self.model_file)
@@ -105,7 +107,7 @@ class Separator:
             first_line = ffmpeg_version_output.splitlines()[0]
             self.logger.debug(f"FFmpeg installed: {first_line}")
         except FileNotFoundError:
-            self.logger.error("FFmpeg is not installed. Please install FFmpeg to use this package.")
+            self.logger.warning("FFmpeg is not installed. Please install FFmpeg to use this package.")
 
     def setup_torch_device(self):
         """
@@ -122,7 +124,7 @@ class Separator:
             hardware_acceleration_enabled = True
 
         if not hardware_acceleration_enabled:
-            self.logger.info("No hardware acceleration could be configured, running in CPU mode")
+            self.logger.warning("No hardware acceleration could be configured, running in CPU mode")
             self.torch_device = self.torch_device_cpu
 
     def configure_cuda(self):
@@ -135,16 +137,15 @@ class Separator:
         self.torch_device = self.torch_device_mps
 
     def load_model_data(self, model_name):
-        vr_model_data_object = json.load(open(VR_MODEL, encoding="utf-8"))
+        with open(MODELS_INFO, "r") as f:
+            vr_model_data_object = json.load(f)
         if model_name in vr_model_data_object.keys():
             model_data = vr_model_data_object[model_name]
             self.logger.debug(f"Model data loaded from UVR JSON: {model_data}")
             return model_data
         else:
-            unofficial_model_data = json.load(open(os.path.join(UNOFFICIAL_MODEL, "unofficial_vr_model.json"), encoding="utf-8"))
-            model_data = unofficial_model_data[model_name]
-            self.logger.debug(f"Model data loaded from unofficial UVR JSON: {model_data}")
-            return model_data
+            self.logger.error(f"Model data not found in UVR JSON for model: {model_name}")
+            raise ValueError(f"Model data not found in UVR JSON for model: {model_name}")
 
     def load_model(self, model_path):
         model_filename = os.path.basename(model_path)
@@ -212,6 +213,8 @@ class Separator:
                         self.logger.debug(f"Saved {stem} for {base_name}_{stem}.{self.output_format} in {dir}")
 
             success_files.append(os.path.basename(file_path))
+            del mix, results
+            gc.collect()
         return success_files
 
     def separate(self, mix):
@@ -219,7 +222,10 @@ class Separator:
         if is_numpy:
             tempdir = os.path.join(TEMP_PATH, "tmp_audio")
             os.makedirs(tempdir, exist_ok=True)
-            sf.write(os.path.join(tempdir, "tmp_audio.wav"), mix.T, 44100, subtype="FLOAT")
+            try:
+                sf.write(os.path.join(tempdir, "tmp_audio.wav"), mix.T, 44100, subtype="FLOAT")
+            except:
+                sf.write(os.path.join(tempdir, "tmp_audio.wav"), mix, 44100, subtype="FLOAT")
 
             mix = os.path.join(tempdir, "tmp_audio.wav")
             self.logger.debug(f"Temporary audio file created: {mix}")
@@ -237,7 +243,7 @@ class Separator:
     def save_audio(self, audio, sr, file_name, store_dir):
         if self.output_format.lower() == 'flac':
             file = os.path.join(store_dir, file_name + '.flac')
-            sf.write(file, audio, sr, subtype='PCM_24')
+            sf.write(file, audio, sr, subtype=self.audio_params["flac_bit_depth"])
 
         elif self.output_format.lower() == 'mp3':
             file = os.path.join(store_dir, file_name + '.mp3')
@@ -252,11 +258,11 @@ class Separator:
                 channels=2
                 )
 
-            audio_segment.export(file, format='mp3', bitrate='320k')
+            audio_segment.export(file, format='mp3', bitrate=self.audio_params["mp3_bit_rate"])
 
         else:
             file = os.path.join(store_dir, file_name + '.wav')
-            sf.write(file, audio, sr, subtype='FLOAT')
+            sf.write(file, audio, sr, subtype=self.audio_params["wav_bit_depth"])
 
     def del_cache(self):
         self.logger.debug("Running garbage collection...")

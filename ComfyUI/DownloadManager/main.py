@@ -1,9 +1,13 @@
 import os
 import sys
+import shutil
 sys.path.append(os.getcwd())
 
+if not os.path.exists("./data"):
+        shutil.copytree("data_backup", "data")
+
 from qfluentwidgets import setTheme, setThemeColor, Theme, FluentTranslator
-from download_manager import DownloadManager
+from ComfyUI.DownloadManager.download_manager import DownloadManager
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QTranslator
 from PySide6.QtGui import QIcon
@@ -11,6 +15,7 @@ from ComfyUI.DownloadManager.common.config import cfg
 
 
 def main():
+
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon("ComfyUI/DownloadManager/resource/icon/DownloadManager.ico"))
     translator = QTranslator()
