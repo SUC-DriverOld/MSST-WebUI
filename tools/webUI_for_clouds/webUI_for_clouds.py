@@ -29,6 +29,7 @@ def msst_cloud_model(model_type):
     for key, model in msst_config.items():
         if model["model_class"] == model_type:
             msst_models.append(key)
+    return msst_models        
 
 def load_vr_cloud_model():
     model_map = load_configs(MODELS_INFO)
