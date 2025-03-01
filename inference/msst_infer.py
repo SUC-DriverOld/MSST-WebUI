@@ -160,31 +160,33 @@ class MSSeparator:
                 self.logger.debug(f"Starting separation process for audio_file: {path}")
                 results = self.separate(mix)
                 self.logger.debug(f"Separation audio_file: {path} completed. Starting to save results.")
+
+                file_name, _ = os.path.splitext(os.path.basename(path))
+
+                for instr in results.keys():
+                    save_dir = self.store_dirs.get(instr, "")
+                    if save_dir and type(save_dir) == str:
+                        os.makedirs(save_dir, exist_ok=True)
+                        self.save_audio(results[instr], sr, f"{file_name}_{instr}", save_dir)
+                        self.logger.debug(f"Saved {instr} for {file_name}_{instr}.{self.output_format} in {save_dir}")
+                    elif save_dir and type(save_dir) == list:
+                        for dir in save_dir:
+                            os.makedirs(dir, exist_ok=True)
+                            self.save_audio(results[instr], sr, f"{file_name}_{instr}", dir)
+                            self.logger.debug(f"Saved {instr} for {file_name}_{instr}.{self.output_format} in {dir}")
+
+                success_files.append(os.path.basename(path))
+                del mix, results
+                gc.collect()
+
             except Exception as e:
                 if self.jump_failures:
                     self.logger.error(f"Cannot separate audio_file: {path}, jump to next file. Separation failed: {str(e)}\n{traceback.format_exc()}")
                     failed_files.append(os.path.basename(path))
                     continue
                 else:
+                    self.logger.error(f"Cannot separate audio_file: {path}, jump to next file. Separation failed: {str(e)}\n{traceback.format_exc()}")
                     raise e
-
-            file_name, _ = os.path.splitext(os.path.basename(path))
-
-            for instr in results.keys():
-                save_dir = self.store_dirs.get(instr, "")
-                if save_dir and type(save_dir) == str:
-                    os.makedirs(save_dir, exist_ok=True)
-                    self.save_audio(results[instr], sr, f"{file_name}_{instr}", save_dir)
-                    self.logger.debug(f"Saved {instr} for {file_name}_{instr}.{self.output_format} in {save_dir}")
-                elif save_dir and type(save_dir) == list:
-                    for dir in save_dir:
-                        os.makedirs(dir, exist_ok=True)
-                        self.save_audio(results[instr], sr, f"{file_name}_{instr}", dir)
-                        self.logger.debug(f"Saved {instr} for {file_name}_{instr}.{self.output_format} in {dir}")
-
-            success_files.append(os.path.basename(path))
-            del mix, results
-            gc.collect()
 
         if self.jump_failures and failed_files:
             self.logger.warning(f"Failed files: {failed_files}")
