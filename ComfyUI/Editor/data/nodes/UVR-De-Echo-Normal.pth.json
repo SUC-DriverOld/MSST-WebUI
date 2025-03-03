@@ -1,16 +1,26 @@
 {
     "uid": null,
     "model_name": "UVR-De-Echo-Normal.pth",
+    "input": {
+        "input": {
+            "connection": "source_node_id.output_port_id",
+            "required": true
+        }
+    },
+    "output": {
+        "No Echo": {
+            "connection": null,
+            "required": false
+        },
+        "Echo": {
+            "connection": null,
+            "required": false
+        }
+    },
     "model_type": null,
     "path": "./pretrain/VR_Models/UVR-De-Echo-Normal.pth",
-    "config_path": null,
-    "input": [
-        "input"
-    ],
-    "output": [
-        "No Echo",
-        "Echo"
-    ],
+    "primary_stem": "No Echo",
+    "secondary_stem": "Echo",
     "parameter": [
         {
             "parameter": "batch_size",
@@ -72,8 +82,6 @@
             "current_value": false
         }
     ],
-    "down_stream_nodes": [],
-    "up_stream_node": null,
     "output_format": "wav",
     "scene_pos": [
         0,

@@ -66,21 +66,16 @@ class ExpandableItem(QGraphicsItem):
         self.update()
         
     def _update_layout(self):
-        # 计算文本宽度
         font_metrics = QFontMetrics(font)
         text_width = font_metrics.horizontalAdvance(self.text)
 
-        # 计算图标和文本的总宽度
-        total_width = self.icon_size + 5 + text_width  # 5 是图标和文本之间的间距
+        total_width = self.icon_size + 5 + text_width
 
-        # 计算起始 x 坐标，使图标和文本整体居中
         start_x = (self.width - total_width) / 2
 
-        # 设置图标位置
         icon_y = (self.collapsed_height - self.icon_size) / 2
         self.icon_item.setPos(start_x, icon_y)
         
-        # 设置文本item
         text_height = font_metrics.height()
         text_y = (self.collapsed_height - text_height) / 2
         if not hasattr(self, 'text_item'):

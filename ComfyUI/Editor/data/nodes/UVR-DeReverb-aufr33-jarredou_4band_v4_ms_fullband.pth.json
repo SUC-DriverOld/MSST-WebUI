@@ -1,16 +1,26 @@
 {
     "uid": null,
     "model_name": "UVR-DeReverb-aufr33-jarredou_4band_v4_ms_fullband.pth",
+    "input": {
+        "input": {
+            "connection": "source_node_id.output_port_id",
+            "required": true
+        }
+    },
+    "output": {
+        "Dry": {
+            "connection": null,
+            "required": false
+        },
+        "Reverb": {
+            "connection": null,
+            "required": false
+        }
+    },
     "model_type": null,
     "path": "./pretrain/VR_Models/UVR-DeReverb-aufr33-jarredou_4band_v4_ms_fullband.pth",
-    "config_path": null,
-    "input": [
-        "input"
-    ],
-    "output": [
-        "Dry",
-        "Reverb"
-    ],
+    "primary_stem": "Dry",
+    "secondary_stem": "Reverb",
     "parameter": [
         {
             "parameter": "batch_size",
@@ -72,8 +82,6 @@
             "current_value": false
         }
     ],
-    "down_stream_nodes": [],
-    "up_stream_node": null,
     "output_format": "wav",
     "scene_pos": [
         0,

@@ -1,16 +1,26 @@
 {
     "uid": null,
     "model_name": "MGM_MAIN_v4.pth",
+    "input": {
+        "input": {
+            "connection": "source_node_id.output_port_id",
+            "required": true
+        }
+    },
+    "output": {
+        "Instrumental": {
+            "connection": null,
+            "required": false
+        },
+        "Vocals": {
+            "connection": null,
+            "required": false
+        }
+    },
     "model_type": null,
     "path": "./pretrain/VR_Models/MGM_MAIN_v4.pth",
-    "config_path": null,
-    "input": [
-        "input"
-    ],
-    "output": [
-        "Instrumental",
-        "Vocals"
-    ],
+    "primary_stem": "Instrumental",
+    "secondary_stem": "Vocals",
     "parameter": [
         {
             "parameter": "batch_size",
@@ -72,8 +82,6 @@
             "current_value": false
         }
     ],
-    "down_stream_nodes": [],
-    "up_stream_node": null,
     "output_format": "wav",
     "scene_pos": [
         0,
