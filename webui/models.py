@@ -204,6 +204,11 @@ def install_unmsst_model(unmsst_model, unmsst_config, unmodel_class, unmodel_typ
             "link": unmsst_model_link
         }
 
+        for model in model_map[unmodel_class]:
+            if model["name"] == model_name:
+                model_map[unmodel_class].remove(model)
+                break
+
         model_map[unmodel_class].append(config)
         save_configs(model_map, os.path.join(UNOFFICIAL_MODEL, "unofficial_msst_model.json"))
         logger.info(f"Unofficial MSST model {model_name} installed successfully. Model config: {config}")
