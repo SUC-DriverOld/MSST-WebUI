@@ -108,7 +108,7 @@ def demix_track(config, model, mix, device, pbar=False):
     # windowingArray crossfades at segment boundaries to mitigate clicking artifacts
     windowingArray = _getWindowingArray(C, fade_size)
 
-    with torch.cuda.amp.autocast(enabled=config.training.get('use_amp', True)):
+    with torch.amp.autocast(device_type="cuda", enabled=config.training.get('use_amp', True)):
         with torch.inference_mode():
             if config.training.target_instrument is not None:
                 req_shape = (1, ) + tuple(mix.shape)
@@ -181,7 +181,7 @@ def demix_track_demucs(config, model, mix, device, pbar=False):
     step = C // N
     # logger.info(S, C, N, step, mix.shape, mix.device)
 
-    with torch.cuda.amp.autocast(enabled=config.training.get('use_amp', True)):
+    with torch.amp.autocast(device_type="cuda", enabled=config.training.get('use_amp', True)):
         with torch.inference_mode():
             req_shape = (S, ) + tuple(mix.shape)
             result = torch.zeros(req_shape, dtype=torch.float32)
