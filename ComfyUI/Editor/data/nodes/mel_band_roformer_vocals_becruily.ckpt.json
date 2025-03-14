@@ -1,0 +1,67 @@
+{
+    "uid": null,
+    "model_name": "mel_band_roformer_vocals_becruily.ckpt",
+    "input": {
+        "input": {
+            "connection": [],
+            "required": true
+        }
+    },
+    "output": {
+        "vocals": {
+            "connection": [],
+            "required": false
+        },
+        "other": {
+            "connection": [],
+            "required": false
+        }
+    },
+    "model_type": "mel_band_roformer",
+    "path": "./pretrain/vocal_models/mel_band_roformer_vocals_becruily.ckpt",
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 1,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 1
+        },
+        {
+            "parameter": "dim_t",
+            "type": "int",
+            "default_value": 1101,
+            "max_value": 10000,
+            "min_value": 1,
+            "current_value": 1101
+        },
+        {
+            "parameter": "num_overlap",
+            "type": "int",
+            "default_value": 2,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 2
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "use_tta",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ],
+    "input_path": null,
+    "output_path": null
+}

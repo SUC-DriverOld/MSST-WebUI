@@ -3,17 +3,17 @@
     "model_name": "17_HP-Wind_Inst-UVR.pth",
     "input": {
         "input": {
-            "connection": "source_node_id.output_port_id",
+            "connection": [],
             "required": true
         }
     },
     "output": {
         "No Woodwinds": {
-            "connection": null,
+            "connection": [],
             "required": false
         },
         "Woodwinds": {
-            "connection": null,
+            "connection": [],
             "required": false
         }
     },

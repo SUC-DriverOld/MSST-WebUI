@@ -3,17 +3,17 @@
     "model_name": "UVR-BVE-4B_SN-44100-1.pth",
     "input": {
         "input": {
-            "connection": "source_node_id.output_port_id",
+            "connection": [],
             "required": true
         }
     },
     "output": {
         "Vocals": {
-            "connection": null,
+            "connection": [],
             "required": false
         },
         "Instrumental": {
-            "connection": null,
+            "connection": [],
             "required": false
         }
     },

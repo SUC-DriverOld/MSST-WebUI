@@ -1,0 +1,67 @@
+{
+    "uid": null,
+    "model_name": "aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt",
+    "input": {
+        "input": {
+            "connection": [],
+            "required": true
+        }
+    },
+    "output": {
+        "aspiration": {
+            "connection": [],
+            "required": false
+        },
+        "other": {
+            "connection": [],
+            "required": false
+        }
+    },
+    "model_type": "mel_band_roformer",
+    "path": "./pretrain/single_stem_models/aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt",
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 1,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 1
+        },
+        {
+            "parameter": "dim_t",
+            "type": "int",
+            "default_value": 801,
+            "max_value": 10000,
+            "min_value": 1,
+            "current_value": 801
+        },
+        {
+            "parameter": "num_overlap",
+            "type": "int",
+            "default_value": 4,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 4
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "use_tta",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ],
+    "input_path": null,
+    "output_path": null
+}

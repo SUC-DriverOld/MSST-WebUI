@@ -3,17 +3,17 @@
     "model_name": "UVR-DeNoise.pth",
     "input": {
         "input": {
-            "connection": "source_node_id.output_port_id",
+            "connection": [],
             "required": true
         }
     },
     "output": {
         "Noise": {
-            "connection": null,
+            "connection": [],
             "required": false
         },
         "No Noise": {
-            "connection": null,
+            "connection": [],
             "required": false
         }
     },

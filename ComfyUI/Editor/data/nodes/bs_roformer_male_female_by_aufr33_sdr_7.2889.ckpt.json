@@ -1,0 +1,67 @@
+{
+    "uid": null,
+    "model_name": "bs_roformer_male_female_by_aufr33_sdr_7.2889.ckpt",
+    "input": {
+        "input": {
+            "connection": [],
+            "required": true
+        }
+    },
+    "output": {
+        "male": {
+            "connection": [],
+            "required": false
+        },
+        "female": {
+            "connection": [],
+            "required": false
+        }
+    },
+    "model_type": "bs_roformer",
+    "path": "./pretrain/vocal_models/bs_roformer_male_female_by_aufr33_sdr_7.2889.ckpt",
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 1,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 1
+        },
+        {
+            "parameter": "dim_t",
+            "type": "int",
+            "default_value": 801,
+            "max_value": 10000,
+            "min_value": 1,
+            "current_value": 801
+        },
+        {
+            "parameter": "num_overlap",
+            "type": "int",
+            "default_value": 2,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 2
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "use_tta",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ],
+    "input_path": null,
+    "output_path": null
+}

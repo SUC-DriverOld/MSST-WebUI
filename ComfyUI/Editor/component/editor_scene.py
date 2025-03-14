@@ -9,8 +9,8 @@ from PySide6.QtWidgets import QGraphicsScene, QGraphicsView
 from PySide6.QtGui import QBrush, QColor, QPen, QPainter
 from PySide6.QtCore import QLine, Qt
 from ComfyUI.Editor.component.edge import NodeEdge, DraggingEdge
-from ComfyUI.Editor.component.node_port import InputPort, OutputPort
-from ComfyUI.Editor.component.node import InputNode, OutputNode, FileInputNode, ModelNode
+from ComfyUI.Editor.component.node.node_port import InputPort, OutputPort
+# from ComfyUI.Editor.component.node import InputNode, OutputNode, FileInputNode, ModelNode
 from ComfyUI.Editor.component.node_executor import InferenceWorker
 from ComfyUI.Editor.inference.msst_inference import msst_inference
 from ComfyUI.Editor.inference.vr_inference import vr_inference

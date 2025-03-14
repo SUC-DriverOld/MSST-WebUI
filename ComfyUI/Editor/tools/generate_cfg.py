@@ -1,5 +1,4 @@
 import json
-import os
 import yaml
 from ml_collections import ConfigDict
 from omegaconf import OmegaConf
@@ -13,6 +12,7 @@ def generate_cfg():
     for model in model_info:
         row = model_info[model]
         model_name = row["model_name"]
+        print(model_name)
         model_class = row["model_class"]
         target_position = row["target_position"]
         
@@ -21,7 +21,7 @@ def generate_cfg():
             "model_name": model_name,
             "input": {
                 "input": {
-                    "connection": "source_node_id.output_port_id",
+                    "connection": [],
                     "required": True
                 },
             },
@@ -39,11 +39,11 @@ def generate_cfg():
             model_dict["secondary_stem"] = secondary_stem
             model_dict["output"] = {
                 primary_stem: {
-                    "connection": None,
+                    "connection": [],
                     "required": False
                 },
                 secondary_stem: {
-                    "connection": None,
+                    "connection": [],
                     "required": False
                 }
             }
@@ -121,7 +121,7 @@ def generate_cfg():
                     config = ConfigDict(yaml.load(f, Loader=yaml.FullLoader))
             for instrument in config.training.instruments:
                 model_dict["output"][instrument] = {
-                    "connection": None,
+                    "connection": [],
                     "required": False
                 }
             model_dict["parameter"] = []
@@ -171,8 +171,7 @@ def generate_cfg():
                     "default_value": False,
                     "current_value": False
                 })
-            break
-
+                
         model_dict["output_format"] = "wav"
         model_dict["scene_pos"] = [0, 0]
         model_dict["input_path"] = None

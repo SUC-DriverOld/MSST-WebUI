@@ -3,17 +3,17 @@
     "model_name": "UVR-DeReverb-aufr33-jarredou_4band_v4_ms_fullband.pth",
     "input": {
         "input": {
-            "connection": "source_node_id.output_port_id",
+            "connection": [],
             "required": true
         }
     },
     "output": {
         "Dry": {
-            "connection": null,
+            "connection": [],
             "required": false
         },
         "Reverb": {
-            "connection": null,
+            "connection": [],
             "required": false
         }
     },

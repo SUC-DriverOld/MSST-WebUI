@@ -1,0 +1,75 @@
+{
+    "uid": null,
+    "model_name": "bs_roformer_4stems_ft.ckpt",
+    "input": {
+        "input": {
+            "connection": [],
+            "required": true
+        }
+    },
+    "output": {
+        "drums": {
+            "connection": [],
+            "required": false
+        },
+        "bass": {
+            "connection": [],
+            "required": false
+        },
+        "other": {
+            "connection": [],
+            "required": false
+        },
+        "vocals": {
+            "connection": [],
+            "required": false
+        }
+    },
+    "model_type": "bs_roformer",
+    "path": "./pretrain/multi_stem_models/bs_roformer_4stems_ft.ckpt",
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 2,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 2
+        },
+        {
+            "parameter": "dim_t",
+            "type": "int",
+            "default_value": 2048,
+            "max_value": 10000,
+            "min_value": 1,
+            "current_value": 2048
+        },
+        {
+            "parameter": "num_overlap",
+            "type": "int",
+            "default_value": 4,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 4
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "use_tta",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ],
+    "input_path": null,
+    "output_path": null
+}

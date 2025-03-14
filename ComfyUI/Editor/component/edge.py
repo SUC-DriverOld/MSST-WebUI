@@ -4,7 +4,7 @@ from PySide6.QtGui import QPainterPath, QPen, QColor
 import sys
 sys.path.append("D:\projects\python\MSST-WebUI")
 from ComfyUI.Editor.common.config import color
-from ComfyUI.Editor.component.node_port import InputPort, OutputPort
+from ComfyUI.Editor.component.node.node_port import InputPort, OutputPort
 
 
 

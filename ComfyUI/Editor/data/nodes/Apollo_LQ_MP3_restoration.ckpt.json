@@ -1,0 +1,59 @@
+{
+    "uid": null,
+    "model_name": "Apollo_LQ_MP3_restoration.ckpt",
+    "input": {
+        "input": {
+            "connection": [],
+            "required": true
+        }
+    },
+    "output": {
+        "restored": {
+            "connection": [],
+            "required": false
+        },
+        "addition": {
+            "connection": [],
+            "required": false
+        }
+    },
+    "model_type": "apollo",
+    "path": "./pretrain/single_stem_models/Apollo_LQ_MP3_restoration.ckpt",
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 1,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 1
+        },
+        {
+            "parameter": "num_overlap",
+            "type": "int",
+            "default_value": 4,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 4
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "use_tta",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ],
+    "input_path": null,
+    "output_path": null
+}

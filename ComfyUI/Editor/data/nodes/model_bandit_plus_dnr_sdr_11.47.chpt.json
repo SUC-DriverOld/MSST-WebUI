@@ -1,0 +1,71 @@
+{
+    "uid": null,
+    "model_name": "model_bandit_plus_dnr_sdr_11.47.chpt",
+    "input": {
+        "input": {
+            "connection": [],
+            "required": true
+        }
+    },
+    "output": {
+        "speech": {
+            "connection": [],
+            "required": false
+        },
+        "music": {
+            "connection": [],
+            "required": false
+        },
+        "effects": {
+            "connection": [],
+            "required": false
+        }
+    },
+    "model_type": "bandit",
+    "path": "./pretrain/multi_stem_models/model_bandit_plus_dnr_sdr_11.47.chpt",
+    "parameter": [
+        {
+            "parameter": "batch_size",
+            "type": "int",
+            "default_value": 1,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 1
+        },
+        {
+            "parameter": "dim_t",
+            "type": "int",
+            "default_value": 256,
+            "max_value": 10000,
+            "min_value": 1,
+            "current_value": 256
+        },
+        {
+            "parameter": "num_overlap",
+            "type": "int",
+            "default_value": 4,
+            "max_value": 100,
+            "min_value": 1,
+            "current_value": 4
+        }
+    ],
+    "bool": [
+        {
+            "parameter": "use_cpu",
+            "default_value": false,
+            "current_value": false
+        },
+        {
+            "parameter": "use_tta",
+            "default_value": false,
+            "current_value": false
+        }
+    ],
+    "output_format": "wav",
+    "scene_pos": [
+        0,
+        0
+    ],
+    "input_path": null,
+    "output_path": null
+}

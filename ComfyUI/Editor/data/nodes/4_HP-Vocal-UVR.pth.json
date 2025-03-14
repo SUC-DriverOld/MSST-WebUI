@@ -3,17 +3,17 @@
     "model_name": "4_HP-Vocal-UVR.pth",
     "input": {
         "input": {
-            "connection": "source_node_id.output_port_id",
+            "connection": [],
             "required": true
         }
     },
     "output": {
         "Vocals": {
-            "connection": null,
+            "connection": [],
             "required": false
         },
         "Instrumental": {
-            "connection": null,
+            "connection": [],
             "required": false
         }
     },

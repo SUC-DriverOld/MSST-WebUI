@@ -3,17 +3,17 @@
     "model_name": "8_HP2-UVR.pth",
     "input": {
         "input": {
-            "connection": "source_node_id.output_port_id",
+            "connection": [],
             "required": true
         }
     },
     "output": {
         "Instrumental": {
-            "connection": null,
+            "connection": [],
             "required": false
         },
         "Vocals": {
-            "connection": null,
+            "connection": [],
             "required": false
         }
     },

@@ -3,17 +3,17 @@
     "model_name": "UVR-De-Echo-Aggressive.pth",
     "input": {
         "input": {
-            "connection": "source_node_id.output_port_id",
+            "connection": [],
             "required": true
         }
     },
     "output": {
         "No Echo": {
-            "connection": null,
+            "connection": [],
             "required": false
         },
         "Echo": {
-            "connection": null,
+            "connection": [],
             "required": false
         }
     },
