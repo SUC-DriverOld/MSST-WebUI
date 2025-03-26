@@ -5,7 +5,7 @@
 [English](../README.md) | 简体中文 | 繁體中文 | 日本語 | 한국어<br>
 一个为Music-Source-Separation-Training打造的WebUI应用，此外我们也添加了UVR进来！<br>
 [![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI?label=Version)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest) [![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI?label=Stars&color=blue&style=flat)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers) [![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI?label=License)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE) [![Hugging Face Model](https://img.shields.io/badge/Hugging%20Face-Models-blue?)](https://huggingface.co/Sucial/MSST-WebUI)<br>
-[![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) [![优云智算](https://img.shields.io/badge/一键部署-优云智算-orange?)](https://www.compshare.cn/images-detail?ImageID=compshareImage-19o9qlm9x5f6&referral_code=1ywd4VqDKknFWCEUZvOoWo&ytag=GPU_Github_ZFTurbo)
+[![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) [![UCloud](https://img.shields.io/badge/一键部署-优云智算UCloud-orange?)](https://www.compshare.cn/images-detail?ImageID=compshareImage-19o9qlm9x5f6&referral_code=1ywd4VqDKknFWCEUZvOoWo&ytag=GPU_Github_ZFTurbo)
 
 </div>
 
@@ -18,7 +18,7 @@
 - **Windows**: 从 [Releases](https://github.com/SUC-DriverOld/MSST-WebUI/releases) 下载安装程序，或克隆此仓库并从源代码运行。<br>
 - **Linux/macOS**: 克隆此仓库并从源代码运行。<br>
 - **Google Colab**: [点击这里](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) 在Google Colab上运行WebUI。<br>
-- 优云智算: [点击此处](https://www.compshare.cn/images-detail?ImageID=compshareImage-19o9qlm9x5f6&referral_code=1ywd4VqDKknFWCEUZvOoWo&ytag=GPU_Github_ZFTurbo) 前往优云智算一键部署。
+- **优云智算 (UCloud)**: [点击此处](https://www.compshare.cn/images-detail?ImageID=compshareImage-19o9qlm9x5f6&referral_code=1ywd4VqDKknFWCEUZvOoWo&ytag=GPU_Github_ZFTurbo) 前往优云智算一键部署。
 
 ### 下载链接
 
