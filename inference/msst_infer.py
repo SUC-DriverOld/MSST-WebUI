@@ -193,15 +193,15 @@ class MSSeparator:
         if self.model_type in ['bs_roformer', 'mel_band_roformer']:
             isstereo = self.config.model.get("stereo", True)
 
-        if isstereo and len(mix.shape) == 1:
+        if isstereo and len(mix.shape) == 1: # if model is stereo, but track is mono, add a second channel
             mix = np.stack([mix, mix], axis=0)
             self.logger.warning(f"Track is mono, but model is stereo, adding a second channel.")
-        elif isstereo and len(mix.shape) > 2:
-            mix = np.mean(mix, axis=0) # if more than 2 channels, take mean
+        elif isstereo and len(mix.shape) != 1 and mix.shape[0] > 2: # fi model is stereo, but track has more than 2 channels, take mean
+            mix = np.mean(mix, axis=0)
             mix = np.stack([mix, mix], axis=0)
             self.logger.warning(f"Track has more than 2 channels, taking mean of all channels and adding a second channel.")
-        elif not isstereo and len(mix.shape) != 1:
-            mix = np.mean(mix, axis=0) # if more than 2 channels, take mean
+        elif not isstereo and len(mix.shape) != 1: # if model is mono, but track has more than 1 channels, take mean
+            mix = np.mean(mix, axis=0)
             self.logger.warning(f"Track has more than 1 channels, but model is mono, taking mean of all channels.")
 
         instruments = self.config.training.instruments.copy()
