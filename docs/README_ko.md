@@ -2,7 +2,7 @@
 <h1 align="center">MSST-WebUI</h1>
 <div align="center">
 
-[English](https://github.com/beckgom/MSST-WebUI/blob/main/README.md) | [简体中文](docs/README_zh.md) | 繁體中文 | 日本語 | 한국어<br>
+[English](../README.md) | [简体中文](README_zh.md) | 繁體中文 | 日本語 | 한국어<br>
 Music-Source-Separation-Training용 WebUI 애플리케이션, UVR도 함께 포함되어 있습니다!<br>
 [![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI?label=Version)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest) [![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI?label=Stars&color=blue&style=flat)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers) [![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI?label=License)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE) [![Hugging Face Model](https://img.shields.io/badge/Hugging%20Face-Models-blue?)](https://huggingface.co/Sucial/MSST-WebUI)<br>
 [![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) [![UCloud](https://img.shields.io/badge/一键部署-优云智算UCloud-orange?)](https://www.compshare.cn/images-detail?ImageID=compshareImage-19o9qlm9x5f6&referral_code=1ywd4VqDKknFWCEUZvOoWo&ytag=GPU_Github_ZFTurbo)
@@ -63,17 +63,17 @@ pip install tools/webUI_for_clouds/librosa-0.9.2-py3-none-any.whl
 python webUI.py
 ```
 
-* 자세한 실행 인자나 클라우드 실행은 [이 문서](docs/webui.md) 참고
+* 자세한 실행 인자나 클라우드 실행은 [이 문서](webui.md) 참고
 
 * 모델 유형이 `swin_upernet`일 때 다음 오류가 발생할 수 있음: `ValueError: Make sure that the channel dimension of the pixel values match with the one set in the configuration`. [이슈 #24](https://github.com/SUC-DriverOld/MSST-WebUI/issues/24) 참고하세요
 
 ## CLI 및 Python API
 
-[docs/inference.md](docs/inference.md) 참고
+[docs/inference.md](inference.md) 참고
 
 ## 학습 및 검증
 
-[docs/training.md](docs/training.md) 참고
+[docs/training.md](training.md) 참고
 
 ## 참고 자료
 
