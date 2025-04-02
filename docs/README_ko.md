@@ -1,80 +1,81 @@
-<div align="center"><img src="docs/logo.png" alt="logo" width="128" height="128"></div>
+<div align="center"><img src="logo.png" alt="logo" width="128" height="128"></div>
 <h1 align="center">MSST-WebUI</h1>
 <div align="center">
 
-English | [简体中文](docs/README_zh.md) | 繁體中文 | 日本語 | [한국어](docs/README_ko.md)<br>
-A WebUI app for Music-Source-Separation-Training and we packed UVR together!<br>
+[English](../README.md) | [简体中文](README_zh.md) | 繁體中文 | 日本語 | 한국어<br>
+Music-Source-Separation-Training용 WebUI 애플리케이션, UVR도 함께 포함되어 있습니다!<br>
 [![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI?label=Version)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest) [![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI?label=Stars&color=blue&style=flat)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers) [![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI?label=License)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE) [![Hugging Face Model](https://img.shields.io/badge/Hugging%20Face-Models-blue?)](https://huggingface.co/Sucial/MSST-WebUI)<br>
 [![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) [![UCloud](https://img.shields.io/badge/一键部署-优云智算UCloud-orange?)](https://www.compshare.cn/images-detail?ImageID=compshareImage-19o9qlm9x5f6&referral_code=1ywd4VqDKknFWCEUZvOoWo&ytag=GPU_Github_ZFTurbo)
 
 </div>
 
-## Introduction
+## 소개
 
-This is a webUI for [Music-Source-Separation-Training (MSST)](https://github.com/ZFTurbo/Music-Source-Separation-Training), which is a repository for training models for music source separation. You can use this webUI to infer the MSST model and VR Models, and the preset process page allows you to customize the processing flow yourself. You can install models in the "Install Models" interface. If you have downloaded [Ultimate Vocal Remover (UVR)](https://github.com/Anjok07/ultimatevocalremovergui) before, you do not need to download VR Models again. You can go to the "Settings" page and directly select your UVR5 model folder. We also provide some convenient tools in the WebUI such as [Singing-Oriented MIDI Extractor (SOME)](https://github.com/openvpi/SOME/), advanced ensemble mode, and more.
+이 WebUI는 [Music-Source-Separation-Training (MSST)](https://github.com/ZFTurbo/Music-Source-Separation-Training)를 위한 사용자 인터페이스입니다. 이 저장소는 음악 소스 분리 모델을 학습하기 위한 도구들을 포함하고 있습니다. 본 WebUI를 사용하여 MSST 모델과 VR 모델을 추론할 수 있으며, 사전 설정된 프로세스 페이지에서 처리 과정을 직접 커스터마이징할 수 있습니다.
 
-## Usage
+“Install Models” 메뉴에서 모델을 설치할 수 있으며, 기존에 [Ultimate Vocal Remover (UVR)](https://github.com/Anjok07/ultimatevocalremovergui)를 다운로드한 경우 VR 모델을 다시 받을 필요 없이 “Settings” 페이지에서 UVR5 모델 폴더를 선택하면 됩니다. 또한 [SOME (Singing-Oriented MIDI Extractor)](https://github.com/openvpi/SOME/)와 고급 앙상블 모드 등 다양한 편의 기능도 제공됩니다.
 
-- **Windows**: Download the installer from [Releases](https://github.com/SUC-DriverOld/MSST-WebUI/releases) or clone this repository and run from source.<br>
-- **Linux/macOS**: Clone this repository and run from source.<br>
-- **Google Colab**: [Click here](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) to run the webUI on Google Colab.
-- **UCloud (For Chinese Users Only)**: [Click here](https://www.compshare.cn/images-detail?ImageID=compshareImage-19o9qlm9x5f6&referral_code=1ywd4VqDKknFWCEUZvOoWo&ytag=GPU_Github_ZFTurbo) to deploy the webUI on UCloud.
+## 사용 방법
 
-### Download links
+- **Windows**: [Releases](https://github.com/SUC-DriverOld/MSST-WebUI/releases)에서 설치 파일을 받거나 저장소를 클론하여 직접 실행합니다.<br>
+- **Linux/macOS**: 저장소를 클론하고 직접 실행합니다.<br>
+- **Google Colab**: [여기 클릭](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb)하여 Colab에서 실행합니다.
+- **UCloud (중국 사용자 전용)**: [여기 클릭](https://www.compshare.cn/images-detail?ImageID=compshareImage-19o9qlm9x5f6&referral_code=1ywd4VqDKknFWCEUZvOoWo&ytag=GPU_Github_ZFTurbo)하여 UCloud에 배포합니다.
 
-|    Websites     | Download Links                                       | Notes                              |
-|:---------------:|:----------------------------------------------------:|:----------------------------------:|
-| Github Releases | https://github.com/SUC-DriverOld/MSST-WebUI/releases |      Only installer, no models     |
-|   Huggingface   |  https://huggingface.co/Sucial/MSST-WebUI/tree/main  | Installer and all available models |
+### 다운로드 링크
 
-### Documents
+| 웹사이트         | 다운로드 링크                                             | 비고                           |
+|------------------|----------------------------------------------------------|--------------------------------|
+| Github Releases  | https://github.com/SUC-DriverOld/MSST-WebUI/releases     | 설치 파일만 포함, 모델 없음   |
+| Huggingface      | https://huggingface.co/Sucial/MSST-WebUI/tree/main       | 설치 파일 및 모든 모델 포함   |
 
-We provided some detailed chinese documents for chinese users, click [here](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc) to jump. For other users, go to `docs` folder to find some documents. You can also see [deton24](https://github.com/deton24)'s [Instrumental and vocal & stems separation & mastering guide](https://docs.google.com/document/d/17fjNvJzj8ZGSer7c7OFe_CNfUKbAxEh_OBv94ZdRG5c), which is a great guide too.
+### 문서
 
-## Run from source
+중국어 문서는 [여기](https://r1kc63iz15l.feishu.cn/wiki/JSp3wk7zuinvIXkIqSUcCXY1nKc)를 클릭하세요. 그 외 사용자들은 `docs` 폴더에서 문서를 확인할 수 있습니다. 또한 [deton24](https://github.com/deton24)의 [보컬 및 악기 분리 & 마스터링 가이드](https://docs.google.com/document/d/17fjNvJzj8ZGSer7c7OFe_CNfUKbAxEh_OBv94ZdRG5c)도 매우 유용합니다.
 
-- Clone this repository.
+## 소스 코드를 받아서 실행하기
+* 저장소 클론
+```bash
+git clone https://github.com/SUC-DriverOld/MSST-WebUI.git
+cd MSST-WebUI
+```
 
-  ```bash
-  git clone https://github.com/SUC-DriverOld/MSST-WebUI.git
-  cd MSST-WebUI
-  ```
+* Python 환경 생성 및 라이브러리 설치 (Python 3.10 권장):
 
-- Create Python environment and install the requirements. We recommend to use python 3.10.
+```bash
+conda create -n msst python=3.10 -y
+conda activate msst
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install -r requirements.txt --only-binary=samplerate
+```
 
-  ```bash
-  conda create -n msst python=3.10 -y
-  conda activate msst
-  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-  pip install -r requirements.txt --only-binary=samplerate
-  ```
+* 라이브러리 설치 후, 요구사항 설치 후, site-packages 폴더로 이동하여 librosa\util\utils.py 파일을 열고 **2185번째 줄**로 이동합니다. 다음과 같이 코드를 수정하세요: `np.dtype(complex): np.dtype(np.float).type, → np.dtype(complex): np.dtype(float).type`,
+만약 이 작업이 어렵거나 익숙하지 않다면, 아래 명령어를 사용해 쉽게 대체할 수 있습니다.
 
-- After installing the requirements, go to `site-packages` folder, open `librosa\util\utils.py` and go to line **2185**. Change the line from `np.dtype(complex): np.dtype(np.float).type,` to `np.dtype(complex): np.dtype(float).type,`. If you do not know how to do this, you can use the following command.
+```bash
+pip uninstall librosa -y
+pip install tools/webUI_for_clouds/librosa-0.9.2-py3-none-any.whl
+```
 
-  ```bash
-  pip uninstall librosa -y
-  pip install tools/webUI_for_clouds/librosa-0.9.2-py3-none-any.whl
-  ```
+* WebUI 실행:
 
-- Run the webUI use the following command.
+```bash
+python webUI.py
+```
 
-  ```bash
-  python webUI.py
-  ```
+* 자세한 실행 인자나 클라우드 실행은 [이 문서](webui.md) 참고
 
-- For more detailed launching arguments, or if you want to run the webUI on a cloud platform, see [this document](docs/webui.md).
+* 모델 유형이 `swin_upernet`일 때 다음 오류가 발생할 수 있음: `ValueError: Make sure that the channel dimension of the pixel values match with the one set in the configuration`. [이슈 #24](https://github.com/SUC-DriverOld/MSST-WebUI/issues/24) 참고하세요
 
-- You may meet the following error when using model_type swin_upernet: `ValueError: Make sure that the channel dimension of the pixel values match with the one set in the configuration`. Refer to [this issue](https://github.com/SUC-DriverOld/MSST-WebUI/issues/24) to solve the problem.
+## CLI 및 Python API
 
-## CLI & Python API
+[docs/inference.md](inference.md) 참고
 
-See [this document](docs/inference.md) for more details.
+## 학습 및 검증
 
-## Training & Validation
+[docs/training.md](training.md) 참고
 
-See [this document](docs/training.md) for more details.
-
-## Reference
+## 참고 자료
 
 - [deton24's Documents] [Instrumental and vocal & stems separation & mastering guide](https://docs.google.com/document/d/17fjNvJzj8ZGSer7c7OFe_CNfUKbAxEh_OBv94ZdRG5c)
 - [KitsuneX07's ComfyMSS] [ComfyMSS](https://github.com/KitsuneX07/ComfyMSS)
@@ -85,13 +86,15 @@ See [this document](docs/training.md) for more details.
 - [Ultimate Vocal Remover] [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui)
 - [ZFTurbo's MSST code] [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training)
 
-### Thanks to all contributors for their efforts
+---
+
+### 기여자 여러분께 감사드립니다
 
 <a href="https://github.com/SUC-DriverOld/MSST-WebUI/graphs/contributors" target="_blank">
   <img src="https://contrib.rocks/image?repo=SUC-DriverOld/MSST-WebUI" alt=""/>
 </a>
 
-### Thanks for all model providers
+### 모델 제공자 분들께 감사드립니다
 
 <table>
   <tr>

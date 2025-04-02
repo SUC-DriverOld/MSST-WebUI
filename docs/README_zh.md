@@ -2,7 +2,7 @@
 <h1 align="center">MSST-WebUI</h1>
 <div align="center">
 
-[English](../README.md) | 简体中文 | 繁體中文 | 日本語 | 한국어<br>
+[English](../README.md) | 简体中文 | 繁體中文 | 日本語 | [한국어](README_ko.md)<br>
 一个为Music-Source-Separation-Training打造的WebUI应用，此外我们也添加了UVR进来！<br>
 [![GitHub release](https://img.shields.io/github/v/release/SUC-DriverOld/MSST-WebUI?label=Version)](https://github.com/SUC-DriverOld/MSST-WebUI/releases/latest) [![GitHub stars](https://img.shields.io/github/stars/SUC-DriverOld/MSST-WebUI?label=Stars&color=blue&style=flat)](https://github.com/SUC-DriverOld/MSST-WebUI/stargazers) [![GitHub license](https://img.shields.io/github/license/SUC-DriverOld/MSST-WebUI?label=License)](https://github.com/SUC-DriverOld/MSST-WebUI/blob/main/LICENSE) [![Hugging Face Model](https://img.shields.io/badge/Hugging%20Face-Models-blue?)](https://huggingface.co/Sucial/MSST-WebUI)<br>
 [![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SUC-DriverOld/MSST-WebUI/blob/main/webUI_for_colab.ipynb) [![UCloud](https://img.shields.io/badge/一键部署-优云智算UCloud-orange?)](https://www.compshare.cn/images-detail?ImageID=compshareImage-19o9qlm9x5f6&referral_code=1ywd4VqDKknFWCEUZvOoWo&ytag=GPU_Github_ZFTurbo)
