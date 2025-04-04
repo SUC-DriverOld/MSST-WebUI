@@ -33,7 +33,7 @@ def get_msst_model(model_name):
     #             return model_path, download_link
     if config[model_name]:
         model_path = os.path.join("pretrain", config[model_name]["model_class"], model_name)
-        download_link = config[model_name]["download_link"]
+        download_link = config[model_name]["link"]
         return model_path, download_link
 
 def get_uvr_models(model_name):
