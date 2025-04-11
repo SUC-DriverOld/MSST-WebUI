@@ -118,7 +118,7 @@ def train_model(args):
     torch.multiprocessing.set_start_method('spawn')
 
     model, config = get_model_from_config(args.model_type, args.config_path)
-    accelerator.logger.info("Instruments: {}".format(config.training.instruments))
+    logger.info("Instruments: {}".format(config.training.instruments))
 
     os.makedirs(args.results_path, exist_ok=True)
 
@@ -157,7 +157,7 @@ def train_model(args):
     valid_loader = accelerator.prepare(valid_loader)
 
     if args.start_check_point != '':
-        accelerator.logger.info('Start from checkpoint: {}'.format(args.start_check_point))
+        logger.info('Start from checkpoint: {}'.format(args.start_check_point))
         if 1:
             load_not_compatible_weights(model, args.start_check_point, verbose=False)
         else:
@@ -168,7 +168,7 @@ def train_model(args):
     optim_params = dict()
     if 'optimizer' in config:
         optim_params = dict(config['optimizer'])
-        accelerator.logger.info('Optimizer params from config:\n{}'.format(optim_params))
+        logger.info('Optimizer params from config:\n{}'.format(optim_params))
 
     if config.training.optimizer == 'adam':
         optimizer = Adam(model.parameters(), lr=config.training.lr, **optim_params)
@@ -187,10 +187,10 @@ def train_model(args):
         import bitsandbytes as bnb
         optimizer = bnb.optim.AdamW8bit(model.parameters(), lr=config.training.lr, **optim_params)
     elif config.training.optimizer == 'sgd':
-        accelerator.logger.info('Use SGD optimizer')
+        logger.info('Use SGD optimizer')
         optimizer = SGD(model.parameters(), lr=config.training.lr, **optim_params)
     else:
-        accelerator.logger.info('Unknown optimizer: {}'.format(config.training.optimizer))
+        logger.info('Unknown optimizer: {}'.format(config.training.optimizer))
         exit()
 
     if accelerator.is_main_process:
@@ -215,7 +215,7 @@ def train_model(args):
             loss_options = dict(config.loss_multistft)
         except:
             loss_options = dict()
-        accelerator.logger.info('Loss options: {}'.format(loss_options))
+        logger.info('Loss options: {}'.format(loss_options))
         loss_multistft = auraloss.freq.MultiResolutionSTFTLoss(
             **loss_options
         )
@@ -238,21 +238,21 @@ def train_model(args):
             # logger.info(sdr_list[instr])
             sdr_data = torch.cat(sdr_list[instr], dim=0).cpu().numpy()
             sdr_val = sdr_data.mean()
-            accelerator.logger.info("Valid length: {}".format(valid_dataset_length))
-            accelerator.logger.info("Instr SDR {}: {:.4f} Debug: {}".format(instr, sdr_val, len(sdr_data)))
+            logger.info("Valid length: {}".format(valid_dataset_length))
+            logger.info("Instr SDR {}: {:.4f} Debug: {}".format(instr, sdr_val, len(sdr_data)))
             sdr_val = sdr_data[:valid_dataset_length].mean()
-            accelerator.logger.info("Instr SDR {}: {:.4f} Debug: {}".format(instr, sdr_val, len(sdr_data)))
+            logger.info("Instr SDR {}: {:.4f} Debug: {}".format(instr, sdr_val, len(sdr_data)))
             sdr_avg += sdr_val
         sdr_avg /= len(instruments)
         if len(instruments) > 1:
-            accelerator.logger.info('SDR Avg: {:.4f}'.format(sdr_avg))
+            logger.info('SDR Avg: {:.4f}'.format(sdr_avg))
         sdr_list = None
 
-    accelerator.logger.info('Train for: {}'.format(config.training.num_epochs))
+    logger.info('Train for: {}'.format(config.training.num_epochs))
     best_sdr = -100
     for epoch in range(config.training.num_epochs):
         model.train().to(device)
-        accelerator.logger.info('Train epoch: {} Learning rate: {}'.format(epoch, optimizer.param_groups[0]['lr']))
+        logger.info('Train epoch: {} Learning rate: {}'.format(epoch, optimizer.param_groups[0]['lr']))
         loss_val = 0.
         total = 0
 
