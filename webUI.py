@@ -84,7 +84,7 @@ def main(args):
     from webui import app
     app.app(
         platform=platform_info, device=devices, force_cpu=force_cpu, theme=theme_path
-    ).launch(
+    ).queue().launch(
         inbrowser=True, share=share, server_name=server_name, server_port=server_port,
         show_api=False, favicon_path="docs/logo.png"
     )
