@@ -28,6 +28,7 @@ import os
 import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
+os.environ["no_proxy"] = "127.0.0.1,localhost,::1"
 
 
 def main(args):
