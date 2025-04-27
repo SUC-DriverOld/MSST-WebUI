@@ -28,10 +28,9 @@ presets_backup/
 !pretrain/*.json
 !.gitkeep
 setup_app.py
-go-webui.bat
-DownloadManager.exe
-go-DownloadManager.bat
-webui_no_admin.exe
+*.bat
+*.ps1
+*.exe
 results.zip
 
 *.ckpt

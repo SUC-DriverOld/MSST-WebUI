@@ -160,10 +160,35 @@ class VRSeparator(CommonSeparator):
         # self.logger.debug(f"y_spec stats - min: {np.min(y_spec)}, max: {np.max(y_spec)}, isnan: {np.isnan(y_spec).any()}, isinf: {np.isinf(y_spec).any()}")
         # self.logger.debug(f"v_spec stats - min: {np.min(v_spec)}, max: {np.max(v_spec)}, isnan: {np.isnan(v_spec).any()}, isinf: {np.isinf(v_spec).any()}")
 
-        results = {
-            self.primary_stem_name: self.process_stem(self.primary_stem_name, self.primary_source, y_spec),
-            self.secondary_stem_name: self.process_stem(self.secondary_stem_name, self.secondary_source, v_spec)
-        }
+        if not self.invert_using_spec:
+            # [length, channel]
+            results = {
+                self.primary_stem_name: self.process_stem(self.primary_stem_name, self.primary_source, y_spec),
+                self.secondary_stem_name: self.process_stem(self.secondary_stem_name, self.secondary_source, v_spec)
+            }
+        else:
+            self.logger.debug("Inverting secondary stem using spectogram as invert_using_spec is set to True")
+
+            # raw_mix = [channel, length], self.primary_source = [length, channel]
+            raw_mix, _ = librosa.load(self.audio_file_path, sr=44100, mono=False, dtype=np.float32)
+            self.primary_source = self.process_stem(self.primary_stem_name, self.primary_source, y_spec).astype(np.float32)
+
+            # self.primary_source = [length, channel]
+            self.primary_source = self.primary_source.T
+
+            # match the length of raw_mix and primary_source
+            # raw_mix = [channel, length], self.primary_source = [length, channel]
+            min_audio_length = min(raw_mix.shape[-1], self.primary_source.shape[-1])
+            raw_mix, self.primary_source = raw_mix[..., :min_audio_length], self.primary_source[..., :min_audio_length]
+
+            # raw_mix = [channel, length], self.primary_source = [channel, length]
+            self.secondary_source = spec_utils.invert_stem(raw_mix, self.primary_source)
+
+            # self.primary_source = [length, channel], self.secondary_source = [length, channel]
+            results = {
+                self.primary_stem_name: self.primary_source.T,
+                self.secondary_stem_name: self.secondary_source
+            }
 
         if "Aspiration" in results.keys():
             res = results["Aspiration"]
