@@ -204,7 +204,6 @@ class Presets:
         webui_config = load_configs(WEBUI_CONFIG)
         self.debug = webui_config["settings"].get("debug", False)
         self.vr_model_path = webui_config['settings']['uvr_model_dir']
-        self.invert_using_spec = webui_config['inference']['vr_invert_spect']
         self.batch_size = int(webui_config['inference']['vr_batch_size'])
         self.window_size = int(webui_config['inference']['vr_window_size'])
         self.aggression = int(webui_config['inference']['vr_aggression'])
@@ -268,7 +267,7 @@ class Presets:
         vr_inference = multiprocessing.Process(
             target=run_inference,
             args=(
-                self.debug, model_file, output_dir, output_format, self.invert_using_spec, self.force_cpu,
+                self.debug, model_file, output_dir, output_format, self.force_cpu,
                 self.batch_size, self.window_size, self.aggression, self.use_tta, self.enable_post_process,
                 self.post_process_threshold, self.high_end_process, self.wav_bit_depth, self.flac_bit_depth,
                 self.mp3_bit_rate, input_folder, result_queue

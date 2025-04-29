@@ -16,7 +16,7 @@ def load_vr_model_stem(model):
     return (gr.Checkbox(label=f"{primary_stem} Only", value=False, interactive=True),
             gr.Checkbox(label=f"{secondary_stem} Only", value=False, interactive=True))
 
-def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
+def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
     config = load_configs(WEBUI_CONFIG)
     config['inference']['vr_select_model'] = vr_select_model
     config['inference']['vr_window_size'] = int(vr_window_size)
@@ -29,14 +29,13 @@ def save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_
     config['inference']['store_dir'] = vr_store_dir
     config['inference']['vr_batch_size'] = int(vr_batch_size)
     config['inference']['vr_post_process_threshold'] = float(vr_post_process_threshold)
-    config['inference']['vr_invert_spect'] = vr_invert_spect
     config['inference']['vr_enable_tta'] = vr_enable_tta
     config['inference']['vr_high_end_process'] = vr_high_end_process
     config['inference']['vr_enable_post_process'] = vr_enable_post_process
     save_configs(config, WEBUI_CONFIG)
     logger.debug(f"Saved VR inference config: {config['inference']}")
 
-def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
+def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
     vr_input_save = None
 
     if not audio_input:
@@ -50,16 +49,16 @@ def vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_outpu
         shutil.copy(audio, TEMP_PATH)
     vr_audio_input = TEMP_PATH
 
-    save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_input_save, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
-    message = start_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
+    save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_input_save, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
+    message = start_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, vr_audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
     shutil.rmtree(TEMP_PATH)
     return message
 
-def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
-    save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
-    return start_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
+def vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
+    save_vr_inference_config(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
+    return start_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
 
-def start_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
+def start_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
     if not audio_input:
         return i18n("请上传至少一个音频文件!")
     if not vr_select_model:
@@ -91,7 +90,7 @@ def start_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_fo
     result_queue = multiprocessing.Queue()
     vr_inference = multiprocessing.Process(
         target=run_inference,
-        args=(debug, model_file, output_dir, vr_output_format, vr_invert_spect, vr_use_cpu, int(vr_batch_size), int(vr_window_size), int(vr_aggression), vr_enable_tta, vr_enable_post_process, vr_post_process_threshold, vr_high_end_process, wav_bit_depth, flac_bit_depth, mp3_bit_rate, audio_input, result_queue),
+        args=(debug, model_file, output_dir, vr_output_format, vr_use_cpu, int(vr_batch_size), int(vr_window_size), int(vr_aggression), vr_enable_tta, vr_enable_post_process, vr_post_process_threshold, vr_high_end_process, wav_bit_depth, flac_bit_depth, mp3_bit_rate, audio_input, result_queue),
         name="vr_inference"
     )
 
@@ -109,8 +108,8 @@ def start_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_fo
     else:
         return i18n("用户强制终止")
 
-def run_inference(debug, model_file, output_dir, output_format, invert_using_spec, use_cpu, batch_size, window_size, aggression, enable_tta, enable_post_process, post_process_threshold, high_end_process, wav_bit_depth, flac_bit_depth, mp3_bit_rate, input_folder, result_queue):
-    logger.debug(f"Start VR inference process with parameters: debug={debug}, model_file={model_file}, output_dir={output_dir}, output_format={output_format}, invert_using_spec={invert_using_spec}, use_cpu={use_cpu}, batch_size={batch_size}, window_size={window_size}, aggression={aggression}, enable_tta={enable_tta}, enable_post_process={enable_post_process}, post_process_threshold={post_process_threshold}, high_end_process={high_end_process}, wav_bit_depth={wav_bit_depth}, flac_bit_depth={flac_bit_depth}, mp3_bit_rate={mp3_bit_rate}, input_folder={input_folder}")
+def run_inference(debug, model_file, output_dir, output_format, use_cpu, batch_size, window_size, aggression, enable_tta, enable_post_process, post_process_threshold, high_end_process, wav_bit_depth, flac_bit_depth, mp3_bit_rate, input_folder, result_queue):
+    logger.debug(f"Start VR inference process with parameters: debug={debug}, model_file={model_file}, output_dir={output_dir}, output_format={output_format}, use_cpu={use_cpu}, batch_size={batch_size}, window_size={window_size}, aggression={aggression}, enable_tta={enable_tta}, enable_post_process={enable_post_process}, post_process_threshold={post_process_threshold}, high_end_process={high_end_process}, wav_bit_depth={wav_bit_depth}, flac_bit_depth={flac_bit_depth}, mp3_bit_rate={mp3_bit_rate}, input_folder={input_folder}")
 
     try:
         separator = Separator(
@@ -119,7 +118,6 @@ def run_inference(debug, model_file, output_dir, output_format, invert_using_spe
             model_file=model_file,
             output_dir=output_dir,
             output_format=output_format,
-            invert_using_spec=invert_using_spec,
             use_cpu=use_cpu,
             vr_params={
                 "batch_size": batch_size,

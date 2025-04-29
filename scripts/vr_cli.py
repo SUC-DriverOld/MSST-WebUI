@@ -24,7 +24,6 @@ def vr_inference(args):
         model_file=args.model_path,
         output_dir=args.output_folder,
         output_format=args.output_format,
-        invert_using_spec=args.invert_spect,
         use_cpu=args.use_cpu,
         vr_params={
             "batch_size": args.batch_size,
@@ -56,11 +55,8 @@ if __name__ == "__main__":
     io_params.add_argument("-o", "--output_folder", type=str, default="results", help="Folder to store separated files. Only can be str when using cli (default: %(default)s). Example: --output_folder=results")
     io_params.add_argument("--output_format", choices=['wav', 'flac', 'mp3'], default="wav", help="Output format for separated files (default: %(default)s). Example: --output_format=wav")
 
-    common_params = parser.add_argument_group("Common Separation Parameters")
-    common_params.add_argument("-m", "--model_path", type=str, help="Path to model checkpoint.", required=True)
-    common_params.add_argument("--invert_spect", action="store_true", help="Invert secondary stem using spectogram (default: %(default)s). Example: --invert_spect")
-
     vr_params = parser.add_argument_group("VR Architecture Parameters")
+    vr_params.add_argument("-m", "--model_path", type=str, help="Path to model checkpoint.", required=True)
     vr_params.add_argument("--batch_size", type=int, default=2, help="Number of batches to process at a time. higher = more RAM, slightly faster processing (default: %(default)s). Example: --batch_size=16")
     vr_params.add_argument("--window_size", type=int, default=512, help="Balance quality and speed. 1024 = fast but lower, 320 = slower but better quality. (default: %(default)s). Example: --window_size=320")
     vr_params.add_argument("--aggression", type=int, default=5, help="Intensity of primary stem extraction, -100 - 100. typically 5 for vocals & instrumentals (default: %(default)s). Example: --aggression=2")

@@ -108,12 +108,6 @@ def vr(webui_config, force_cpu_flag=False):
                 interactive=True
             )
         with gr.Row():
-            vr_invert_spect = gr.Checkbox(
-                label="Invert Spectrogram",
-                info=i18n("次级输出使用频谱而非波形进行反转, 可能会提高质量, 但速度稍慢"),
-                value=webui_config['inference']['vr_invert_spect'] if webui_config['inference']['vr_invert_spect'] else False,
-                interactive=True
-            )
             vr_enable_tta = gr.Checkbox(
                 label="Enable TTA",
                 info=i18n("启用“测试时增强”, 可能会提高质量, 但速度稍慢"),
@@ -160,7 +154,6 @@ def vr(webui_config, force_cpu_flag=False):
             vr_store_dir,
             vr_batch_size,
             vr_post_process_threshold,
-            vr_invert_spect,
             vr_enable_tta,
             vr_high_end_process,
             vr_enable_post_process
@@ -181,7 +174,6 @@ def vr(webui_config, force_cpu_flag=False):
             vr_store_dir,
             vr_batch_size,
             vr_post_process_threshold,
-            vr_invert_spect,
             vr_enable_tta,
             vr_high_end_process,
             vr_enable_post_process

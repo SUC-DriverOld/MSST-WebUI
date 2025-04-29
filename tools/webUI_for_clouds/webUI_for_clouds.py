@@ -63,17 +63,17 @@ def cloud_msst_infer_folder(selected_model, input_folder, store_dir, extract_ins
         assert download_model("msst", selected_model), i18n("模型下载失败, 请重试!")
         return run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
 
-def cloud_vr_infer_audio(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
+def cloud_vr_infer_audio(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
     from webui.vr import vr_inference_single
     if vr_select_model:
         assert download_model("uvr", vr_select_model), i18n("模型下载失败, 请重试!")
-        return vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
+        return vr_inference_single(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, audio_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
 
-def cloud_vr_infer_folder(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
+def cloud_vr_infer_folder(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process):
     from webui.vr import vr_inference_multi
     if vr_select_model:
         assert download_model("uvr", vr_select_model), i18n("模型下载失败, 请重试!")
-        return vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_invert_spect, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
+        return vr_inference_multi(vr_select_model, vr_window_size, vr_aggression, vr_output_format, vr_use_cpu, vr_primary_stem_only, vr_secondary_stem_only, folder_input, vr_store_dir, vr_batch_size, vr_post_process_threshold, vr_enable_tta, vr_high_end_process, vr_enable_post_process)
 
 def check_preset(preset_data):
     for model in preset_data["flow"]:
@@ -398,12 +398,6 @@ def vr():
                 interactive=True
             )
         with gr.Row():
-            vr_invert_spect = gr.Checkbox(
-                label="Invert Spectrogram",
-                info=i18n("次级输出使用频谱而非波形进行反转, 可能会提高质量, 但速度稍慢"),
-                value=False,
-                interactive=True
-            )
             vr_enable_tta = gr.Checkbox(
                 label="Enable TTA",
                 info=i18n("启用“测试时增强”, 可能会提高质量, 但速度稍慢"),
@@ -431,8 +425,8 @@ def vr():
     audio_tab.select(fn=change_to_audio_infer, outputs=[vr_inference_audio, vr_inference_folder])
     folder_tab.select(fn=change_to_folder_infer, outputs=[vr_inference_audio, vr_inference_folder])
     vr_select_model.change(fn=load_vr_model_stem,inputs=vr_select_model,outputs=[vr_primary_stem_only, vr_secondary_stem_only])
-    vr_inference_audio.click(fn=cloud_vr_infer_audio,inputs=[vr_select_model,vr_window_size,vr_aggression,vr_output_format,vr_use_cpu,vr_primary_stem_only,vr_secondary_stem_only,audio_input,vr_store_dir,vr_batch_size,vr_post_process_threshold,vr_invert_spect,vr_enable_tta,vr_high_end_process,vr_enable_post_process],outputs=vr_output_message)
-    vr_inference_folder.click(fn=cloud_vr_infer_folder,inputs=[vr_select_model,vr_window_size,vr_aggression,vr_output_format,vr_use_cpu,vr_primary_stem_only,vr_secondary_stem_only,folder_input,vr_store_dir,vr_batch_size,vr_post_process_threshold,vr_invert_spect,vr_enable_tta,vr_high_end_process,vr_enable_post_process],outputs=vr_output_message)
+    vr_inference_audio.click(fn=cloud_vr_infer_audio,inputs=[vr_select_model,vr_window_size,vr_aggression,vr_output_format,vr_use_cpu,vr_primary_stem_only,vr_secondary_stem_only,audio_input,vr_store_dir,vr_batch_size,vr_post_process_threshold,vr_enable_tta,vr_high_end_process,vr_enable_post_process],outputs=vr_output_message)
+    vr_inference_folder.click(fn=cloud_vr_infer_folder,inputs=[vr_select_model,vr_window_size,vr_aggression,vr_output_format,vr_use_cpu,vr_primary_stem_only,vr_secondary_stem_only,folder_input,vr_store_dir,vr_batch_size,vr_post_process_threshold,vr_enable_tta,vr_high_end_process,vr_enable_post_process],outputs=vr_output_message)
     stop_vr.click(fn=stop_vr_inference)
 
 def preset():

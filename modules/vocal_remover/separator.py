@@ -14,7 +14,7 @@ from pydub import AudioSegment
 from tqdm import tqdm
 from modules.vocal_remover.vr_separator import VRSeparator
 from utils.logger import get_logger, set_log_level
-from utils.constant import TEMP_PATH, MODELS_INFO, UNOFFICIAL_MODEL
+from utils.constant import TEMP_PATH, MODELS_INFO
 
 class Separator:
     def __init__(
@@ -24,7 +24,6 @@ class Separator:
         model_file="pretrain/VR_Models/1_HP-UVR.pth",
         output_dir="results",
         output_format="wav",
-        invert_using_spec=False,
         use_cpu=False,
         vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
         audio_params={"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"}
@@ -39,10 +38,6 @@ class Separator:
         self.model_file = model_file
         self.output_dir = output_dir
         self.output_format = output_format
-        self.invert_using_spec = invert_using_spec
-
-        if self.invert_using_spec:
-            self.logger.debug(f"Secondary step will be inverted using spectogram rather than waveform. This may improve quality but is slightly slower.")
 
         # These are parameters which users may want to configure so we expose them to the top-level Separator class,
         # even though they are specific to a single model architecture
@@ -166,7 +161,6 @@ class Separator:
             "model_data": model_data,
             "output_format": self.output_format,
             "output_dir": self.output_dir,
-            "invert_using_spec": self.invert_using_spec,
             "sample_rate": self.sample_rate,
         }
 

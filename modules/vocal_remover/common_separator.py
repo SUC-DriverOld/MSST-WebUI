@@ -65,7 +65,6 @@ class CommonSeparator:
         self.output_format = config.get("output_format")
 
         # Functional options which are applicable to all architectures and the user may tweak to affect the output
-        self.invert_using_spec = config.get("invert_using_spec")
         self.sample_rate = config.get("sample_rate")
 
         # Model specific properties
@@ -77,9 +76,8 @@ class CommonSeparator:
         self.bv_model_rebalance = self.model_data.get("is_bv_model_rebalanced", 0)
 
         self.logger.info(f"Common params: model_name={self.model_name}, model_path={self.model_path}")
-        self.logger.info(f"Common params: output_dir={self.output_dir}, output_format={self.output_format}")
+        self.logger.info(f"Common params: output_dir={self.output_dir}, output_format={self.output_format}, sample_rate={self.sample_rate}")
         self.logger.info(f"Common params: primary_stem_name={self.primary_stem_name}, secondary_stem_name={self.secondary_stem_name}")
-        self.logger.debug(f"Common params: invert_using_spec={self.invert_using_spec}, sample_rate={self.sample_rate}")
         self.logger.debug(f"Common params: is_karaoke={self.is_karaoke}, is_bv_model={self.is_bv_model}, bv_model_rebalance={self.bv_model_rebalance}")
 
         # File-specific variables which need to be cleared between processing different audio inputs

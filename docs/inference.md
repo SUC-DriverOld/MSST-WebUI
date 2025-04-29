@@ -147,7 +147,6 @@ separator = Separator(
     model_file="pretrain/VR_Models/1_HP-UVR.pth",
     output_dir={"Vocals": "results/Vocals", "Instrumental": "results/instrumental"},
     output_format="mp3",
-    invert_using_spec=False,
     use_cpu=False,
     vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
     audio_params = {"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
@@ -200,7 +199,6 @@ separator.del_cache()
   ```
 
 - `output_format: str`: The output format for separated files. Choices: ['wav', 'flac', 'mp3'].
-- `invert_using_spec: bool`: Invert secondary stem using spectogram instead of waveform.
 - `use_cpu: bool`: Focusing CPU for inference.
 - `vr_params: Dict[str, Any]`: The parameters for the VR model.
   - `batch_size: int`: Number of batches to process at a time. higher = more RAM, slightly faster processing.
@@ -281,7 +279,7 @@ python scripts/msst_cli.py -i input -o results --model_type bs_roformer --model_
 Use `scripts\vr_cli.py`. When using cli, the `output_folder` can only be str.
 
 ```bash
-usage: vr_cli.py [-h] [-d] [--use_cpu] [-i INPUT_FOLDER] [-o OUTPUT_FOLDER] [--output_format {wav,flac,mp3}] -m MODEL_PATH [--invert_spect] [--batch_size BATCH_SIZE] [--window_size WINDOW_SIZE]
+usage: vr_cli.py [-h] [-d] [--use_cpu] [-i INPUT_FOLDER] [-o OUTPUT_FOLDER] [--output_format {wav,flac,mp3}] -m MODEL_PATH [--batch_size BATCH_SIZE] [--window_size WINDOW_SIZE]
                  [--aggression AGGRESSION] [--enable_tta] [--high_end_process] [--enable_post_process] [--post_process_threshold POST_PROCESS_THRESHOLD] [--wav_bit_depth {PCM_16,PCM_24,PCM_32,FLOAT}]
                  [--flac_bit_depth {PCM_16,PCM_24}] [--mp3_bit_rate {96k,128k,192k,256k,320k}]
 
@@ -297,11 +295,8 @@ Separation I/O Params:
   -o OUTPUT_FOLDER, --output_folder OUTPUT_FOLDER  Folder to store separated files. Only can be str when using cli (default: results). Example: --output_folder=results
   --output_format {wav,flac,mp3}                   Output format for separated files (default: wav). Example: --output_format=wav
 
-Common Separation Parameters:
-  -m MODEL_PATH, --model_path MODEL_PATH           Path to model checkpoint.
-  --invert_spect                                   Invert secondary stem using spectogram (default: False). Example: --invert_spect
-
 VR Architecture Parameters:
+  -m MODEL_PATH, --model_path MODEL_PATH           Path to model checkpoint.
   --batch_size BATCH_SIZE                          Number of batches to process at a time. higher = more RAM, slightly faster processing (default: 2). Example: --batch_size=16
   --window_size WINDOW_SIZE                        Balance quality and speed. 1024 = fast but lower, 320 = slower but better quality. (default: 512). Example: --window_size=320
   --aggression AGGRESSION                          Intensity of primary stem extraction, -100 - 100. typically 5 for vocals & instrumentals (default: 5). Example: --aggression=2

@@ -20,7 +20,6 @@
         "vr_primary_stem_only": false,
         "vr_secondary_stem_only": false,
         "vr_post_process_threshold": 0.2,
-        "vr_invert_spect": false,
         "vr_enable_tta": false,
         "vr_high_end_process": false,
         "vr_enable_post_process": false,
