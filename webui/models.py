@@ -43,7 +43,7 @@ def upgrade_download_model_name(model_type_dropdown):
         for model in model_map.values():
             if model["model_class"] == "VR_Models":
                 list.append(model["model_name"])
-        return gr.Dropdown(label=i18n("选择模型"), choices=[keys for keys in model_map.keys()])
+        return gr.Dropdown(label=i18n("选择模型"), choices=list)
     else:
         list = []
         for model in model_map.values():
@@ -285,9 +285,12 @@ def install_unvr_model(unvr_model, unvr_primary_stem, unvr_secondary_stem, model
             logger.warning(f"Find existing model with the same name: {model_name}, overwriting.")
         shutil.copy(unvr_model, vr_model_path)
 
+        model_map[model_name]["model_class"] = "VR_Models"
+        model_map[model_name]["model_name"] = model_name
+        model_map[model_name]["target_position"] = os.path.join(vr_model_path, model_name)
         model_map[model_name]["primary_stem"] = unvr_primary_stem
         model_map[model_name]["secondary_stem"] = unvr_secondary_stem
-        model_map[model_name]["download_link"] = unvr_model_link
+        model_map[model_name]["link"] = unvr_model_link if unvr_model_link else ""
 
         if model_param == i18n("上传参数"):
             os.makedirs(os.path.join(UNOFFICIAL_MODEL, "vr_modelparams"), exist_ok=True)
