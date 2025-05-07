@@ -78,6 +78,8 @@ class MSSeparator:
                 self.logger.debug("Apple Silicon MPS/CoreML is available in Torch, setting Torch device to MPS")
         else:
             self.device = device
+
+        if self.device == "cpu":
             self.logger.warning("No hardware acceleration could be configured, running in CPU mode")
 
         torch.backends.cudnn.benchmark = True

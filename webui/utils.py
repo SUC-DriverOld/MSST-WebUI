@@ -110,7 +110,8 @@ def load_selected_model(model_type=None):
     if model_type:
         downloaded_model = []
         model_dir = os.path.join(MODEL_FOLDER, model_type)
-
+        if not os.path.exists(model_dir):
+            return None
         for files in os.listdir(model_dir):
             if files.endswith(('.ckpt', '.th', '.chpt')):
                 try: 
