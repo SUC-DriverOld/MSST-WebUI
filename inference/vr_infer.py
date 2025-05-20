@@ -27,7 +27,7 @@ class VRSeparator:
         use_cpu=False,
         vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
         audio_params={"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
-        callback={}
+        callback=None
     ):
         if debug:
             set_log_level(logger, logging.DEBUG)

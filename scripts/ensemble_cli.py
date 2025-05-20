@@ -7,14 +7,11 @@ sys.path.append(parent_dir)
 import argparse
 import time
 import shutil
-import glob
-import traceback
-from webui.ensemble import EnsembleFlow
+from inference.preset_infer import EnsembleInfer
 from webui.setup import setup_webui, set_debug
-from webui.utils import get_msst_model, load_configs
+from webui.utils import load_configs
 from utils.constant import *
 from utils.logger import get_logger
-from utils.ensemble import ensemble_audios
 
 logger = get_logger()
 
@@ -26,95 +23,14 @@ def main(preset_path, ensemble_mode, output_format, store_dir, input_folder, ext
 	if os.path.exists(TEMP_PATH):
 		shutil.rmtree(TEMP_PATH)
 
-	preset = EnsembleFlow(preset_data, force_cpu=False, use_tta=False, logger=logger)
-	if preset.total_steps < 2:
-		logger.error("Ensemble process requires at least 2 models")
-		return
-	if not preset.is_exist_models()[0]:
-		logger.error(f"Model {preset.is_exist_models()[1]} not found")
-
+	start_time = time.time()
 	logger.info("Starting ensemble inference process")
+	preset = EnsembleInfer(preset_data, force_cpu=False, use_tta=False, logger=logger, callback=None)
 	logger.debug(f"presets: {preset.presets}")
 	logger.debug(f"total_models: {preset.total_steps}, store_dir: {store_dir}, output_format: {output_format}")
-
-	start_time = time.time()
-	ensemble_data = {}
-	for data in preset.presets:
-		model_type = data["model_type"]
-		model_name = data["model_name"]
-		stem = data["stem"]
-		temp_store_dir = os.path.join(TEMP_PATH, model_name)
-		ensemble_data[model_name] = {"store_dir": temp_store_dir, "weight": float(data["weight"])}
-
-		logger.info(f"\033[33mRunning inference using {model_name}\033[0m")
-
-		if model_type == "UVR_VR_Models":
-			storage = {stem: [temp_store_dir]}
-			logger.debug(f"input_folder: {input_folder}, temp_store_dir: {temp_store_dir}, storage: {storage}")
-			result = preset.vr_infer(model_name, input_folder, storage, "wav")
-			if result[0] == 0:
-				logger.error(f"Failed to run VR model {model_name}, error: {result[1]}")
-				return
-		else:
-			model_path, config_path, msst_model_type, _ = get_msst_model(model_name)
-			storage = {stem: [temp_store_dir]}
-			logger.debug(f"input_folder: {input_folder}, temp_store_dir: {temp_store_dir}, storage: {storage}")
-			result = preset.msst_infer(msst_model_type, config_path, model_path, input_folder, storage, "wav")
-			if result[0] == 0:
-				logger.error(f"Failed to run MSST model {model_name}, error: {result[1]}")
-				return
-
-	logger.info(f"\033[33mInference process completed, time cost: {round(time.time() - start_time, 2)}s, starting ensemble...\033[0m")
-
-	success_count = 0
-	failed_count = 0
-
-	for audio in os.listdir(input_folder):
-		base_name = os.path.splitext(audio)[0]
-		ensemble_audio = []
-		ensemble_weights = []
-		try:
-			for model_name in ensemble_data.keys():
-				audio_folder = ensemble_data[model_name]["store_dir"]
-				audio_file = glob.glob(os.path.join(audio_folder, f"{base_name}*"))[0]
-				ensemble_audio.append(audio_file)
-				ensemble_weights.append(ensemble_data[model_name]["weight"])
-
-			logger.debug(f"ensemble_audio: {ensemble_audio}, ensemble_weights: {ensemble_weights}")
-			res, sr = ensemble_audios(ensemble_audio, ensemble_mode, ensemble_weights)
-			save_filename = f"{base_name}_ensemble_{ensemble_mode}"
-			preset.save_audio(res, sr, output_format, save_filename, store_dir)
-
-			if extract_inst:
-				import librosa
-
-				logger.debug(f"User choose to extract other instruments")
-				raw, _ = librosa.load(os.path.join(input_folder, audio), sr=sr, mono=False)
-				res = res.T
-
-				if raw.shape[-1] != res.shape[-1]:
-					logger.warning(f"Extracted audio shape: {res.shape} is not equal to raw audio shape: {raw.shape}, matching min length")
-					min_length = min(raw.shape[-1], res.shape[-1])
-					raw = raw[..., :min_length]
-					res = res[..., :min_length]
-
-				result = raw - res
-				logger.debug(f"Extracted audio shape: {result.shape}")
-				save_inst = f"{base_name}_ensemble_{ensemble_mode}_other"
-				preset.save_audio(result.T, sr, output_format, save_inst, store_dir)
-
-			success_count += 1
-
-		except Exception as e:
-			logger.error(f"Fail to ensemble audio: {audio}. Error: {e}\n{traceback.format_exc()}")
-			failed_count += 1
-			continue
-
-	if os.path.exists(TEMP_PATH):
-		shutil.rmtree(TEMP_PATH)
-
-	logger.info(f"Ensemble process completed, saved to: {store_dir}, total time cost: {round(time.time() - start_time, 2)}s")
-	logger.info(f"Total {success_count} audios ensemble successfully, {failed_count} audios failed to ensemble")
+	preset.process_folder(input_folder)
+	results = preset.ensemble(input_folder, store_dir, ensemble_mode, output_format, extract_inst)
+	logger.info(f"Ensemble inference completed in {time.time() - start_time:.2f} seconds")
 
 
 if __name__ == "__main__":

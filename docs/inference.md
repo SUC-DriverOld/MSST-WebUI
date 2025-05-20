@@ -138,10 +138,10 @@ separator.del_cache()
 Here is a simple class calling method.
 
 ```python
-from modules.vocal_remover.separator import Separator
+from inference.vr_infer import VRSeparator
 from utils.logger import get_logger
 
-separator = Separator(
+separator = VRSeparator(
     logger=get_logger(),
     debug=True,
     model_file="pretrain/VR_Models/1_HP-UVR.pth",
