@@ -19,22 +19,22 @@ from utils.constant import TEMP_PATH, MODELS_INFO
 
 
 class VRSeparator:
-    def __init__(
-        self,
-        logger=get_logger(),
-        debug=False,
-        model_file="pretrain/VR_Models/1_HP-UVR.pth",
-        output_dir="results",
-        output_format="wav",
-        use_cpu=False,
-        vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
-        audio_params={"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
-        callback=None
-    ):
-        if debug:
-            set_log_level(logger, logging.DEBUG)
-        else:
-            set_log_level(logger, logging.INFO)
+	def __init__(
+		self,
+		logger=get_logger(),
+		debug=False,
+		model_file="pretrain/VR_Models/1_HP-UVR.pth",
+		output_dir="results",
+		output_format="wav",
+		use_cpu=False,
+		vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
+		audio_params={"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
+		callback=None
+	):
+		if debug:
+			set_log_level(logger, logging.DEBUG)
+		else:
+			set_log_level(logger, logging.INFO)
 
 		self.logger = logger
 		self.debug = debug
