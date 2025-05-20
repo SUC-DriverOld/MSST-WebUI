@@ -147,6 +147,7 @@ class MSSeparator:
 			raise ValueError(f"Input folder '{input_folder}' does not exist.")
 
 		all_mixtures_path = [os.path.join(input_folder, f) for f in os.listdir(input_folder)]
+		file_lists = all_mixtures_path.copy()
 
 		sample_rate = 44100
 		if "sample_rate" in self.config.audio:
@@ -169,7 +170,7 @@ class MSSeparator:
 			self.logger.debug(f"Starting separation process for audio_file: {path}")
 
 			if self.callback:
-				self.callback["info"] = {"index": all_mixtures_path.index(path) + 1, "total": len(all_mixtures_path), "name": os.path.basename(path)}
+				self.callback["info"] = {"index": file_lists.index(path) + 1, "total": len(file_lists), "name": os.path.basename(path)}
 
 			results = self.separate(mix)
 			self.logger.debug(f"Separation audio_file: {path} completed. Starting to save results.")

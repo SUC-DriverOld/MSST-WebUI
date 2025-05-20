@@ -175,6 +175,7 @@ class VRSeparator:
 			raise ValueError(f"Input folder '{input_folder}' does not exist.")
 
 		all_audio_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder)]
+		file_lists = all_audio_files.copy()
 		self.logger.info(f"Input_folder: {input_folder}, Total files found: {len(all_audio_files)}")
 
 		if not self.debug:
@@ -194,7 +195,7 @@ class VRSeparator:
 			self.logger.debug(f"Starting separation process for audio_file: {file_path}")
 
 			if self.callback:
-				self.callback["info"] = {"index": all_audio_files.index(file_path) + 1, "total": len(all_audio_files), "name": os.path.basename(file_path)}
+				self.callback["info"] = {"index": file_lists.index(file_path) + 1, "total": len(file_lists), "name": os.path.basename(file_path)}
 
 			results = self.separate(file_path)
 			self.logger.debug(f"Separation audio_file: {file_path} completed. Starting to save results.")
