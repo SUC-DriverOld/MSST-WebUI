@@ -44,8 +44,8 @@ WEBUI_CONFIG_BACKUP = "data_backup/webui_config.json"
 
 # package version
 with open(WEBUI_CONFIG_BACKUP, "r") as f:
-    config = json.load(f)
-    PACKAGE_VERSION = config.get("version", "Unknown version")
+	config = json.load(f)
+	PACKAGE_VERSION = config.get("version", "Unknown version")
 
 # presets data path
 PRESETS = "presets"
@@ -96,32 +96,13 @@ SOME_CONFIG = "configs_backup/config_some.yaml"
 THEME_FOLDER = "tools/themes"
 
 # msst model types, type=list
-MODEL_TYPE = [
-    'bs_roformer', 
-    'mel_band_roformer', 
-    'segm_models', 
-    'htdemucs', 
-    'mdx23c', 
-    'swin_upernet', 
-    'bandit', 
-    'bandit_v2', 
-    'scnet', 
-    'scnet_unofficial', 
-    'torchseg', 
-    'apollo', 
-    'bs_mamba2'
-    ]
+MODEL_TYPE = ["bs_roformer", "mel_band_roformer", "segm_models", "htdemucs", "mdx23c", "swin_upernet", "bandit", "bandit_v2", "scnet", "scnet_unofficial", "torchseg", "apollo", "bs_mamba2"]
 
 # model choices (unofficial), type=list
-MODEL_CHOICES = [
-    "vocal_models", 
-    "multi_stem_models", 
-    "single_stem_models", 
-    "UVR_VR_Models"
-    ]
+MODEL_CHOICES = ["vocal_models", "multi_stem_models", "single_stem_models", "UVR_VR_Models"]
 
 # metrics for model evaluation and training
-METRICS = ['sdr', 'l1_freq', 'si_sdr', 'log_wmse', 'aura_stft', 'aura_mrstft', 'bleedless', 'fullness']
+METRICS = ["sdr", "l1_freq", "si_sdr", "log_wmse", "aura_stft", "aura_mrstft", "bleedless", "fullness"]
 
 # ensemble modes
 ENSEMBLE_MODES = ["avg_wave", "median_wave", "min_wave", "max_wave", "avg_fft", "median_fft", "min_fft", "max_fft"]

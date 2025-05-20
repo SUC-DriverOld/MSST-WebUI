@@ -1,3 +1,1 @@
-from .bsrnn.wrapper import (
-    MultiMaskMultiSourceBandSplitRNNSimple,
-)
+from .bsrnn.wrapper import MultiMaskMultiSourceBandSplitRNNSimple
