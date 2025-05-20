@@ -7,7 +7,7 @@ import argparse
 import warnings
 import logging
 from time import time
-from modules.vocal_remover.separator import Separator
+from inference.vr_infer import VRSeparator
 from utils.logger import get_logger
 
 def vr_inference(args):
@@ -18,7 +18,7 @@ def vr_inference(args):
 
     start_time = time()
 
-    separator = Separator(
+    separator = VRSeparator(
         logger=logger,
         debug=args.debug,
         model_file=args.model_path,

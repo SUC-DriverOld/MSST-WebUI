@@ -9,7 +9,7 @@ import traceback
 
 from utils.constant import *
 from webui.utils import i18n, get_vr_model, load_configs, save_configs, logger, detailed_error
-from modules.vocal_remover.separator import Separator
+from inference.vr_infer import VRSeparator
 
 def load_vr_model_stem(model):
     primary_stem, secondary_stem, _, _= get_vr_model(model)
@@ -87,32 +87,51 @@ def start_inference(vr_select_model, vr_window_size, vr_aggression, vr_output_fo
     start_time = time.time()
     logger.info("Straring VR inference process...")
 
-    result_queue = multiprocessing.Queue()
-    vr_inference = multiprocessing.Process(
-        target=run_inference,
-        args=(debug, model_file, output_dir, vr_output_format, vr_use_cpu, int(vr_batch_size), int(vr_window_size), int(vr_aggression), vr_enable_tta, vr_enable_post_process, vr_post_process_threshold, vr_high_end_process, wav_bit_depth, flac_bit_depth, mp3_bit_rate, audio_input, result_queue),
-        name="vr_inference"
-    )
+    progress = gr.Progress()
+    progress(0, desc="Starting", total=1, unit="percent")
+    flag = (0, None) # flag
 
-    vr_inference.start()
-    logger.debug(f"Inference process started, PID: {vr_inference.pid}")
-    vr_inference.join()
+    with multiprocessing.Manager() as manager:
+        callback = manager.dict()
+        callback["info"] = {"index": -1, "total": -1, "name": ""}
+        callback["progress"] = 0 # percent
+        callback["flag"] = flag # flag
 
-    if not result_queue.empty():
-        result = result_queue.get()
-        if result[0] == "success":
+        vr_inference = multiprocessing.Process(
+            target=run_inference,
+            args=(debug, model_file, output_dir, vr_output_format, vr_use_cpu, int(vr_batch_size), int(vr_window_size), int(vr_aggression), vr_enable_tta, vr_enable_post_process, vr_post_process_threshold, vr_high_end_process, wav_bit_depth, flac_bit_depth, mp3_bit_rate, audio_input, callback),
+            name="vr_inference"
+        )
+
+        vr_inference.start()
+        logger.debug(f"Inference process started, PID: {vr_inference.pid}")
+
+        while vr_inference.is_alive():
+            if callback["flag"][0]:
+                break
+            info = callback["info"]
+            if info["index"] != -1:
+                desc = f"{info['index']}/{info['total']}: {info['name']}"
+                progress(callback["progress"], desc=desc, total=1, unit="percent")
+            time.sleep(0.5)
+
+        vr_inference.join()
+        flag = callback["flag"]
+
+    if flag[0]:
+        if flag[0] == 1:
             return i18n("处理完成, 结果已保存至: ") + vr_store_dir + i18n(", 耗时: ") + \
                 str(round(time.time() - start_time, 2)) + "s"
-        elif result[0] == "error":
-            return i18n("处理失败: ") + detailed_error(result[1])
+        elif flag[0] == -1:
+            return i18n("处理失败: ") + detailed_error(flag[1])
     else:
-        return i18n("用户强制终止")
+        return i18n("进程意外终止")
 
-def run_inference(debug, model_file, output_dir, output_format, use_cpu, batch_size, window_size, aggression, enable_tta, enable_post_process, post_process_threshold, high_end_process, wav_bit_depth, flac_bit_depth, mp3_bit_rate, input_folder, result_queue):
+def run_inference(debug, model_file, output_dir, output_format, use_cpu, batch_size, window_size, aggression, enable_tta, enable_post_process, post_process_threshold, high_end_process, wav_bit_depth, flac_bit_depth, mp3_bit_rate, input_folder, callback):
     logger.debug(f"Start VR inference process with parameters: debug={debug}, model_file={model_file}, output_dir={output_dir}, output_format={output_format}, use_cpu={use_cpu}, batch_size={batch_size}, window_size={window_size}, aggression={aggression}, enable_tta={enable_tta}, enable_post_process={enable_post_process}, post_process_threshold={post_process_threshold}, high_end_process={high_end_process}, wav_bit_depth={wav_bit_depth}, flac_bit_depth={flac_bit_depth}, mp3_bit_rate={mp3_bit_rate}, input_folder={input_folder}")
 
     try:
-        separator = Separator(
+        separator = VRSeparator(
             logger=logger,
             debug=debug,
             model_file=model_file,
@@ -133,15 +152,16 @@ def run_inference(debug, model_file, output_dir, output_format, use_cpu, batch_s
                 "flac_bit_depth": flac_bit_depth, 
                 "mp3_bit_rate": mp3_bit_rate
             },
+            callback=callback
         )
         success_files = separator.process_folder(input_folder)
         separator.del_cache()
 
         logger.info(f"Successfully separated files: {success_files}")
-        result_queue.put(("success", success_files))
+        callback["flag"] = (1, success_files)
     except Exception as e:
         logger.error(f"Separation failed: {str(e)}\n{traceback.format_exc()}")
-        result_queue.put(("error", str(e)))
+        callback["flag"] = (-1, str(e))
 
 def stop_vr_inference():
     for process in multiprocessing.active_children():

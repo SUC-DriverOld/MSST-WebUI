@@ -33,7 +33,8 @@ class MSSeparator:
                 "num_overlap": None,
                 "chunk_size": None,
                 "normalize": None
-            }
+            },
+            callback = None
     ):
         
         self.logger = logger
@@ -54,6 +55,7 @@ class MSSeparator:
         self.store_dirs = store_dirs
         self.audio_params = audio_params
         self.debug = debug
+        self.callback = callback
 
         if self.debug:
             set_log_level(logger, logging.DEBUG)
@@ -168,6 +170,14 @@ class MSSeparator:
                 continue
 
             self.logger.debug(f"Starting separation process for audio_file: {path}")
+
+            if self.callback:
+                self.callback["info"] = {
+                    "index": all_mixtures_path.index(path) + 1,
+                    "total": len(all_mixtures_path),
+                    "name": os.path.basename(path)
+                }
+
             results = self.separate(mix)
             self.logger.debug(f"Separation audio_file: {path} completed. Starting to save results.")
 
@@ -227,7 +237,7 @@ class MSSeparator:
 
         full_result = []
         for mix in track_proc_list:
-            waveforms = demix(self.config, self.model, mix, self.device, pbar=True, model_type=self.model_type)
+            waveforms = demix(self.config, self.model, mix, self.device, model_type=self.model_type, callback=self.callback)
             full_result.append(waveforms)
 
         self.logger.debug("Finished demixing tracks.")
@@ -273,6 +283,9 @@ class MSSeparator:
                 results[extract_instrumental] = estimates
 
         self.logger.debug("Separation process completed.")
+
+        if self.callback:
+            self.callback["progress"] = 1.0
 
         return results
 

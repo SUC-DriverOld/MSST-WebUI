@@ -12,11 +12,11 @@ import numpy as np
 import soundfile as sf
 from pydub import AudioSegment
 from tqdm import tqdm
-from modules.vocal_remover.vr_separator import VRSeparator
+from modules.vocal_remover.vr_separator import VRSeparator as VR
 from utils.logger import get_logger, set_log_level
 from utils.constant import TEMP_PATH, MODELS_INFO
 
-class Separator:
+class VRSeparator:
     def __init__(
         self,
         logger=get_logger(),
@@ -26,7 +26,8 @@ class Separator:
         output_format="wav",
         use_cpu=False,
         vr_params={"batch_size": 2, "window_size": 512, "aggression": 5, "enable_tta": False, "enable_post_process": False, "post_process_threshold": 0.2, "high_end_process": False},
-        audio_params={"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"}
+        audio_params={"wav_bit_depth": "FLOAT", "flac_bit_depth": "PCM_24", "mp3_bit_rate": "320k"},
+        callback={}
     ):
         if debug:
             set_log_level(logger, logging.DEBUG)
@@ -49,6 +50,7 @@ class Separator:
         self.torch_device_mps = None
         self.model_instance = None
         self.audio_params = audio_params
+        self.callback = callback
 
         self.setup_accelerated_inferencing_device()
         self.load_model(self.model_file)
@@ -162,9 +164,10 @@ class Separator:
             "output_format": self.output_format,
             "output_dir": self.output_dir,
             "sample_rate": self.sample_rate,
+            "callback": self.callback
         }
 
-        self.model_instance = VRSeparator(common_config=common_params, arch_config=self.vr_params_params)
+        self.model_instance = VR(common_config=common_params, arch_config=self.vr_params_params)
         self.model_instance.load_model()
         self.logger.debug(f'Loading model completed, duration: {time.time() - load_model_start_time:.2f} seconds')
 
@@ -190,6 +193,14 @@ class Separator:
                 continue
 
             self.logger.debug(f"Starting separation process for audio_file: {file_path}")
+
+            if self.callback:
+                self.callback["info"] = {
+                    "index": all_audio_files.index(file_path) + 1,
+                    "total": len(all_audio_files),
+                    "name": os.path.basename(file_path)
+                }
+
             results = self.separate(file_path)
             self.logger.debug(f"Separation audio_file: {file_path} completed. Starting to save results.")
 
@@ -231,6 +242,9 @@ class Separator:
             os.remove(mix)
 
         self.logger.debug("Separation process completed.")
+
+        if self.callback:
+            self.callback["progress"] = 1.0
 
         return results
 

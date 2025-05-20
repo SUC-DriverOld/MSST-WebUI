@@ -268,6 +268,10 @@ class VRSeparator(CommonSeparator):
                     pred = pred.detach().cpu().numpy()
                     pred = np.concatenate(pred, axis=2)
                     mask.append(pred)
+
+                    if self.callback:
+                        self.callback["progress"] = min(0.99 * (i / patches), 0.99) # the rest 1% is for the postprocess
+
                 if len(mask) == 0:
                     raise ValueError(f"Window size error: h1_shape[3] must be greater than h2_shape[3]")
 

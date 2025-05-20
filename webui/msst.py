@@ -6,6 +6,7 @@ import time
 import gradio as gr
 import multiprocessing
 import traceback
+import os
 
 from utils.constant import *
 from webui.utils import i18n, load_configs, save_configs, load_selected_model, logger, detailed_error
@@ -155,28 +156,47 @@ def start_inference(selected_model, input_folder, store_dir, extract_instrumenta
     start_time = time.time()
     logger.info("Starting MSST inference process...")
 
-    result_queue = multiprocessing.Queue()
-    msst_inference = multiprocessing.Process(
-        target=run_inference,
-        args=(model_type, config_path, model_path, device, gpu_ids, output_format, use_tta, store_dict, debug, wav_bit_depth, flac_bit_depth, mp3_bit_rate, input_folder, result_queue),
-        name="msst_inference"
-    )
+    progress = gr.Progress()
+    progress(0, desc="Starting", total=1, unit="percent")
+    flag = (0, None) # flag
 
-    msst_inference.start()
-    logger.debug(f"Inference process started, PID: {msst_inference.pid}")
-    msst_inference.join()
+    with multiprocessing.Manager() as manager:
+        callback = manager.dict()
+        callback["info"] = {"index": -1, "total": -1, "name": ""}
+        callback["progress"] = 0 # percent
+        callback["flag"] = flag # flag
 
-    if not result_queue.empty():
-        result = result_queue.get()
-        if result[0] == "success":
+        msst_inference = multiprocessing.Process(
+            target=run_inference,
+            args=(model_type, config_path, model_path, device, gpu_ids, output_format, use_tta, store_dict, debug, wav_bit_depth, flac_bit_depth, mp3_bit_rate, input_folder, callback),
+            name="msst_inference"
+        )
+
+        msst_inference.start()
+        logger.debug(f"Inference process started, PID: {msst_inference.pid}")
+
+        while msst_inference.is_alive():
+            if callback["flag"][0]:
+                break
+            info = callback["info"]
+            if info["index"] != -1:
+                desc = f"{info['index']}/{info['total']}: {info['name']}"
+                progress(callback["progress"], desc=desc, total=1, unit="percent")
+            time.sleep(0.5)
+
+        msst_inference.join()
+        flag = callback["flag"]
+
+    if flag[0]:
+        if flag[0] == 1:
             return i18n("处理完成, 结果已保存至: ") + store_dir + i18n(", 耗时: ") + \
                 str(round(time.time() - start_time, 2)) + "s"
-        elif result[0] == "error":
-            return i18n("处理失败: ") + detailed_error(result[1])
+        elif flag[0] == -1:
+            return i18n("处理失败: ") + detailed_error(flag[1])
     else:
-        return i18n("用户强制终止")
+        return i18n("进程意外终止")
 
-def run_inference(model_type, config_path, model_path, device, gpu_ids, output_format, use_tta, store_dict, debug, wav_bit_depth, flac_bit_depth, mp3_bit_rate, input_folder, result_queue):
+def run_inference(model_type, config_path, model_path, device, gpu_ids, output_format, use_tta, store_dict, debug, wav_bit_depth, flac_bit_depth, mp3_bit_rate, input_folder, callback):
     logger.debug(f"Start MSST inference process with parameters: model_type={model_type}, config_path={config_path}, model_path={model_path}, device={device}, gpu_ids={gpu_ids}, output_format={output_format}, use_tta={use_tta}, store_dict={store_dict}, debug={debug}, wav_bit_depth={wav_bit_depth}, flac_bit_depth={flac_bit_depth}, mp3_bit_rate={mp3_bit_rate}, input_folder={input_folder}")
 
     try:
@@ -195,16 +215,17 @@ def run_inference(model_type, config_path, model_path, device, gpu_ids, output_f
                 "mp3_bit_rate": mp3_bit_rate
             },
             logger=logger,
-            debug=debug
+            debug=debug,
+            callback=callback,
         )
         success_files = separator.process_folder(input_folder)
         separator.del_cache()
 
         logger.info(f"Successfully separated files: {success_files}")
-        result_queue.put(("success", success_files))
+        callback["flag"] = (1, success_files)
     except Exception as e:
         logger.error(f"Separation failed: {str(e)}\n{traceback.format_exc()}")
-        result_queue.put(("error", str(e)))
+        callback["flag"] = (-1, str(e))
 
 def stop_msst_inference():
     for process in multiprocessing.active_children():

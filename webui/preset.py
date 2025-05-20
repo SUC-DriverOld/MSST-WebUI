@@ -6,16 +6,15 @@ import pandas as pd
 import shutil
 import time
 import multiprocessing
+import traceback
 
 from utils.constant import *
-from utils.logger import get_logger
+from inference.preset_infer import PresetInfer
 from webui.utils import (
     i18n, 
     load_configs, 
     save_configs,
-    load_vr_model, 
     get_vr_model,
-    load_msst_model,
     get_msst_model,
     logger,
     detailed_error
@@ -183,108 +182,6 @@ def restore_preset_func(backup_file):
     logger.info(f"Restore preset: {backup_file} -> {backup_file_rename}")
     return output_message_manage, preset_dropdown, preset_name_delet, preset_flow_delete
 
-
-class Presets:
-    def __init__(
-            self,
-            presets,
-            force_cpu=False,
-            use_tta=False,
-            logger=get_logger()
-    ):
-        self.presets = presets.get("flow", [])
-        self.device = "auto" if not force_cpu else "cpu"
-        self.force_cpu = force_cpu
-        self.use_tta = use_tta
-        self.logger = logger
-        self.total_steps = len(self.presets)
-        self.preset_version = presets.get("version", "Unknown version")
-        self.preset_name = presets.get("name", "Unknown name")
-
-        webui_config = load_configs(WEBUI_CONFIG)
-        self.debug = webui_config["settings"].get("debug", False)
-        self.vr_model_path = webui_config['settings']['uvr_model_dir']
-        self.batch_size = int(webui_config['inference']['vr_batch_size'])
-        self.window_size = int(webui_config['inference']['vr_window_size'])
-        self.aggression = int(webui_config['inference']['vr_aggression'])
-        self.enable_post_process = webui_config['inference']['vr_enable_post_process']
-        self.post_process_threshold = float(webui_config['inference']['vr_post_process_threshold'])
-        self.high_end_process = webui_config['inference']['vr_high_end_process']
-        self.wav_bit_depth = webui_config["settings"].get("wav_bit_depth", "FLOAT")
-        self.flac_bit_depth = webui_config["settings"].get("flac_bit_depth", "PCM_24")
-        self.mp3_bit_rate = webui_config["settings"].get("mp3_bit_rate", "320k")
-        
-        gpu_id = webui_config["inference"].get("device", None)
-        self.gpu_ids = []
-        if not self.force_cpu and gpu_id:
-            try:
-                for gpu in gpu_id:
-                    self.gpu_ids.append(int(gpu[:gpu.index(":")]))
-            except:
-                self.gpu_ids = [0]
-        else:
-            self.gpu_ids = [0]
-
-    def get_step(self, step):
-        return self.presets[step]
-
-    def is_exist_models(self):
-        for step in self.presets:
-            model_name = step["model_name"]
-            if model_name not in load_msst_model() and model_name not in load_vr_model():
-                return False, model_name
-        return True, None
-
-    def msst_infer(self, model_type, config_path, model_path, input_folder, store_dict, output_format="wav"):
-        from webui.msst import run_inference
-
-        result_queue = multiprocessing.Queue()
-        msst_inference = multiprocessing.Process(
-            target=run_inference,
-            args=(
-                model_type, config_path, model_path, self.device, self.gpu_ids, output_format,
-                self.use_tta, store_dict, self.debug, self.wav_bit_depth, self.flac_bit_depth,
-                self.mp3_bit_rate, input_folder, result_queue
-            ),
-            name="msst_preset_inference"
-        )
-        msst_inference.start()
-        msst_inference.join()
-
-        if result_queue.empty():
-            return -1, None
-        result = result_queue.get()
-        if result[0] == "success":
-            return 1, None
-        elif result[0] == "error":
-            return 0, result[1]
-
-    def vr_infer(self, model_name, input_folder, output_dir, output_format="wav"):
-        from webui.vr import run_inference
-
-        model_file = os.path.join(self.vr_model_path, model_name)
-        result_queue = multiprocessing.Queue()
-        vr_inference = multiprocessing.Process(
-            target=run_inference,
-            args=(
-                self.debug, model_file, output_dir, output_format, self.force_cpu,
-                self.batch_size, self.window_size, self.aggression, self.use_tta, self.enable_post_process,
-                self.post_process_threshold, self.high_end_process, self.wav_bit_depth, self.flac_bit_depth,
-                self.mp3_bit_rate, input_folder, result_queue
-            ),
-            name="vr_preset_inference"
-        )
-        vr_inference.start()
-        vr_inference.join()
-
-        if result_queue.empty():
-            return -1, None
-        result = result_queue.get()
-        if result[0] == "success":
-            return 1, None
-        elif result[0] == "error":
-            return 0, result[1]
-
 def preset_inference_audio(input_audio, store_dir, preset, force_cpu, output_format, use_tta, extra_output_dir):
     if not input_audio:
         return i18n("请上传至少一个音频文件!")
@@ -319,93 +216,73 @@ def preset_inference(input_folder, store_dir, preset_name, force_cpu, output_for
         config['inference']['input_dir'] = input_folder
     save_configs(config, WEBUI_CONFIG)
 
-    os.makedirs(store_dir, exist_ok=True)
-
-    direct_output = store_dir
-    if extra_output_dir:
-        os.makedirs(os.path.join(store_dir, "extra_output"), exist_ok=True)
-        direct_output = os.path.join(store_dir, "extra_output")
-
-    input_to_use = input_folder
     if os.path.exists(TEMP_PATH) and not is_audio:
         shutil.rmtree(TEMP_PATH)
-    tmp_store_dir = os.path.join(TEMP_PATH, "step_1_output")
-
-    preset = Presets(preset_data, force_cpu, use_tta, logger)
-
-    logger.info(f"Starting preset inference process, use presets: {preset_name}")
-    logger.debug(f"presets: {preset.presets}")
-    logger.debug(f"total_steps: {preset.total_steps}, force_cpu: {force_cpu}, use_tta: {use_tta}, store_dir: {store_dir}, extra_output_dir: {extra_output_dir}, output_format: {output_format}")
-
-    if not preset.is_exist_models()[0]:
-        return i18n("模型") + preset.is_exist_models()[1] + i18n("不存在")
 
     start_time = time.time()
-    current_step = 0
+    logger.info(f"Starting preset inference process, use presets: {preset_name}")
 
-    for step in range(preset.total_steps):
-        if current_step == 0:
-            input_to_use = input_folder
-        if preset.total_steps - 1 > current_step > 0:
-            if input_to_use != input_folder:
-                shutil.rmtree(input_to_use)
-            input_to_use = tmp_store_dir
-            tmp_store_dir = os.path.join(TEMP_PATH, f"step_{current_step + 1}_output")
-        if current_step == preset.total_steps - 1:
-            input_to_use = tmp_store_dir
-            tmp_store_dir = store_dir
-        if preset.total_steps == 1:
-            input_to_use = input_folder
-            tmp_store_dir = store_dir
+    progress = gr.Progress()
+    progress(0, desc="Starting", total=1, unit="percent")
+    flag = (0, None) # flag
 
-        data = preset.get_step(step)
-        model_type = data["model_type"]
-        model_name = data["model_name"]
-        input_to_next = data["input_to_next"]
-        output_to_storage = data["output_to_storage"]
+    with multiprocessing.Manager() as manager:
+        callback = manager.dict()
+        callback["info"] = {"index": -1, "total": -1, "name": ""}
+        callback["progress"] = 0 # percent
+        callback["step_name"] = ""
+        callback["flag"] = flag # flag
 
-        logger.info(f"\033[33mStep {current_step + 1}: Running inference using {model_name}\033[0m")
+        preset_inference = multiprocessing.Process(
+            target=run_inference,
+            name="preset_inference",
+            args=(preset_data, force_cpu, use_tta, input_folder, store_dir, extra_output_dir, output_format, callback),
+        )
 
-        if model_type == "UVR_VR_Models":
-            primary_stem, secondary_stem, _, _= get_vr_model(model_name)
-            storage = {primary_stem:[], secondary_stem:[]}
-            storage[input_to_next].append(tmp_store_dir)
-            for stem in output_to_storage:
-                storage[stem].append(direct_output)
+        preset_inference.start()
+        logger.debug(f"Inference process started, PID: {preset_inference.pid}")
 
-            logger.debug(f"input_to_next: {input_to_next}, output_to_storage: {output_to_storage}, storage: {storage}")
-            result = preset.vr_infer(model_name, input_to_use, storage, output_format)
-            if result[0] == -1:
-                return i18n("用户强制终止")
-            elif result[0] == 0:
-                return i18n("处理失败: ") + detailed_error(result[1])
-        else:
-            model_path, config_path, msst_model_type, _ = get_msst_model(model_name)
-            stems = load_configs(config_path).training.get("instruments", [])
-            storage = {stem:[] for stem in stems}
-            storage[input_to_next].append(tmp_store_dir)
-            for stem in output_to_storage:
-                storage[stem].append(direct_output)
+        while preset_inference.is_alive():
+            if callback["flag"][0]:
+                break
+            desc = ""
+            if callback["step_name"]:
+                desc += callback["step_name"] + " "
+            info = callback["info"]
+            if info["index"] != -1:
+                desc += f"{info['index']}/{info['total']}: {info['name']}"
+            else:
+                desc += "Strarting"
+            progress(callback["progress"], desc=desc, total=1, unit="percent")
+            time.sleep(0.5)
 
-            logger.debug(f"input_to_next: {input_to_next}, output_to_storage: {output_to_storage}, storage: {storage}")
-            result = preset.msst_infer(msst_model_type, config_path, model_path, input_to_use, storage, output_format)
-            if result[0] == -1:
-                return i18n("用户强制终止")
-            elif result[0] == 0:
-                return i18n("处理失败: ") + detailed_error(result[1])
-        current_step += 1
+        preset_inference.join()
+        flag = callback["flag"]
 
-    if os.path.exists(TEMP_PATH):
-        shutil.rmtree(TEMP_PATH)
+    if flag[0]:
+        if flag[0] == 1:
+            logger.info(f"Successfully run preset {preset_name} inference. Cost time: {round(time.time() - start_time, 2)}s")
+            return i18n("处理完成, 结果已保存至: ") + store_dir + i18n(", 耗时: ") + \
+                str(round(time.time() - start_time, 2)) + "s"
+        elif flag[0] == -1:
+            return i18n("处理失败: ") + detailed_error(flag[1])
+    else:
+        return i18n("进程意外终止")
 
-    logger.info(f"\033[33mPreset: {preset_name} inference process completed, results saved to {store_dir}, "
-                f"time cost: {round(time.time() - start_time, 2)}s\033[0m")
-    return i18n("处理完成, 结果已保存至: ") + store_dir + i18n(", 耗时: ") + \
-        str(round(time.time() - start_time, 2)) + "s"
+def run_inference(preset_data, force_cpu, use_tta, input_folder, store_dir, extra_output_dir, output_format, callback):
+    try:
+        preset = PresetInfer(preset_data, force_cpu, use_tta, logger, callback)
+        logger.debug(f"presets: {preset.presets}")
+        logger.debug(f"total_steps: {preset.total_steps}, force_cpu: {force_cpu}, use_tta: {use_tta}, store_dir: {store_dir}, extra_output_dir: {extra_output_dir}, output_format: {output_format}")
+        preset.process_folder(input_folder, store_dir, output_format, extra_output_dir)
+        callback["flag"] = (1, "")
+    except Exception as e:
+        logger.error(f"Separation failed: {str(e)}\n{traceback.format_exc()}")
+        callback["flag"] = (-1, str(e))
 
 def stop_preset():
     for process in multiprocessing.active_children():
-        if process.name in ["msst_preset_inference", "vr_preset_inference"]:
+        if process.name == "preset_inference":
             process.terminate()
             process.join()
             logger.info(f"Inference process stopped, PID: {process.pid}")

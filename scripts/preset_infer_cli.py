@@ -6,7 +6,7 @@ sys.path.append(parent_dir)
 import argparse
 import time
 import shutil
-from webui.preset import Presets
+from inference.preset_infer import Presets
 from webui.utils import load_configs, get_vr_model, get_msst_model
 from webui.setup import setup_webui, set_debug
 from utils.constant import *

@@ -67,6 +67,9 @@ class CommonSeparator:
         # Functional options which are applicable to all architectures and the user may tweak to affect the output
         self.sample_rate = config.get("sample_rate")
 
+        # callback dict for progress tracking
+        self.callback= config.get("callback", None)
+
         # Model specific properties
         self.primary_stem_name = self.model_data.get("primary_stem", "primary_stem")
         self.secondary_stem_name = self.model_data.get("secondary_stem", "secondary_stem")

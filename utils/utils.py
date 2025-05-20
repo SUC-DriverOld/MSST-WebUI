@@ -80,57 +80,75 @@ def get_model_from_config(model_type, config_path):
 
     return model, config
 
-def _getWindowingArray(window_size, fade_size):
-    fadein = torch.linspace(0, 1, fade_size)
-    fadeout = torch.linspace(1, 0, fade_size)
-    window = torch.ones(window_size)
-    window[-fade_size:] *= fadeout
-    window[:fade_size] *= fadein
-    return window
 
+def demix(config, model, mix: NDArray, device, model_type: str = None, callback=None) -> Dict[str, NDArray]:
+    mix = torch.tensor(mix, dtype=torch.float32)
 
-def demix_track(config, model, mix, device, pbar=False):
-    C = config.audio.chunk_size
+    C = config.audio.chunk_size if model_type != 'htdemucs' else config.training.samplerate * config.training.segment
     N = config.inference.num_overlap
-    fade_size = C // 10
-    step = int(C // N)
-    border = C - step
     batch_size = config.inference.batch_size
+    step = int(C // N)
+
+    # HTDemucs doesn't use border padding and fading
+    use_fading = model_type != 'htdemucs'
+
+    if use_fading:
+        fade_size = C // 10
+        border = C - step
+    else:
+        border = 0
 
     length_init = mix.shape[-1]
 
-    # Do pad from the beginning and end to account floating window results better
-    if length_init > 2 * border and (border > 0):
+    # Apply padding for non-HTDemucs models
+    if use_fading and length_init > 2 * border and (border > 0):
         if mix.ndim == 1:
             mix = mix.unsqueeze(0)  # [1, length]
         mix = nn.functional.pad(mix, (border, border), mode='reflect')
 
-    # windowingArray crossfades at segment boundaries to mitigate clicking artifacts
-    windowingArray = _getWindowingArray(C, fade_size)
+    # Prepare windows arrays for non-HTDemucs models
+    if use_fading:
+        window_size = C
+        fadein = torch.linspace(0, 1, fade_size)
+        fadeout = torch.linspace(1, 0, fade_size)
+        window_start = torch.ones(window_size)
+        window_middle = torch.ones(window_size)
+        window_finish = torch.ones(window_size)
+        window_start[-fade_size:] *= fadeout  # First audio chunk, no fadein
+        window_finish[:fade_size] *= fadein  # Last audio chunk, no fadeout
+        window_middle[-fade_size:] *= fadeout
+        window_middle[:fade_size] *= fadein
 
-    with torch.cuda.amp.autocast(enabled=config.training.get('use_amp', True)):
+    with torch.amp.autocast("cuda", enabled=config.training.get('use_amp', True)):
         with torch.inference_mode():
-            if config.training.target_instrument is not None:
-                req_shape = (1, ) + tuple(mix.shape)
+            # Determine the shape of the result based on model type and configuration
+            if model_type == 'htdemucs':
+                S = len(config.training.instruments)
+                req_shape = (S, ) + tuple(mix.shape)
             else:
-                req_shape = (len(config.training.instruments),) + tuple(mix.shape)
+                if config.training.target_instrument is not None:
+                    req_shape = (1, ) + tuple(mix.shape)
+                else:
+                    req_shape = (len(config.training.instruments),) + tuple(mix.shape)
 
             result = torch.zeros(req_shape, dtype=torch.float32)
             counter = torch.zeros(req_shape, dtype=torch.float32)
             i = 0
             batch_data = []
             batch_locations = []
-            progress_bar = tqdm(total=mix.shape[1], desc="Processing audio chunks", leave=False) if pbar else None
+            progress_bar = tqdm(total=mix.shape[1], desc="Processing audio chunks", leave=False)
 
             while i < mix.shape[1]:
-                # logger.info(i, i + C, mix.shape[1])
                 part = mix[:, i:i + C].to(device)
                 length = part.shape[-1]
+
+                # Pad the last chunk if needed
                 if length < C:
-                    if length > C // 2 + 1:
+                    if use_fading and length > C // 2 + 1:
                         part = nn.functional.pad(input=part, pad=(0, C - length), mode='reflect')
                     else:
                         part = nn.functional.pad(input=part, pad=(0, C - length, 0, 0), mode='constant', value=0)
+
                 batch_data.append(part)
                 batch_locations.append((i, length))
                 i += step
@@ -139,93 +157,53 @@ def demix_track(config, model, mix, device, pbar=False):
                     arr = torch.stack(batch_data, dim=0)
                     x = model(arr)
 
-                    window = windowingArray
-                    if i - step == 0:  # First audio chunk, no fadein
-                        window[:fade_size] = 1
-                    elif i >= mix.shape[1]:  # Last audio chunk, no fadeout
-                        window[-fade_size:] = 1
-
                     for j in range(len(batch_locations)):
                         start, l = batch_locations[j]
-                        result[..., start:start+l] += x[j][..., :l].cpu() * window[..., :l]
-                        counter[..., start:start+l] += window[..., :l]
+
+                        if use_fading:
+                            # Apply windowing for regular model
+                            window = window_middle
+                            if i - step == 0:  # First audio chunk
+                                window = window_start
+                            elif i >= mix.shape[1]:  # Last audio chunk
+                                window = window_finish
+
+                            result[..., start:start+l] += x[j][..., :l].cpu() * window[..., :l]
+                            counter[..., start:start+l] += window[..., :l]
+                        else:
+                            # Simple accumulation for HTDemucs
+                            result[..., start:start+l] += x[j][..., :l].cpu()
+                            counter[..., start:start+l] += 1.
 
                     batch_data = []
                     batch_locations = []
 
-                if progress_bar:
-                    progress_bar.update(step)
+                progress_bar.update(step)
 
-            if progress_bar:
-                progress_bar.close()
+                if callback:
+                    callback["progress"] = min(0.99 * (i / mix.shape[1]), 0.99) # the rest 1% is for the postprocess
+
+            progress_bar.close()
 
             estimated_sources = result / counter
             estimated_sources = estimated_sources.cpu().numpy()
             np.nan_to_num(estimated_sources, copy=False, nan=0.0)
 
-            if length_init > 2 * border and (border > 0):
-                # Remove pad
+            # Remove padding for non-HTDemucs models
+            if use_fading and length_init > 2 * border and (border > 0):
                 estimated_sources = estimated_sources[..., border:-border]
 
-    if config.training.target_instrument is None:
-        return {k: v for k, v in zip(config.training.instruments, estimated_sources)}
-    else:
-        return {k: v for k, v in zip([config.training.target_instrument], estimated_sources)}
-
-
-def demix_track_demucs(config, model, mix, device, pbar=False):
-    S = len(config.training.instruments)
-    C = config.training.samplerate * config.training.segment
-    N = config.inference.num_overlap
-    batch_size = config.inference.batch_size
-    step = C // N
-    # logger.info(S, C, N, step, mix.shape, mix.device)
-
-    with torch.cuda.amp.autocast(enabled=config.training.get('use_amp', True)):
-        with torch.inference_mode():
-            req_shape = (S, ) + tuple(mix.shape)
-            result = torch.zeros(req_shape, dtype=torch.float32)
-            counter = torch.zeros(req_shape, dtype=torch.float32)
-            i = 0
-            batch_data = []
-            batch_locations = []
-            progress_bar = tqdm(total=mix.shape[1], desc="Processing audio chunks", leave=False) if pbar else None
-
-            while i < mix.shape[1]:
-                # logger.info(i, i + C, mix.shape[1])
-                part = mix[:, i:i + C].to(device)
-                length = part.shape[-1]
-                if length < C:
-                    part = nn.functional.pad(input=part, pad=(0, C - length, 0, 0), mode='constant', value=0)
-                batch_data.append(part)
-                batch_locations.append((i, length))
-                i += step
-
-
-                if len(batch_data) >= batch_size or (i >= mix.shape[1]):
-                    arr = torch.stack(batch_data, dim=0)
-                    x = model(arr)
-                    for j in range(len(batch_locations)):
-                        start, l = batch_locations[j]
-                        result[..., start:start+l] += x[j][..., :l].cpu()
-                        counter[..., start:start+l] += 1.
-                    batch_data = []
-                    batch_locations = []
-
-                if progress_bar:
-                    progress_bar.update(step)
-
-            if progress_bar:
-                progress_bar.close()
-
-            estimated_sources = result / counter
-            estimated_sources = estimated_sources.cpu().numpy()
-            np.nan_to_num(estimated_sources, copy=False, nan=0.0)
-
-    if S > 1:
-        return {k: v for k, v in zip(config.training.instruments, estimated_sources)}
-    else:
-        return estimated_sources
+    # Return the results based on configuration
+    if model_type == 'htdemucs':
+        if len(config.training.instruments) > 1:
+            return {k: v for k, v in zip(config.training.instruments, estimated_sources)}
+        else:
+            return estimated_sources
+    else:  # Regular model
+        if config.training.target_instrument is None:
+            return {k: v for k, v in zip(config.training.instruments, estimated_sources)}
+        else:
+            return {k: v for k, v in zip([config.training.target_instrument], estimated_sources)}
 
 
 def sdr(references, estimates):
@@ -407,11 +385,3 @@ def get_metrics(
         if 'fullness' in metrics:
             result['fullness'] = fullness
     return result
-
-
-def demix(config, model, mix: NDArray, device, pbar=False, model_type: str = None) -> Dict[str, NDArray]:
-    mix = torch.tensor(mix, dtype=torch.float32)
-    if model_type == 'htdemucs':
-        return demix_track_demucs(config, model, mix, device, pbar=pbar)
-    else:
-        return demix_track(config, model, mix, device, pbar=pbar)
