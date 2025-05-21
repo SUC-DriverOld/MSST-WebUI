@@ -1,7 +1,7 @@
 import json
 import os
 from utils.constant import WEBUI_CONFIG, MODELS_INFO
-from webui.utils import load_configs, logger
+from webui.utils import load_configs, logger, get_main_link
 
 
 def load_configs(config_path):
@@ -51,8 +51,7 @@ def get_uvr_models(model_name):
 
 
 def download(url, path):
-	config = load_configs(WEBUI_CONFIG)
-	main_link = config["settings"]["download_link"]
+	main_link = get_main_link()
 	try:
 		url = url.replace("huggingface.co", main_link)
 	except:
