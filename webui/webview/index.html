@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        #container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #gradio-frame {
+            flex: 1;
+            border: none;
+            display: none;
+        }
+        #loading-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--webview-bg, #f8f8f8);
+            color: var(--webview-text, #333);
+        }
+        #error-container {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--webview-bg, #f8f8f8);
+            color: var(--webview-text, #333);
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--webview-accent, #0066cc);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        #loading-text {
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+        #retry-button {
+            margin-top: 16px;
+            padding: 8px 16px;
+            background: var(--webview-accent, #0066cc);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="loading-container">
+            <div class="spinner"></div>
+            <div id="loading-text">Starting application, please wait...</div>
+        </div>
+        <div id="error-container">
+            <h3>Unable to Load Application</h3>
+            <p id="error-message">Gradio service failed to start, please check console output</p>
+            <button id="retry-button">Retry</button>
+        </div>
+        <iframe id="gradio-frame" src="about:blank"
+                sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
+    </div>
+    <script>
+        let gradioReady = false;
+        let checkInterval;
+        const maxRetries = 30;
+        let retryCount = 0;
+
+        const ip = "{{ip}}";
+        const port = "{{port}}";
+
+        function detectSystemTheme() {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const root = document.documentElement;
+            root.style.setProperty('--webview-bg', isDark ? '#1e1e1e' : '#f8f8f8');
+            root.style.setProperty('--webview-text', isDark ? '#e0e0e0' : '#333');
+            root.style.setProperty('--webview-accent', isDark ? '#3a96dd' : '#0066cc');
+            root.style.setProperty('--webview-controls-bg', isDark ? '#2d2d2d' : '#f0f0f0');
+            root.style.setProperty('--webview-border-color', isDark ? '#444' : '#ddd');
+            root.style.setProperty('--webview-text-color', isDark ? '#e0e0e0' : '#333');
+            root.style.setProperty('--webview-accent-color', isDark ? '#3a96dd' : '#0066cc');
+        }
+
+        function showError(message) {
+            document.getElementById('loading-container').style.display = 'none';
+            document.getElementById('gradio-frame').style.display = 'none';
+            document.getElementById('error-container').style.display = 'flex';
+            document.getElementById('error-message').textContent = message || 'Gradio service failed to start, please check console output';
+        }
+
+        function retryLoading() {
+            retryCount = 0;
+            document.getElementById('error-container').style.display = 'none';
+            document.getElementById('loading-container').style.display = 'flex';
+            startCheckingGradio();
+        }
+
+        function checkGradioAvailable() {
+            fetch(`http://${ip}:${port}/`, {
+                method: 'GET',
+                mode: 'no-cors',
+                cache: 'no-cache'
+            })
+            .then(() => {
+                clearInterval(checkInterval);
+                document.getElementById('loading-container').style.display = 'none';
+                const frame = document.getElementById('gradio-frame');
+                frame.style.display = 'block';
+                frame.src = `http://${ip}:${port}`;
+                checkGradioLoaded();
+            })
+            .catch(() => {
+                retryCount++;
+                if (retryCount >= maxRetries) {
+                    clearInterval(checkInterval);
+                    showError('Connection to Gradio service timed out, please ensure the application is started correctly');
+                }
+            });
+        }
+
+        function checkGradioLoaded() {
+            const frame = document.getElementById('gradio-frame');
+            try {
+                if (frame.contentDocument.readyState === 'complete' && frame.contentDocument.body.children.length > 0) {
+                    gradioReady = true;
+                } else {
+                    setTimeout(checkGradioLoaded, 100);
+                }
+            } catch (e) {
+                setTimeout(checkGradioLoaded, 100);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('loading-container').style.display = 'flex';
+            document.getElementById('error-container').style.display = 'none';
+            document.getElementById('gradio-frame').style.display = 'none';
+
+            detectSystemTheme();
+            document.getElementById('retry-button').addEventListener('click', retryLoading);
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', detectSystemTheme);
+            startCheckingGradio();
+        });
+
+        function startCheckingGradio() {
+            checkInterval = setInterval(checkGradioAvailable, 1000);
+        }
+    </script>
+</body>
+</html>

@@ -19,7 +19,7 @@ from webui.utils import i18n, load_configs, save_configs, load_vr_model, get_vr_
 def open_model_folder(model_type):
 	if not model_type:
 		open_folder(MODEL_FOLDER)
-	if model_type == "UVR_VR_Models":
+	elif model_type == "UVR_VR_Models":
 		config = load_configs(WEBUI_CONFIG)
 		uvr_model_folder = config["settings"]["uvr_model_dir"]
 		open_folder(uvr_model_folder)
