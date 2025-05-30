@@ -97,7 +97,8 @@ def setup_webui():
 	main_link = get_main_link()
 	os.environ["HF_HOME"] = os.path.abspath(MODEL_FOLDER)
 	os.environ["HF_ENDPOINT"] = "https://" + main_link
-	os.environ["PATH"] += os.pathsep + os.path.abspath("ffmpeg/bin/")
+	ffmpeg_path = os.path.abspath("ffmpeg/bin/")
+	os.environ["PATH"] = ffmpeg_path + os.pathsep + os.environ["PATH"]
 	os.environ["GRADIO_TEMP_DIR"] = os.path.abspath("cache/")
 
 	logger.debug("Set HF_HOME to: " + os.path.abspath(MODEL_FOLDER))
