@@ -37,6 +37,7 @@ torchseg
 transformers~=4.35.0
 tqdm
 pydantic<2.11
+sageattention==1.0.6
 
 # After installing the requirements, go to site-packages folder, open "\librosa\util\utils.py" and go to line 2185
 # Change the line from "np.dtype(complex): np.dtype(np.float).type," to "np.dtype(complex): np.dtype(float).type,"\
