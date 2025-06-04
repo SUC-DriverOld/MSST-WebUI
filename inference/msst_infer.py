@@ -138,9 +138,32 @@ class MSSeparator:
 		if len(self.device_ids) > 1:
 			model = torch.nn.DataParallel(model, device_ids=self.device_ids)
 		model = model.to(self.device)
+		model.eval()
 
 		self.logger.debug(f"Loading model completed, duration: {time() - start_time:.2f} seconds")
 		return model, config
+
+	def normalize_audio(self, audio: np.ndarray):
+		mono = audio.mean(0)
+		mean, std = mono.mean(), mono.std()
+		return (audio - mean) / std, {"mean": mean, "std": std}
+
+	def apply_tta(self, mix: torch.Tensor, waveforms_orig: dict[str, torch.Tensor]):
+		track_proc_list = [mix[::-1].copy(), -1.0 * mix.copy()]
+
+		for i, augmented_mix in enumerate(track_proc_list):
+			waveforms = demix(self.config, self.model, augmented_mix, self.device, model_type=self.model_type, callback=self.callback)
+			for el in waveforms:
+				if i == 0:
+					waveforms_orig[el] += waveforms[el][::-1].copy()
+				else:
+					waveforms_orig[el] -= waveforms[el]
+			self.logger.debug(f"TTA processing {i + 1}/{len(track_proc_list)} completed.")
+
+		for el in waveforms_orig:
+			waveforms_orig[el] /= len(track_proc_list) + 1
+
+		return waveforms_orig
 
 	def process_folder(self, input_folder):
 		if not os.path.isdir(input_folder):
@@ -149,9 +172,7 @@ class MSSeparator:
 		all_mixtures_path = [os.path.join(input_folder, f) for f in os.listdir(input_folder)]
 		file_lists = all_mixtures_path.copy()
 
-		sample_rate = 44100
-		if "sample_rate" in self.config.audio:
-			sample_rate = self.config.audio["sample_rate"]
+		sample_rate = getattr(self.config.audio, 'sample_rate', 44100)
 		self.logger.info(f"Input_folder: {input_folder}, Total files found: {len(all_mixtures_path)}, Use sample rate: {sample_rate}")
 
 		if not self.debug:
@@ -210,55 +231,31 @@ class MSSeparator:
 			mix = np.mean(mix, axis=0)
 			self.logger.warning(f"Track has more than 1 channels, but model is mono, taking mean of all channels.")
 
-		instruments = self.config.training.instruments.copy()
+		instruments = self.config.training.instruments
 		if self.config.training.target_instrument is not None:
 			instruments = [self.config.training.target_instrument]
 			self.logger.debug("Target instrument is not null, set primary_stem to target_instrument, secondary_stem will be calculated by mix - target_instrument")
 
 		mix_orig = mix.copy()
-		if "normalize" in self.config.inference and self.config.inference["normalize"]:
-			mono = mix.mean(0)
-			mean = mono.mean()
-			std = mono.std()
-			mix = (mix - mean) / std
-			self.logger.debug(f"Normalize mix with mean: {mean}, std: {std}")
+		if 'normalize' in self.config.inference:
+			if self.config.inference['normalize']:
+				mix, norm_params = self.normalize_audio(mix)
+
+		waveforms_orig = demix(self.config, self.model, mix, self.device, model_type=self.model_type, callback=self.callback)
+		self.logger.debug(f"Finished demixing track, total instruments: {len(waveforms_orig)}")
 
 		if self.use_tta:
-			track_proc_list = [mix.copy(), mix[::-1].copy(), -1.0 * mix.copy()]
-			self.logger.debug(f"User needs to apply TTA, total tracks: {len(track_proc_list)}")
-		else:
-			track_proc_list = [mix.copy()]
-
-		full_result = []
-		for mix in track_proc_list:
-			waveforms = demix(self.config, self.model, mix, self.device, model_type=self.model_type, callback=self.callback)
-			full_result.append(waveforms)
-
-		self.logger.debug("Finished demixing tracks.")
-
-		waveforms = full_result[0]
-		for i in range(1, len(full_result)):
-			d = full_result[i]
-			for el in d:
-				if i == 2:
-					waveforms[el] += -1.0 * d[el]
-				elif i == 1:
-					waveforms[el] += d[el][::-1].copy()
-				else:
-					waveforms[el] += d[el]
-		for el in waveforms:
-			waveforms[el] = waveforms[el] / len(full_result)
+			self.logger.debug("User needs to apply TTA, applying TTA to the waveforms.")
+			waveforms_orig = self.apply_tta(mix, waveforms_orig)
 
 		results = {}
-		self.logger.debug(f"Starting to extract waveforms for instruments: {instruments}")
-
 		for instr in instruments:
-			estimates = waveforms[instr].T
+			estimates = waveforms_orig[instr]
+			if 'normalize' in self.config.inference:
+				if self.config.inference['normalize']:
+					estimates = estimates * norm_params["std"] + norm_params["mean"]
 
-			if "normalize" in self.config.inference and self.config.inference["normalize"]:
-				estimates = estimates * std + mean
-
-			results[instr] = estimates
+			results[instr] = estimates.T
 
 		if self.config.training.target_instrument is not None:
 			target_instrument = self.config.training.target_instrument
@@ -267,14 +264,12 @@ class MSSeparator:
 			self.logger.debug(f"target_instrument is not null, extracting instrumental from {target_instrument}, other_instruments: {other_instruments}")
 
 			if other_instruments:
-				extract_instrumental = other_instruments[0]
-				waveforms[extract_instrumental] = mix_orig - waveforms[target_instrument]
-				estimates = waveforms[extract_instrumental].T
+				estimates = mix_orig - waveforms_orig[target_instrument]
+				if 'normalize' in self.config.inference:
+					if self.config.inference['normalize']:
+						estimates = estimates * norm_params["std"] + norm_params["mean"]
 
-				if "normalize" in self.config.inference and self.config.inference["normalize"]:
-					estimates = estimates * std + mean
-
-				results[extract_instrumental] = estimates
+				results[other_instruments[0]] = estimates.T
 
 		self.logger.debug("Separation process completed.")
 
