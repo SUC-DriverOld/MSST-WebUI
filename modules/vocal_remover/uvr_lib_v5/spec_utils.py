@@ -313,8 +313,8 @@ def spectrogram_to_wave(spec, hop_length=1024, mp={}, band=0, is_v51_model=True)
 	spec_left = np.asfortranarray(spec[0])
 	spec_right = np.asfortranarray(spec[1])
 
-	wave_left = librosa.istft(spec_left, hop_length=hop_length)
-	wave_right = librosa.istft(spec_right, hop_length=hop_length)
+	wave_left = librosa.istft(spec_left, hop_length=hop_length, dtype=np.float64)
+	wave_right = librosa.istft(spec_right, hop_length=hop_length, dtype=np.float64)
 
 	if is_v51_model:
 		cc = mp.param["band"][band].get("convert_channels")
