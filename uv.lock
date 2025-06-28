@@ -1721,7 +1721,7 @@ wheels = [
 
 [[package]]
 name = "msst-webui"
-version = "0.1.0"
+version = "1.7.0"
 source = { virtual = "." }
 dependencies = [
     { name = "accelerate" },
