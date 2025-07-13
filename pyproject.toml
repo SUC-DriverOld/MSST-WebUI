@@ -1,18 +1,82 @@
 [project]
-name = "MSST-WebUI"
+name = "msst-webui"
 version = "1.7.0"
 description = "This is a webUI for Music-Source-Separation-Training (MSST), which is a repository for training models for music source separation."
 readme = "README.md"
-authors = [
-]
 requires-python = ">=3.10"
+dependencies = [
+    "accelerate==0.33.0",
+    "aiohttp==3.9.5",
+    "alembic==1.13.2",
+    "asteroid==0.7.0",
+    "audiomentations==0.24.0",
+    "auraloss==0.4.0",
+    "banal==1.0.6",
+    "beartype==0.14.1",
+    "bitsandbytes==0.43.3",
+    "coloredlogs==15.0.1",
+    "darkdetect==0.8.0",
+    "demucs==4.0.0",
+    "deptry==0.23.0",
+    "flatbuffers==24.3.25",
+    "gradio==4.38.1",
+    "httptools==0.6.1",
+    "lazy-loader==0.4",
+    "lightning==2.4.0",
+    "mido==1.3.2",
+    "ml-collections==0.1.1",
+    "msgpack==1.0.8",
+    "pedalboard==0.8.2",
+    "prodigyopt==1.0",
+    "protobuf==3.20.3",
+    "python-dotenv==1.0.1",
+    "pywin32==308",
+    "rotary-embedding-torch==0.3.5",
+    "samplerate==0.2.1",
+    "segmentation-models-pytorch==0.3.3",
+    "shiboken6==6.8.0.2",
+    "soxr==0.3.7",
+    "spafe==0.3.2",
+    "torch-audiomentations==0.11.1",
+    "torch>=2.7.1",
+    "torchaudio>=2.7.1",
+    "torchvision>=0.22.1",
+    "torch-log-wmse==0.2.9",
+    "torchseg==0.0.1a1",
+    "transformers>=4.53.0",
+    "watchfiles==0.22.0",
+    "wheel==0.43.0",
+    "pyside6-fluent-widgets>=1.8.3",
+    "pydantic==2.10.6",
+    "fastapi==0.111.0",
+]
+
+[[tool.uv.index]]
+url = "https://mirrors.ustc.edu.cn/pypi/simple"
+default = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://mirror.nju.edu.cn/pytorch/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchvision = [
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchaudio = [
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
 
 [tool.ruff]
 target-version = "py310"
 line-length = 200
 
 [tool.ruff.format]
-indent-style = "tab"
+indent-style = "space"
 line-ending = "auto"
 quote-style = "double"
 skip-magic-trailing-comma = true
