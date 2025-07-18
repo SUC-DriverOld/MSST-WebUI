@@ -30,7 +30,7 @@ dependencies = [
     "prodigyopt==1.0",
     "protobuf==3.20.3",
     "python-dotenv==1.0.1",
-    "pywin32==308",
+    "pywin32==308 ; sys_platform == 'win32'",
     "rotary-embedding-torch==0.3.5",
     "samplerate==0.2.1",
     "segmentation-models-pytorch==0.3.3",
@@ -49,6 +49,7 @@ dependencies = [
     "pyside6-fluent-widgets>=1.8.3",
     "pydantic==2.10.6",
     "fastapi==0.111.0",
+    "colorama>=0.4.6",
 ]
 
 [[tool.uv.index]]
