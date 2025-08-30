@@ -276,7 +276,9 @@ def run_inference(
 
 		logger.info(f"Successfully separated files: {success_files}")
 		callback["flag"] = (1, success_files)
-	except Exception as e:logger.error(f"Separation failed: {str(e)}\n{traceback.format_exc()}");callback["flag"] = (-1, str(e))
+	except Exception as e:
+		logger.error(f"Separation failed: {str(e)}\n{traceback.format_exc()}")
+		callback["flag"] = (-1, str(e))
 
 
 def stop_msst_inference():
