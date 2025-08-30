@@ -215,6 +215,57 @@ class MSSeparator:
 			gc.collect()
 		return success_files
 
+	def process_folder_recursive(self, input_folder, store_dir):
+		if not os.path.isdir(input_folder):
+			raise ValueError(f"Input folder '{input_folder}' does not exist.")
+
+		all_mixtures_path = []
+		for root, _, files in os.walk(input_folder):
+			for file in files:
+				all_mixtures_path.append(os.path.join(root, file))
+
+		file_lists = all_mixtures_path.copy()
+
+		sample_rate = getattr(self.config.audio, "sample_rate", 44100)
+		self.logger.info(f"Input_folder: {input_folder}, Total files found: {len(all_mixtures_path)}, Use sample rate: {sample_rate}")
+
+		if not self.debug:
+			all_mixtures_path = tqdm(all_mixtures_path, desc="Total progress")
+
+		success_files = []
+		for path in all_mixtures_path:
+			if not self.debug:
+				all_mixtures_path.set_postfix({"track": os.path.basename(path)})
+			try:
+				mix, sr = librosa.load(path, sr=sample_rate, mono=False)
+			except Exception as e:
+				self.logger.warning(f"Cannot process track: {path}, error: {str(e)}")
+				continue
+
+			self.logger.debug(f"Starting separation process for audio_file: {path}")
+
+			if self.callback:
+				self.callback["info"] = {"index": file_lists.index(path) + 1, "total": len(file_lists), "name": os.path.basename(path)}
+
+			results = self.separate(mix)
+			self.logger.debug(f"Separation audio_file: {path} completed. Starting to save results.")
+
+			file_name, _ = os.path.splitext(os.path.basename(path))
+
+			relative_path = os.path.relpath(os.path.dirname(path), input_folder)
+			output_sub_dir = os.path.join(store_dir, relative_path)
+			os.makedirs(output_sub_dir, exist_ok=True)
+
+			for instr in results.keys():
+				if instr in self.store_dirs:
+					self.save_audio(results[instr], sr, f"{file_name}_{instr}", output_sub_dir)
+					self.logger.debug(f"Saved {instr} for {file_name}_{instr}.{self.output_format} in {output_sub_dir}")
+
+			success_files.append(os.path.basename(path))
+			del mix, results
+			gc.collect()
+		return success_files
+
 	def separate(self, mix):
 		isstereo = True
 		if self.model_type in ["bs_roformer", "mel_band_roformer"]:
