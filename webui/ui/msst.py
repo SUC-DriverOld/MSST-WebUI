@@ -3,9 +3,9 @@ __author__ = "Sucial https://github.com/SUC-DriverOld"
 
 import gradio as gr
 
-from webui.utils import i18n, select_folder, open_folder, change_to_audio_infer, change_to_folder_infer
+from webui.utils import i18n, select_folder, open_folder
 from webui.init import init_selected_model, init_selected_msst_model
-from webui.msst import run_inference_single, run_multi_inference, stop_msst_inference, update_selected_model, load_selected_model, save_model_config, reset_model_config, update_inference_settings
+from webui.msst import run_inference_single, run_multi_inference, stop_msst_inference, update_selected_model, load_selected_model, save_model_config, reset_model_config, update_inference_settings, run_folder_batch_inference
 
 
 def msst(webui_config, device, force_cpu_flag=False):
@@ -48,6 +48,13 @@ def msst(webui_config, device, force_cpu_flag=False):
 				folder_input = gr.Textbox(label=i18n("输入目录"), value=webui_config["inference"]["input_dir"] if webui_config["inference"]["input_dir"] else "input/", interactive=True, scale=4)
 				select_multi_input_dir = gr.Button(i18n("选择文件夹"), scale=1)
 				open_multi_input_dir = gr.Button(i18n("打开文件夹"), scale=1)
+		with gr.TabItem(label=i18n("批量文件夹处理")) as folder_batch_tab:
+			with gr.Row():
+				folder_batch_input = gr.Textbox(
+					label=i18n("输入根目录"), value=webui_config["inference"].get("batch_input_dir", "input_batch/"), interactive=True, scale=4
+				)
+				select_folder_batch_input_dir = gr.Button(i18n("选择文件夹"), scale=1)
+				open_folder_batch_input_dir = gr.Button(i18n("打开文件夹"), scale=1)
 	with gr.Row():
 		store_dir = gr.Textbox(label=i18n("输出目录"), value=webui_config["inference"]["store_dir"] if webui_config["inference"]["store_dir"] else "results/", interactive=True, scale=4)
 		select_store_btn = gr.Button(i18n("选择文件夹"), scale=1)
@@ -75,15 +82,23 @@ def msst(webui_config, device, force_cpu_flag=False):
 			reset_config_button = gr.Button(i18n("重置配置"))
 	inference_audio = gr.Button(i18n("输入音频分离"), variant="primary", visible=True)
 	inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False)
+	inference_folder_batch = gr.Button(i18n("批量文件夹分离"), variant="primary", visible=False)
 	with gr.Row():
 		output_message = gr.Textbox(label="Output Message", scale=5)
 		stop_msst = gr.Button(i18n("强制停止"), scale=1)
 
-	audio_tab.select(fn=change_to_audio_infer, outputs=[inference_audio, inference_folder])
-	folder_tab.select(fn=change_to_folder_infer, outputs=[inference_audio, inference_folder])
+	buttons = [inference_audio, inference_folder, inference_folder_batch]
+	audio_tab.select(lambda: [gr.update(visible=True)] + [gr.update(visible=False)] * 2, outputs=buttons)
+	folder_tab.select(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], outputs=buttons)
+	folder_batch_tab.select(lambda: [gr.update(visible=False)] * 2 + [gr.update(visible=True)], outputs=buttons)
 
 	inference_audio.click(fn=run_inference_single, inputs=[selected_model, audio_input, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta], outputs=output_message)
 	inference_folder.click(fn=run_multi_inference, inputs=[selected_model, folder_input, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta], outputs=output_message)
+	inference_folder_batch.click(
+		fn=run_folder_batch_inference,
+		inputs=[selected_model, folder_batch_input, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta],
+		outputs=output_message,
+	)
 
 	selected_model.change(fn=update_inference_settings, inputs=selected_model, outputs=[batch_size, num_overlap, chunk_size, normalize, extract_instrumental])
 	save_config_button.click(fn=save_model_config, inputs=[selected_model, batch_size, num_overlap, chunk_size, normalize], outputs=output_message)
@@ -93,4 +108,6 @@ def msst(webui_config, device, force_cpu_flag=False):
 	open_store_btn.click(fn=open_folder, inputs=store_dir)
 	select_multi_input_dir.click(fn=select_folder, outputs=folder_input)
 	open_multi_input_dir.click(fn=open_folder, inputs=folder_input)
+	select_folder_batch_input_dir.click(fn=select_folder, outputs=folder_batch_input)
+	open_folder_batch_input_dir.click(fn=open_folder, inputs=folder_batch_input)
 	stop_msst.click(fn=stop_msst_inference)
