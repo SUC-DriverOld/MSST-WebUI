@@ -5,7 +5,7 @@ import gradio as gr
 import pandas as pd
 import platform
 
-from torch import cuda
+from torch import cuda, backends
 from multiprocessing import cpu_count
 from utils.constant import *
 from webui.utils import i18n, load_configs, webui_restart, log_level_debug, change_to_audio_infer, change_to_folder_infer, logger
@@ -209,6 +209,9 @@ def launch(server_name=None, server_port=None, share=True):
 		for i in range(cuda.device_count()):
 			devices[f"cuda{i}"] = f"{i}: {cuda.get_device_name(i)}"
 		logger.info(i18n("检测到CUDA, 设备信息: ") + str(devices))
+	elif backends.mps.is_available():
+		devices = {"mps": i18n("使用MPS")}
+		logger.info(i18n("检测到MPS, 使用MPS"))
 	else:
 		devices = {"cpu": i18n("无可用的加速设备, 使用CPU")}
 		logger.warning(i18n("\033[33m未检测到可用的加速设备, 使用CPU\033[0m"))
