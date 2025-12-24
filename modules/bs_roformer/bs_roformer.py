@@ -20,6 +20,8 @@ from rotary_embedding_torch import RotaryEmbedding
 from einops import rearrange, pack, unpack
 from einops.layers.torch import Rearrange
 
+from neuralop.models import FNO
+
 # helper functions
 
 
@@ -361,7 +363,41 @@ class MaskEstimator(Module):
 
 		return torch.cat(outs, dim=-1)
 
+class MaskEstimatorFNO(Module):
+	@beartype
+	def __init__(
+			self,
+			dim,
+			dim_inputs: Tuple[int, ...],
+	):
+		super().__init__()
+		self.dim_inputs = dim_inputs
+		self.to_freqs = ModuleList([])
+		
+		for dim_in in dim_inputs:
+			net = []
 
+			mlp = nn.Sequential(
+				# change FNO1d to FNO to support neuraloperator 2.0
+				FNO(n_modes=(64,), hidden_channels=dim, in_channels=dim, out_channels=dim_in*2, lifting_channel_ratio=2, projection_channel_ratio=2, n_layers=3, separable=True),
+				nn.GLU(dim=-2)
+			)
+
+			self.to_freqs.append(mlp)
+
+	def forward(self, x):
+		x = x.unbind(dim=-2)
+
+		outs = []
+
+		for band_features, mlp in zip(x, self.to_freqs):
+			band_features = rearrange(band_features, 'b t c -> b c t')
+			with torch.autocast(device_type='cuda', enabled=False, dtype=torch.float32):
+				freq_out = mlp(band_features).float()
+			freq_out = rearrange(freq_out, 'b c t -> b t c')
+			outs.append(freq_out)
+
+		return torch.cat(outs, dim=-1)
 # main class
 
 DEFAULT_FREQS_PER_BANDS = (
@@ -412,7 +448,8 @@ class BSRoformer(Module):
 			use_torch_checkpoint=False,
 			skip_connection=False,
 			sage_attention=False,
-			use_shared_bias=False
+			use_shared_bias=False,
+			use_mask_estimator_fno=False
 	):
 		super().__init__()
 
@@ -490,12 +527,18 @@ class BSRoformer(Module):
 		self.mask_estimators = nn.ModuleList([])
 
 		for _ in range(num_stems):
-			mask_estimator = MaskEstimator(
-				dim=dim,
-				dim_inputs=freqs_per_bands_with_complex,
-				depth=mask_estimator_depth,
-				mlp_expansion_factor=mlp_expansion_factor,
-			)
+			if use_mask_estimator_fno:
+				mask_estimator = MaskEstimatorFNO(
+					dim=dim,
+					dim_inputs=freqs_per_bands_with_complex,
+				)
+			else:
+				mask_estimator = MaskEstimator(
+					dim=dim,
+					dim_inputs=freqs_per_bands_with_complex,
+					depth=mask_estimator_depth,
+					mlp_expansion_factor=mlp_expansion_factor,
+				)
 
 			self.mask_estimators.append(mask_estimator)
 
