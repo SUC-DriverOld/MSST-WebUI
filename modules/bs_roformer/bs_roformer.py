@@ -10,6 +10,9 @@ try:
 	from modules.bs_roformer.attend_sage import Attend as AttendSage
 except:
 	pass
+from modules.bs_roformer.hyperace import SegmModelHyperACE
+from modules.bs_roformer.hyperace_v2 import SegmModelHyperACE2
+
 from torch.utils.checkpoint import checkpoint
 
 from beartype.typing import Tuple, Optional, List, Callable
@@ -363,6 +366,52 @@ class MaskEstimator(Module):
 
 		return torch.cat(outs, dim=-1)
 
+class MaskEstimatorHyperACE(Module):
+	@beartype
+	def __init__(
+			self,
+			dim,
+			dim_inputs: Tuple[int, ...],
+			depth,
+			mlp_expansion_factor=4,
+			hyperace_version=2
+    ):
+		super().__init__()
+		self.dim_inputs = dim_inputs
+		self.to_freqs = ModuleList([])
+		dim_hidden = dim * mlp_expansion_factor
+
+		for dim_in in dim_inputs:
+			net = []
+
+			mlp = nn.Sequential(
+				MLP(dim, dim_in * 2, dim_hidden=dim_hidden, depth=depth),
+				nn.GLU(dim=-1)
+			)
+
+			self.to_freqs.append(mlp)
+		if hyperace_version == 2:
+			self.segm = SegmModelHyperACE2(in_bands=len(dim_inputs), in_dim=dim, out_bins=sum(dim_inputs)//4)
+		elif hyperace_version == 1:
+			self.segm = SegmModelHyperACE(in_bands=len(dim_inputs), in_dim=dim, out_bins=sum(dim_inputs)//4)
+		else:
+			raise ValueError(f'hyperace_version {hyperace_version} not supported')
+        
+	def forward(self, x):
+		y = rearrange(x, 'b t f c -> b c t f')
+		y = self.segm(y)
+		y = rearrange(y, 'b c t f -> b t (f c)')
+
+		x = x.unbind(dim=-2)
+
+		outs = []
+
+		for band_features, mlp in zip(x, self.to_freqs):
+			freq_out = mlp(band_features)
+			outs.append(freq_out)
+
+		return torch.cat(outs, dim=-1) + y
+
 class MaskEstimatorFNO(Module):
 	@beartype
 	def __init__(
@@ -449,6 +498,8 @@ class BSRoformer(Module):
 			skip_connection=False,
 			sage_attention=False,
 			use_shared_bias=False,
+			use_mask_estimator_hyper_ace=False,
+			hyperace_version: Optional[int] = None,
 			use_mask_estimator_fno=False
 	):
 		super().__init__()
@@ -527,7 +578,15 @@ class BSRoformer(Module):
 		self.mask_estimators = nn.ModuleList([])
 
 		for _ in range(num_stems):
-			if use_mask_estimator_fno:
+			if use_mask_estimator_hyper_ace:
+				mask_estimator = MaskEstimatorHyperACE(
+					dim=dim,
+					dim_inputs=freqs_per_bands_with_complex,
+					depth=mask_estimator_depth,
+					mlp_expansion_factor=mlp_expansion_factor,
+					hyperace_version=hyperace_version,
+				)
+			elif use_mask_estimator_fno:
 				mask_estimator = MaskEstimatorFNO(
 					dim=dim,
 					dim_inputs=freqs_per_bands_with_complex,
