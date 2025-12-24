@@ -11,6 +11,8 @@ from time import time
 from tqdm import tqdm
 from pydub import AudioSegment
 
+from safetensors.torch import load_file
+
 from utils.utils import demix, get_model_from_config
 from utils.logger import get_logger, set_log_level
 
@@ -131,6 +133,8 @@ class MSSeparator:
 				state_dict = state_dict["state"]
 			if "state_dict" in state_dict:
 				state_dict = state_dict["state_dict"]
+		elif self.model_path.endswith("safetensors"):
+			state_dict = load_file(self.model_path, device=self.device)
 		else:
 			state_dict = torch.load(self.model_path, map_location=self.device, weights_only=True)
 		model.load_state_dict(state_dict)
