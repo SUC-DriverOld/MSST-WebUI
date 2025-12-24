@@ -120,7 +120,7 @@ def load_selected_model(model_type=None):
 		if not os.path.exists(model_dir):
 			return None
 		for files in os.listdir(model_dir):
-			if files.endswith((".ckpt", ".th", ".chpt")):
+			if files.endswith((".ckpt", ".th", ".chpt", ".safetensors")):
 				try:
 					get_msst_model(files, model_type)
 					downloaded_model.append(files)
@@ -136,7 +136,7 @@ def load_msst_model():
 	model_dir = [os.path.join(MODEL_FOLDER, keys) for keys in model_classes]
 	for dirs in model_dir:
 		for files in os.listdir(dirs):
-			if files.endswith((".ckpt", ".th", ".chpt")):
+			if files.endswith((".ckpt", ".th", ".chpt", ".safetensors")):
 				model_list.append(files)
 	return model_list
 
