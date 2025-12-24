@@ -22,7 +22,7 @@ def load_msst_model():
 	model_dir = [os.path.join("pretrain", key) for key in keys]
 	for dirs in model_dir:
 		for files in os.listdir(dirs):
-			if files.endswith((".ckpt", ".pth", ".th", ".chpt")):
+			if files.endswith((".ckpt", ".pth", ".th", ".chpt", ".safetensors")):
 				model_list.append(files)
 	return model_list
 

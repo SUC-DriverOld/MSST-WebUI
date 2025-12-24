@@ -229,8 +229,8 @@ def install_unmsst_model(unmsst_model, unmsst_config, unmodel_class, unmodel_typ
 		model_name = os.path.basename(unmsst_model)
 		if not unmsst_config.endswith(".yaml"):
 			return i18n("请上传'.yaml'格式的配置文件")
-		if not unmsst_model.endswith((".ckpt", ".chpt", ".th")):
-			return i18n("请上传'ckpt', 'chpt', 'th'格式的模型文件")
+		if not unmsst_model.endswith((".ckpt", ".chpt", ".th", ".safetensors")):
+			return i18n("请上传'ckpt', 'chpt', 'th', 'safetensors'格式的模型文件")
 		if unmodel_class == "" or unmodel_type == "":
 			return i18n("请输入正确的模型类别和模型类型")
 
