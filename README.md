@@ -47,6 +47,7 @@ We provided some detailed chinese documents for chinese users, click [here](http
   conda activate msst
   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
   pip install -r requirements.txt --only-binary=samplerate
+  pip install neuraloperator>=2.0.0 safetensors>=0.7.0
   ```
 
 - After installing the requirements, go to `site-packages` folder, open `librosa\util\utils.py` and go to line **2185**. Change the line from `np.dtype(complex): np.dtype(np.float).type,` to `np.dtype(complex): np.dtype(float).type,`. If you do not know how to do this, you can use the following command.
