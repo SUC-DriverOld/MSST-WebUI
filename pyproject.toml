@@ -1,6 +1,6 @@
 [project]
 name = "msst-webui"
-version = "1.8.0 pre.1"
+version = "1.8.0pre.1"
 description = "This is a webUI for Music-Source-Separation-Training (MSST), which is a repository for training models for music source separation."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -13,7 +13,7 @@ dependencies = [
     "auraloss==0.4.0",
     "banal==1.0.6",
     "beartype==0.14.1",
-    "bitsandbytes==0.43.3",
+    "bitsandbytes==0.43.3 ; sys_platform == 'linux' or sys_platform == 'win32'",
     "coloredlogs==15.0.1",
     "darkdetect==0.8.0",
     "demucs==4.0.0",
@@ -32,7 +32,7 @@ dependencies = [
     "python-dotenv==1.0.1",
     "pywin32==308 ; sys_platform == 'win32'",
     "rotary-embedding-torch==0.3.5",
-    "samplerate==0.2.1",
+    "samplerate==0.2.4",
     "segmentation-models-pytorch==0.3.3",
     "shiboken6==6.8.0.2",
     "soxr==0.3.7",
