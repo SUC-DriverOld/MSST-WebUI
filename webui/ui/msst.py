@@ -2,11 +2,20 @@ __license__ = "AGPL-3.0"
 __author__ = "Sucial https://github.com/SUC-DriverOld"
 
 import gradio as gr
+import os
 
 from webui.utils import i18n, select_folder, open_folder, change_to_audio_infer, change_to_folder_infer
 from webui.init import init_selected_model, init_selected_msst_model
 from webui.msst import run_inference_single, run_multi_inference, stop_msst_inference, update_selected_model, load_selected_model, save_model_config, reset_model_config, update_inference_settings
 
+
+def custom_select_mode(custom_select, folder_input):
+	return (
+		gr.Button(i18n("全选"), visible=custom_select),
+		gr.Button(i18n("全不选"), visible=custom_select),
+		gr.Button(value=i18n("刷新"), visible=custom_select),
+		gr.FileExplorer(label=i18n("文件浏览器"), root_dir=folder_input if os.path.exists(folder_input) else ".", visible=custom_select, file_count="multiple", interactive=True)
+	)
 
 def msst(webui_config, device, force_cpu_flag=False):
 	device = [value for _, value in device.items()]
@@ -48,6 +57,13 @@ def msst(webui_config, device, force_cpu_flag=False):
 				folder_input = gr.Textbox(label=i18n("输入目录"), value=webui_config["inference"]["input_dir"] if webui_config["inference"]["input_dir"] else "input/", interactive=True, scale=4)
 				select_multi_input_dir = gr.Button(i18n("选择文件夹"), scale=1)
 				open_multi_input_dir = gr.Button(i18n("打开文件夹"), scale=1)
+			with gr.Group():
+				with gr.Row():
+					custom_select = gr.Checkbox(label=i18n("自定义选择"), value=False, interactive=True)
+					reflash_select = gr.Button(value=i18n("刷新"), visible=False)
+					select_all = gr.Button(value=i18n("全选"), visible=False)
+					select_none = gr.Button(value=i18n("全不选"), visible=False)
+				custom_files = gr.FileExplorer(label=i18n("文件浏览器"), visible=False, file_count="multiple")
 	with gr.Row():
 		store_dir = gr.Textbox(label=i18n("输出目录"), value=webui_config["inference"]["store_dir"] if webui_config["inference"]["store_dir"] else "results/", interactive=True, scale=4)
 		select_store_btn = gr.Button(i18n("选择文件夹"), scale=1)
@@ -79,11 +95,31 @@ def msst(webui_config, device, force_cpu_flag=False):
 		output_message = gr.Textbox(label="Output Message", scale=5)
 		stop_msst = gr.Button(i18n("强制停止"), scale=1)
 
+	# with gr.Row():
+	# 	with gr.Column():
+	# 		fileexplorer = gr.FileExplorer(
+	# 			label=i18n("文件浏览器"),
+	# 			root_dir=webui_config["inference"]["store_dir"] if webui_config["inference"]["store_dir"] else "results/",
+	# 			file_count="multiple"
+	# 		)
+	# 	with gr.Column():
+	# 		@gr.render(fileexplorer)
+	# 		def select_audio_fn(files):
+	# 			if not files:
+	# 				return
+	# 			for file in files[0:2]:  # Limit to first 2 files for display
+	# 				try:
+	# 					with sf.SoundFile(file):
+	# 						gr.Audio(type="filepath", value=file, show_download_button=False, label=file)
+	# 				except Exception as e:
+	# 					pass
+
+
 	audio_tab.select(fn=change_to_audio_infer, outputs=[inference_audio, inference_folder])
 	folder_tab.select(fn=change_to_folder_infer, outputs=[inference_audio, inference_folder])
 
 	inference_audio.click(fn=run_inference_single, inputs=[selected_model, audio_input, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta], outputs=output_message)
-	inference_folder.click(fn=run_multi_inference, inputs=[selected_model, folder_input, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta], outputs=output_message)
+	inference_folder.click(fn=run_multi_inference, inputs=[selected_model, folder_input, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, custom_select, custom_files], outputs=output_message)
 
 	selected_model.change(fn=update_inference_settings, inputs=selected_model, outputs=[batch_size, num_overlap, chunk_size, normalize, extract_instrumental])
 	save_config_button.click(fn=save_model_config, inputs=[selected_model, batch_size, num_overlap, chunk_size, normalize], outputs=output_message)
@@ -94,3 +130,8 @@ def msst(webui_config, device, force_cpu_flag=False):
 	select_multi_input_dir.click(fn=select_folder, outputs=folder_input)
 	open_multi_input_dir.click(fn=open_folder, inputs=folder_input)
 	stop_msst.click(fn=stop_msst_inference)
+
+	custom_select.change(fn=custom_select_mode, inputs=[custom_select, folder_input], outputs=[select_all, select_none, reflash_select, custom_files])
+	select_all.click(fn=lambda folder: os.listdir(folder), inputs=folder_input, outputs=custom_files)
+	reflash_select.click(fn=lambda folder: gr.FileExplorer(root_dir=folder if os.path.exists(folder) else "."), inputs=folder_input, outputs=custom_files)
+	select_none.click(fn=lambda: list(), outputs=custom_files)

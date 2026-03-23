@@ -112,3 +112,8 @@ FFMPEG = ".\\ffmpeg\\bin\\ffmpeg.exe" if os.path.isfile(".\\ffmpeg\\bin\\ffmpeg.
 
 # python executable path, if not found, use current python
 PYTHON = ".\\workenv\\python.exe" if os.path.isfile(".\\workenv\\python.exe") else sys.executable
+
+# logging constants
+MAX_LOG = 100
+LOG_DIR = "logs"
+LOG_FILENAME_ENV = "MSST_LOG_FILE"

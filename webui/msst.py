@@ -115,9 +115,12 @@ def run_inference_single(selected_model, input_audio, store_dir, extract_instrum
 	return message
 
 
-def run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
+def run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, custom_select, custom_files):
 	save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
-	return start_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
+	if custom_select:
+		return run_inference_single(selected_model, custom_files, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
+	else:
+		return start_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
 
 
 def start_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):

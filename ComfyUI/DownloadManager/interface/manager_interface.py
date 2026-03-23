@@ -13,6 +13,7 @@ class ManagerInterface(QFrame):
 		super().__init__(parent)
 		self.setObjectName("ManagerInterface")
 		self.table_data = models_info
+		# print("table_data: ", self.table_data)
 		self.setupUI()
 
 	def setupUI(self):
