@@ -7,7 +7,6 @@ from webui.utils import i18n, select_folder, open_folder
 from webui.init import init_selected_model, init_selected_msst_model
 from webui.msst import run_inference_single, run_multi_inference, stop_msst_inference, update_selected_model, load_selected_model, save_model_config, reset_model_config, update_inference_settings, run_folder_batch_inference
 
-
 def msst(webui_config, device, force_cpu_flag=False):
 	device = [value for _, value in device.items()]
 

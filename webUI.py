@@ -1,5 +1,13 @@
 __license__ = "AGPL-3.0"
 __author__ = "Sucial https://github.com/SUC-DriverOld"
+__logo__ = """
+███╗   ███╗███████╗███████╗████████╗    ██╗    ██╗███████╗██████╗ ██╗   ██╗██╗
+████╗ ████║██╔════╝██╔════╝╚══██╔══╝    ██║    ██║██╔════╝██╔══██╗██║   ██║██║
+██╔████╔██║███████╗███████╗   ██║       ██║ █╗ ██║█████╗  ██████╔╝██║   ██║██║
+██║╚██╔╝██║╚════██║╚════██║   ██║       ██║███╗██║██╔══╝  ██╔══██╗██║   ██║██║
+██║ ╚═╝ ██║███████║███████║   ██║       ╚███╔███╔╝███████╗██████╔╝╚██████╔╝██║
+╚═╝     ╚═╝╚══════╝╚══════╝   ╚═╝        ╚══╝╚══╝ ╚══════╝╚═════╝  ╚═════╝ ╚═╝
+"""
 
 """
 This file is responsible for initializing and launching the WebUI for the project. It performs multiple setup tasks,
@@ -30,6 +38,38 @@ import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 os.environ["no_proxy"] = "127.0.0.1,localhost,::1"
+
+
+def gradient_text(ascii_art, start_color, end_color):
+    lines = ascii_art.split("\n")
+    r1, g1, b1 = start_color
+    r2, g2, b2 = end_color
+    max_line_length = max(len(line) for line in lines) if lines else 0
+
+    try:
+        console_width = os.get_terminal_size().columns
+    except:
+        console_width = max_line_length
+
+    padding = max(0, (console_width - max_line_length) // 2)
+
+    for line in lines:
+        if not line.strip():
+            print()
+            continue
+
+        length = len(line)
+        result = " " * padding
+
+        for i, char in enumerate(line):
+            ratio = i / max(length - 1, 1)
+            r = int(r1 + (r2 - r1) * ratio)
+            g = int(g1 + (g2 - g1) * ratio)
+            b = int(b1 + (b2 - b1) * ratio)
+            result += f"\033[38;2;{r};{g};{b}m{char}"
+
+        result += "\033[0m"
+        print(result)
 
 
 def main(args):
@@ -92,6 +132,7 @@ def main(args):
 
 
 if __name__ == "__main__":
+	gradient_text(__logo__, (0, 150, 255), (255, 100, 150))
 	import multiprocessing
 	import argparse
 	import shutil

@@ -114,23 +114,19 @@ def run_inference_single(selected_model, input_audio, store_dir, extract_instrum
 	shutil.rmtree(TEMP_PATH)
 	return message
 
+
 def run_multi_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
 	save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
-	return start_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, batch_mode="folder")
+	return start_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
+
 
 def run_folder_batch_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta):
 	config = load_configs(WEBUI_CONFIG)
-	config["inference"]["selected_model"] = selected_model
-	config["inference"]["device"] = gpu_id
-	config["inference"]["output_format"] = output_format
-	config["inference"]["force_cpu"] = force_cpu
-	config["inference"]["instrumental"] = extract_instrumental
-	config["inference"]["use_tta"] = use_tta
-	config["inference"]["store_dir"] = store_dir
 	config["inference"]["batch_input_dir"] = input_folder
 	save_configs(config, WEBUI_CONFIG)
-	logger.debug(f"Saved MSST inference config: {config['inference']}")
+	save_msst_inference_config(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta)
 	return start_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, batch_mode="recursive")
+
 
 def start_inference(selected_model, input_folder, store_dir, extract_instrumental, gpu_id, output_format, force_cpu, use_tta, batch_mode="folder"):
 	if selected_model == "":

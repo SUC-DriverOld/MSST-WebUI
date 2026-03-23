@@ -16,7 +16,7 @@ for music source separation and model management.
 
 
 import gradio as gr
-
+import os
 from utils.constant import WEBUI_CONFIG, LANGUAGE, PACKAGE_VERSION
 from webui.utils import i18n, load_configs
 from webui import ui
@@ -51,4 +51,9 @@ def app(platform, device, force_cpu, theme="tools/themes/theme_blue.json"):
 				ui.train(webui_config, device)
 			with gr.TabItem(label=i18n("设置")):
 				ui.settings(webui_config, language_dict, platform, device)
+
+			if os.environ.get("MSST_USE_WEBVIEW", "0") == "1":
+				from webui.ui.weblog import weblog
+				weblog()
+
 	return webui
