@@ -1,6 +1,6 @@
 [project]
 name = "msst-webui"
-version = "1.7.0"
+version = "1.8.0 pre.1"
 description = "This is a webUI for Music-Source-Separation-Training (MSST), which is a repository for training models for music source separation."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -50,6 +50,8 @@ dependencies = [
     "pydantic==2.10.6",
     "fastapi==0.111.0",
     "colorama>=0.4.6",
+    "safetensors>=0.7.0",
+    "neuraloperator>=2.0.0"
 ]
 
 [[tool.uv.index]]

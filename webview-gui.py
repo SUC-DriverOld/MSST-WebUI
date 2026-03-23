@@ -3,20 +3,22 @@ __author__ = "Sucial https://github.com/SUC-DriverOld"
 
 import os
 import sys
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-import webview
-import multiprocessing
-import warnings
 import socket
+import warnings
+import platform
 from tkinter import messagebox
+import webview
 from utils.constant import THEME_FOLDER, PACKAGE_VERSION
 
-multiprocessing.set_start_method('spawn', force=True)
+
 os.environ["no_proxy"] = "localhost,127.0.0.1,::1"
 os.environ["MSST_USE_WEBVIEW"] = "1"
 warnings.filterwarnings("ignore")
+gradio_demo = None
 
 
 def find_free_port(ip, start_port=11451, end_port=19198):
@@ -31,11 +33,12 @@ def find_free_port(ip, start_port=11451, end_port=19198):
     os._exit(1)
 
 def launcher(server_name, server_port):
-    import platform
     from webui.utils import i18n, logger
     from webui.setup import setup_webui
     from torch import cuda, backends
     from webui import app
+
+    global gradio_demo
 
     devices = {}
     force_cpu = False
@@ -58,17 +61,13 @@ def launcher(server_name, server_port):
     theme_path = os.path.join(THEME_FOLDER, webui_config["settings"].get("theme", "theme_blue.json"))
     logger.debug(f"Launching WebUI with parameters: ip_address={server_name}, port={server_port}")
 
-    app.app(
+    gradio_demo = app.app(
         platform=platform_info, device=devices, force_cpu=force_cpu, theme=theme_path
-    ).queue().launch(
-        inbrowser=False, share=False, server_name=server_name, server_port=server_port,
-        show_api=False, favicon_path="docs/logo.png"
     )
-
-def start_gradio(server_name, server_port):
-    gradio_process = multiprocessing.Process(target=launcher, args=(server_name, server_port))
-    gradio_process.start()
-    return gradio_process
+    gradio_demo.queue().launch(
+        inbrowser=False, share=False, server_name=server_name, server_port=server_port,
+        show_api=False, favicon_path="docs/logo.png", prevent_thread_lock=True
+    )
 
 def get_html(ip, port):
     with open(os.path.join(current_dir, "webui", "webview", "index.html"), 'r', encoding='utf-8') as f:
@@ -83,9 +82,8 @@ def main():
     isdebug = os.environ.get("MSST_WEBVIEW_DEBUG", "0") == "1"
 
     try:
-        gradio_process = start_gradio(server_name, server_port)
         html = get_html(server_name, server_port)
-        window = webview.create_window(
+        webview.create_window(
             title='MSST WebView GUI',
             html=html,
             width=1300,
@@ -95,9 +93,9 @@ def main():
             text_select=False,
             confirm_close=False
         )
-        webview.start(debug=isdebug, http_server=False)
-        gradio_process.terminate()
-        gradio_process.join()
+        webview.start(func=launcher, args=(server_name, server_port), debug=isdebug, http_server=False)
+        if gradio_demo:
+            gradio_demo.close()
     except Exception as e:
         import traceback
         messagebox.showerror("Error", f"Failed to start the webview: {e}\n{traceback.format_exc()}")
