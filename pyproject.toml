@@ -19,7 +19,7 @@ dependencies = [
     "demucs==4.0.0",
     "deptry==0.23.0",
     "flatbuffers==24.3.25",
-    "gradio==4.38.1",
+    "gradio==5.7.1",
     "httptools==0.6.1",
     "lazy-loader==0.4",
     "lightning==2.4.0",
@@ -49,7 +49,7 @@ dependencies = [
     "wheel==0.43.0",
     "pyside6-fluent-widgets>=1.8.3",
     "pydantic==2.10.6",
-    "fastapi==0.111.0",
+    "fastapi==0.115.2",
     "colorama>=0.4.6",
     "safetensors>=0.7.0",
     "neuraloperator>=2.0.0"
