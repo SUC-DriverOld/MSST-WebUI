@@ -35,6 +35,7 @@ dependencies = [
     "rotary-embedding-torch==0.3.5",
     "samplerate==0.2.4",
     "segmentation-models-pytorch==0.3.3",
+    "setuptools<82",
     "shiboken6==6.8.0.2",
     "soxr==0.3.7",
     "spafe==0.3.2",
