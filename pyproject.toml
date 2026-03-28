@@ -30,6 +30,7 @@ dependencies = [
     "prodigyopt==1.0",
     "protobuf==3.20.3",
     "python-dotenv==1.0.1",
+    "pytorch-triton-rocm",
     "pywin32==308 ; sys_platform == 'win32'",
     "rotary-embedding-torch==0.3.5",
     "samplerate==0.2.4",
@@ -59,19 +60,16 @@ url = "https://mirrors.ustc.edu.cn/pypi/simple"
 default = true
 
 [[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://mirror.nju.edu.cn/pytorch/whl/cu128"
+name = "pytorch-rocm"
+url = "https://download.pytorch.org/whl/rocm6.3"
 explicit = true
 
 [tool.uv.sources]
 torch = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-rocm", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }
 ]
-torchvision = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
-torchaudio = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+pytorch-triton-rocm = [
+  { index = "pytorch-rocm", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }
 ]
 
 [tool.ruff]
