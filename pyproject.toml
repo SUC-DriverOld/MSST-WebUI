@@ -30,7 +30,7 @@ dependencies = [
     "prodigyopt==1.0",
     "protobuf==3.20.3",
     "python-dotenv==1.0.1",
-    "pytorch-triton-rocm",
+    "triton-rocm",
     "pywin32==308 ; sys_platform == 'win32'",
     "rotary-embedding-torch==0.3.5",
     "samplerate==0.2.4",
@@ -62,14 +62,20 @@ default = true
 
 [[tool.uv.index]]
 name = "pytorch-rocm"
-url = "https://download.pytorch.org/whl/rocm6.3"
+url = "https://download.pytorch.org/whl/rocm7.0"
 explicit = true
 
 [tool.uv.sources]
 torch = [
   { index = "pytorch-rocm", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }
 ]
-pytorch-triton-rocm = [
+torchvision = [
+  { index = "pytorch-rocm", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }
+]
+torchaudio = [
+  { index = "pytorch-rocm", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }
+]
+triton-rocm = [
   { index = "pytorch-rocm", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }
 ]
 
