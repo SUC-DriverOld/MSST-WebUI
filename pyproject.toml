@@ -19,7 +19,7 @@ dependencies = [
     "demucs==4.0.0",
     "deptry==0.23.0",
     "flatbuffers==24.3.25",
-    "gradio==4.38.1",
+    "gradio==5.7.1",
     "httptools==0.6.1",
     "lazy-loader==0.4",
     "lightning==2.4.0",
@@ -30,10 +30,12 @@ dependencies = [
     "prodigyopt==1.0",
     "protobuf==3.20.3",
     "python-dotenv==1.0.1",
+    "triton-rocm",
     "pywin32==308 ; sys_platform == 'win32'",
     "rotary-embedding-torch==0.3.5",
     "samplerate==0.2.4",
     "segmentation-models-pytorch==0.3.3",
+    "setuptools<82",
     "shiboken6==6.8.0.2",
     "soxr==0.3.7",
     "spafe==0.3.2",
@@ -48,7 +50,7 @@ dependencies = [
     "wheel==0.43.0",
     "pyside6-fluent-widgets>=1.8.3",
     "pydantic==2.10.6",
-    "fastapi==0.111.0",
+    "fastapi==0.115.2",
     "colorama>=0.4.6",
     "safetensors>=0.7.0",
     "neuraloperator>=2.0.0"
@@ -59,19 +61,22 @@ url = "https://mirrors.ustc.edu.cn/pypi/simple"
 default = true
 
 [[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://mirror.nju.edu.cn/pytorch/whl/cu128"
+name = "pytorch-rocm"
+url = "https://download.pytorch.org/whl/rocm7.0"
 explicit = true
 
 [tool.uv.sources]
 torch = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-rocm", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }
 ]
 torchvision = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-rocm", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }
 ]
 torchaudio = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-rocm", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }
+]
+triton-rocm = [
+  { index = "pytorch-rocm", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }
 ]
 
 [tool.ruff]
