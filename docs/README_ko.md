@@ -12,7 +12,7 @@ Music-Source-Separation-Training용 WebUI 애플리케이션, UVR도 함께 포�
 > [!IMPORTANT]
 > 이 프로젝트는 곧 유지보수가 중단될 예정입니다. 더 포괄적인 모델을 지원하고, MSST-WebUI보다 추론 속도가 50-100배 빠르며, 더 보기 좋은 GUI를 제공하는 **pymss-desktop** 사용을 권장합니다.
 >
-> - Cross-platform desktop GUI for pymss music source separation: [pymss-project/pymss-desktop](https://github.com/pymss-project/pymss-desktop)
+> - Cross-platform desktop GUI for pymss music source separation: [pymss-project/pymss-desktop](https://github.com/pymss-project/pymss-studio)
 > - Python package for music source separation: [pymss-project/pymss](https://github.com/pymss-project/pymss)
 > - ComfyUI custom nodes for pymss music source separation: [pymss-project/comfy-mss](https://github.com/pymss-project/comfy-mss)
 
