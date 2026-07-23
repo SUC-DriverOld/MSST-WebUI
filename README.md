@@ -10,7 +10,7 @@ A WebUI app for Music-Source-Separation-Training and we packed UVR together!<br>
 </div>
 
 > [!IMPORTANT]
-> This project will soon stop being maintained. We recommend using **pymss-desktop**, which supports more comprehensive models, provides 50-100x faster inference than MSST-WebUI, and has a better-looking GUI.
+> This project will soon stop being maintained. We recommend using **pymss-desktop**, which supports more comprehensive models, provides faster inference than MSST-WebUI, and has a better-looking GUI.
 >
 > - Cross-platform desktop GUI for pymss music source separation: [pymss-project/pymss-desktop](https://github.com/pymss-project/pymss-studio)
 > - Python package for music source separation: [pymss-project/pymss](https://github.com/pymss-project/pymss)
