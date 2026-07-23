@@ -10,7 +10,7 @@
 </div>
 
 > [!IMPORTANT]
-> 此项目即将停止维护。建议使用 **pymss-desktop**，它支持更全面的模型，推理速度比 MSST-WebUI 快 50-100 倍，并且提供更美观的 GUI 界面。
+> 此项目即将停止维护。建议使用 **pymss-desktop**，它支持更全面的模型，推理速度比 MSST-WebUI 更快，并且提供更美观的 GUI 界面。
 >
 > - Cross-platform desktop GUI for pymss music source separation：[pymss-project/pymss-desktop](https://github.com/pymss-project/pymss-studio)
 > - Python package for music source separation.：[pymss-project/pymss](https://github.com/pymss-project/pymss)
