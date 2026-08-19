@@ -33,6 +33,13 @@ def find_free_port(ip, start_port=11451, end_port=19198):
     os._exit(1)
 
 def launcher(server_name, server_port):
+    # 修复: 为当前非主线程手动设置事件循环, 防止 safe_get_lock() 返回 None
+    import asyncio
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
     from webui.utils import i18n, logger
     from webui.setup import setup_webui
     from torch import cuda, backends
