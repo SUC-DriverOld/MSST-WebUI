@@ -1,8 +1,9 @@
-from PySide6.QtWidgets import QFrame, QWidget, QHBoxLayout, QTreeWidgetItem
+from PySide6.QtWidgets import QAbstractItemView, QFrame, QWidget, QHBoxLayout, QTreeWidgetItem
 from PySide6.QtCore import Qt, QEasingCurve, QUrl
 from PySide6.QtGui import QDesktopServices
-from qfluentwidgets import CommandBar, FlowLayout, ScrollArea, Action, VBoxLayout, TreeWidget, ProgressBar, BodyLabel, SmoothMode, InfoBar, InfoBarPosition, TitleLabel
+from qfluentwidgets import CommandBar, FlowLayout, ScrollArea, Action, VBoxLayout, TreeWidget, ProgressBar, BodyLabel, SmoothMode, InfoBarPosition, TitleLabel
 from qfluentwidgets import FluentIcon as FIF
+from ComfyUI.DownloadManager.common.accessibility import accessible_info_bar, add_accessible_action, configure_command_bar, set_accessible
 from huggingface_hub import hf_hub_url
 from ComfyUI.DownloadManager.common.data import ARIA2_RPC_URL, HF_ENDPOINT, ARIA2_RPC_SECRET, models_info
 from ComfyUI.DownloadManager.common.download_thread import DownloadThread
@@ -26,9 +27,12 @@ class DownloadInterface(QFrame):
 
 	def setupUI(self):
 		self.command_bar = CommandBar(self)
+		self.command_bar.setAccessibleName(self.tr("Download Center"))
+		self.command_bar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
 		self.label = TitleLabel(self.tr("Download Center"))
 		self.label.setStyleSheet("color: white;")
+		set_accessible(self.label, self.tr("Download Center"))
 
 		self.flow_widget = QWidget(self)
 		self.flow_layout = FlowLayout(self.flow_widget)
@@ -50,12 +54,16 @@ class DownloadInterface(QFrame):
 
 		self.command_bar.addWidget(self.label)
 		self.command_bar.addSeparator()
-		self.command_bar.addAction(Action(FIF.FOLDER, self.tr("Open Folder"), triggered=self.openFolder))
-		self.command_bar.addAction(Action(FIF.DOWNLOAD, self.tr("Download Model(s)"), triggered=self.download_all_models))
+		self.open_folder_action = Action(FIF.FOLDER, self.tr("Open Folder"), triggered=self.openFolder)
+		self.download_action = Action(FIF.DOWNLOAD, self.tr("Download Model(s)"), triggered=self.download_all_models)
+		self.aria2_action = Action(FIF.SEND, self.tr("Send To Aria2"), triggered=self.send_to_aria2)
+		self.clear_action = Action(FIF.DELETE, self.tr("clear"), triggered=self.clearModels)
+		add_accessible_action(self.command_bar, self.open_folder_action)
+		add_accessible_action(self.command_bar, self.download_action)
 		# self.command_bar.addAction(Action(FIF.CANCEL, '取消下载', triggered=self.download_thread.terminate))
-		self.command_bar.addAction(Action(FIF.SEND, self.tr("Send To Aria2"), triggered=self.send_to_aria2))
-		self.command_bar.addAction(Action(FIF.DELETE, self.tr("clear"), triggered=self.clearModels))
-		self.command_bar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+		add_accessible_action(self.command_bar, self.aria2_action)
+		add_accessible_action(self.command_bar, self.clear_action)
+		configure_command_bar(self.command_bar, self.tr("More actions"))
 		self.command_bar.addSeparator()
 		self.layout = VBoxLayout(self)
 		self.layout.addWidget(self.command_bar)
@@ -74,13 +82,20 @@ class DownloadInterface(QFrame):
 		self.tree.itemChanged.connect(self.treeItemChanged)
 
 		self.total_progress_bar = ProgressBar(self)
+		self.total_progress_bar.setRange(0, 100)
+		set_accessible(self.total_progress_bar, self.tr("Total download progress:"))
 
 		self.single_progress_bar = ProgressBar(self)
+		self.single_progress_bar.setRange(0, 100)
+		set_accessible(self.single_progress_bar, self.tr("Current file download progress:"))
 
 		self.single_progress_label = BodyLabel(self.tr("Current file download progress:"), self)
 		self.total_progress_label = BodyLabel(self.tr("Total download progress:"), self)
 		self.download_speed_label = BodyLabel(self.tr("No active download task"), self)
 		self.download_speed_label.setStyleSheet("background: transparent;")
+		set_accessible(self.download_speed_label, self.tr("No active download task"))
+		self.single_progress_label.setBuddy(self.single_progress_bar)
+		self.total_progress_label.setBuddy(self.total_progress_bar)
 
 		single_progress_layout = QHBoxLayout()
 		single_progress_layout.addWidget(self.single_progress_label)
@@ -110,6 +125,14 @@ class DownloadInterface(QFrame):
 		self.tree.setHeaderLabel(self.tr("Model Library"))
 		self.tree.setBorderVisible(False)
 		self.tree.setIndentation(50)
+		self.tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+		self.tree.setAllColumnsShowFocus(True)
+		set_accessible(
+			self.tree,
+			self.tr("Model Library"),
+			self.tr("Use the arrow keys to browse models and Space to select or clear a model."),
+			focusable=True,
+		)
 		self.tree.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH)
 
 		model_class_item1 = QTreeWidgetItem(["multi_stem_models"])
@@ -127,6 +150,7 @@ class DownloadInterface(QFrame):
 		for model_class_item in [model_class_item1, model_class_item2, model_class_item3, model_class_item4]:
 			self.tree.addTopLevelItem(model_class_item)
 			model_class_item.setCheckState(0, Qt.Unchecked)
+			model_class_item.setData(0, Qt.ItemDataRole.AccessibleTextRole, model_class_item.text(0))
 
 			models = categorized_models[model_class_item.text(0)]
 
@@ -134,6 +158,7 @@ class DownloadInterface(QFrame):
 				item = QTreeWidgetItem()
 				item.setText(0, model_name)
 				item.setCheckState(0, Qt.Unchecked)
+				item.setData(0, Qt.ItemDataRole.AccessibleTextRole, model_name)
 				model_class_item.addChild(item)
 
 	def treeItemChanged(self, item):
@@ -185,7 +210,7 @@ class DownloadInterface(QFrame):
 			parent.setCheckState(0, Qt.Checked)
 
 	def addButtonToLayout(self, model_name):
-		tag_widget = TagWidget(model_name)
+		tag_widget = TagWidget(model_name, self.tr("Remove from download list"))
 		tag_widget.deleteSignal.connect(self.removeTagFromLayout)
 		self.flow_layout.addWidget(tag_widget)
 
@@ -206,6 +231,7 @@ class DownloadInterface(QFrame):
 
 	def generate_urls(self):
 		self.model_urls.clear()
+		self.total_files = 0
 
 		for category, models in self.model_to_download.items():
 			for model in models:
@@ -216,12 +242,34 @@ class DownloadInterface(QFrame):
 	def download_all_models(self):
 		self.generate_urls()
 		if not self.model_urls:
-			InfoBar.error(title="ERROR", content=self.tr("Please select models to download first!"), isClosable=True, position=InfoBarPosition.TOP, duration=5000, parent=self)
+			accessible_info_bar(
+				"error",
+				title="ERROR",
+				content=self.tr("Please select models to download first!"),
+				isClosable=True,
+				position=InfoBarPosition.TOP,
+				duration=5000,
+				parent=self,
+				close_text=self.tr("Close"),
+			)
 			return
-		InfoBar.info(title="INFO", content=self.tr("Downloading models, Please do not click repeatedly..."), isClosable=True, position=InfoBarPosition.TOP, duration=5000, parent=self)
+		accessible_info_bar(
+			"info",
+			title="INFO",
+			content=self.tr("Downloading models, Please do not click repeatedly..."),
+			isClosable=True,
+			position=InfoBarPosition.TOP,
+			duration=5000,
+			parent=self,
+			close_text=self.tr("Close"),
+		)
+		self.download_action.setEnabled(False)
+		self.aria2_action.setEnabled(False)
 		self.total_progress_bar.setValue(0)
 		self.single_progress_bar.setValue(0)
-		self.download_speed_label.setText(self.tr("Preparing to download..."))
+		preparing_text = self.tr("Preparing to download...")
+		self.download_speed_label.setText(preparing_text)
+		self.download_speed_label.setAccessibleName(preparing_text)
 		target_dir = "./pretrain"
 		self.total_progress = 0
 
@@ -230,20 +278,65 @@ class DownloadInterface(QFrame):
 		self.download_thread.update_single_progress.connect(self.single_progress_bar.setValue)
 		self.download_thread.update_total_progress.connect(self.total_progress_bar.setValue)
 		self.download_thread.update_speed.connect(self.update_download_speed)
+		self.download_thread.completed.connect(self.download_finished)
+		self.download_thread.failed.connect(self.download_failed)
 		self.download_thread.start()
-		self.download_thread.finished.connect(self.download_finished)
 
 	def update_download_speed(self, speed):
 		# print(f"当前下载速度: {speed}")
-		self.download_speed_label.setText(self.tr(f"Download speed: {speed}"))
+		text = self.tr("Download speed: {speed}").format(speed=speed)
+		self.download_speed_label.setText(text)
+		self.download_speed_label.setAccessibleName(text)
 
 	def download_finished(self):
-		self.download_speed_label.setText(self.tr("Download task completed!"))
-		InfoBar.success(title="SUCCESS", content=self.tr("Download task completed!"), isClosable=True, position=InfoBarPosition.TOP, duration=5000, parent=self)
+		completed_text = self.tr("Download task completed!")
+		self.download_speed_label.setText(completed_text)
+		self.download_speed_label.setAccessibleName(completed_text)
+		self.download_action.setEnabled(True)
+		self.aria2_action.setEnabled(True)
+		accessible_info_bar(
+			"success",
+			title="SUCCESS",
+			content=completed_text,
+			isClosable=True,
+			position=InfoBarPosition.TOP,
+			duration=5000,
+			parent=self,
+			close_text=self.tr("Close"),
+		)
 		self.clearModels()
+
+	def download_failed(self, error):
+		failed_text = self.tr("Download failed: {error}").format(error=error)
+		self.download_speed_label.setText(failed_text)
+		self.download_speed_label.setAccessibleName(failed_text)
+		self.download_action.setEnabled(True)
+		self.aria2_action.setEnabled(True)
+		accessible_info_bar(
+			"error",
+			title="ERROR",
+			content=failed_text,
+			isClosable=True,
+			position=InfoBarPosition.TOP,
+			duration=-1,
+			parent=self,
+			close_text=self.tr("Close"),
+		)
 
 	def send_to_aria2(self):
 		self.generate_urls()
+		if not self.model_urls:
+			accessible_info_bar(
+				"error",
+				title="ERROR",
+				content=self.tr("Please select models to download first!"),
+				isClosable=True,
+				position=InfoBarPosition.TOP,
+				duration=5000,
+				parent=self,
+				close_text=self.tr("Close"),
+			)
+			return
 
 		download_dir = os.path.join(os.getcwd(), "pretrain")
 		flag = True
@@ -258,24 +351,43 @@ class DownloadInterface(QFrame):
 			try:
 				response = requests.post(ARIA2_RPC_URL, data=json.dumps(json_rpc_data))
 			except requests.exceptions.ConnectionError as e:
-				InfoBar.error(
+				accessible_info_bar(
+					"error",
 					title="ERROR",
-					content=self.tr(f"Failed to connect to Aria2 RPC: {e}. Please check if the Aria2 service is running."),
+					content=self.tr("Failed to connect to Aria2 RPC: {e}. Please check if the Aria2 service is running.").format(e=e),
 					isClosable=True,
 					position=InfoBarPosition.TOP,
 					duration=-1,
 					parent=self,
+					close_text=self.tr("Close"),
+				)
+				flag = False
+				continue
+
+			if response.status_code != 200:
+				accessible_info_bar(
+					"error",
+					title="ERROR",
+					content=self.tr("Failed to submit the task, error message: {response.text}").format(response=response),
+					isClosable=True,
+					position=InfoBarPosition.TOP,
+					duration=5000,
+					parent=self,
+					close_text=self.tr("Close"),
 				)
 				flag = False
 
-			if response.status_code == 200:
-				InfoBar.success(title="SUCCESS", content=self.tr("The download task(s) has been submitted to Aria2."), isClosable=True, position=InfoBarPosition.TOP, duration=5000, parent=self)
-
-			else:
-				InfoBar.error(title="ERROR", content=self.tr(f"Failed to submit the task, error message: {response.text}"), isClosable=True, position=InfoBarPosition.TOP, duration=5000, parent=self)
-				flag = False
-
 		if flag:
+			accessible_info_bar(
+				"success",
+				title="SUCCESS",
+				content=self.tr("The download task(s) has been submitted to Aria2."),
+				isClosable=True,
+				position=InfoBarPosition.TOP,
+				duration=5000,
+				parent=self,
+				close_text=self.tr("Close"),
+			)
 			self.clearModels()
 
 	def clearModels(self):

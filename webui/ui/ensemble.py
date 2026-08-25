@@ -4,6 +4,7 @@ __author__ = "Sucial https://github.com/SUC-DriverOld"
 import gradio as gr
 
 from utils.constant import *
+from webui.accessibility import status_textbox
 from webui.utils import i18n, select_folder, open_folder, update_model_name, change_to_audio_infer, change_to_folder_infer
 from webui.ensemble import (
 	ensemble_files,
@@ -54,7 +55,7 @@ def ensemble(webui_config, force_cpu_flag=False):
 					reset_last = gr.Button(i18n("撤销上一步"))
 					reset_flow = gr.Button(i18n("全部清空"))
 				gr.Markdown(i18n("合奏流程"))
-				ensemble_flow = gr.Dataframe(value=load_ensemble(), interactive=False, label=None)
+				ensemble_flow = gr.Dataframe(value=load_ensemble(), interactive=False, label=i18n("合奏流程"))
 				save_ensemble_preset = gr.Button(i18n("保存此合奏流程"), variant="primary")
 			with gr.Row():
 				ensemble_model_mode = gr.Radio(
@@ -123,7 +124,7 @@ def ensemble(webui_config, force_cpu_flag=False):
 			ensemble_button = gr.Button(i18n("运行"), variant="primary")
 
 	with gr.Row():
-		output_message_ensemble = gr.Textbox(label="Output Message", scale=5)
+		output_message_ensemble = status_textbox(label=i18n("处理状态"), scale=5)
 		stop_ensemble = gr.Button(i18n("强制停止"), scale=1)
 	with gr.Row():
 		with gr.Column():

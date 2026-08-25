@@ -6,6 +6,7 @@ import pandas as pd
 
 from multiprocessing import cpu_count
 from utils.constant import *
+from webui.accessibility import status_textbox
 from webui.utils import i18n, open_folder, select_file, select_folder, select_yaml_file
 from webui.train import save_training_config, start_training, update_train_start_check_point, validate_model, load_augmentations_config, stop_msst_valid
 
@@ -94,7 +95,7 @@ def train(webui_config, device):
 			save_train_config = gr.Button(i18n("保存上述训练配置"))
 			start_train_button = gr.Button(i18n("开始训练"), variant="primary")
 			gr.Markdown(value=i18n("点击开始训练后, 请到终端查看训练进度或报错, 下方不会输出报错信息, 想要停止训练可以直接关闭终端。在训练过程中, 你也可以关闭网页, 仅**保留终端**。"))
-			output_message_train = gr.Textbox(label="Output Message")
+			output_message_train = status_textbox(label=i18n("处理状态"))
 
 			select_train_config_path.click(fn=select_yaml_file, outputs=train_config_path)
 			select_train_dataset_path.click(fn=select_folder, outputs=train_dataset_path)
@@ -204,7 +205,7 @@ def train(webui_config, device):
 						valid_use_tta = gr.Checkbox(label=i18n("启用TTA, 能小幅提高分离质量, 若使用, 推理时间x3"), value=False, interactive=True)
 			valid_button = gr.Button(i18n("开始验证"), variant="primary")
 			with gr.Row():
-				valid_output_message = gr.Textbox(label="Output Message", scale=4)
+				valid_output_message = status_textbox(label=i18n("处理状态"), scale=4)
 				stop_valid = gr.Button(i18n("强制停止"), scale=1)
 
 			select_valid_config_path.click(fn=select_yaml_file, outputs=valid_config_path)

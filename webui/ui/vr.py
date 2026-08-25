@@ -3,6 +3,7 @@ __author__ = "Sucial https://github.com/SUC-DriverOld"
 
 import gradio as gr
 
+from webui.accessibility import status_textbox
 from webui.utils import i18n, load_vr_model, select_folder, open_folder, change_to_audio_infer, change_to_folder_infer
 from webui.init import init_selected_vr_model
 from webui.vr import vr_inference_single, vr_inference_multi, stop_vr_inference, load_vr_model_stem
@@ -104,7 +105,7 @@ def vr(webui_config, force_cpu_flag=False):
 	vr_inference_audio = gr.Button(i18n("输入音频分离"), variant="primary", visible=True)
 	vr_inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False)
 	with gr.Row():
-		vr_output_message = gr.Textbox(label="Output Message", scale=5)
+		vr_output_message = status_textbox(label=i18n("处理状态"), scale=5)
 		stop_vr = gr.Button(i18n("强制停止"), scale=1)
 
 	audio_tab.select(fn=change_to_audio_infer, outputs=[vr_inference_audio, vr_inference_folder])

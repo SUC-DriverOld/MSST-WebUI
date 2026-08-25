@@ -1,6 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MSST WebUI</title>
     <style>
         html, body {
             margin: 0;
@@ -49,6 +52,11 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        @media (prefers-reduced-motion: reduce) {
+            .spinner {
+                animation: none;
+            }
+        }
         #loading-text {
             font-size: 16px;
             margin-bottom: 24px;
@@ -66,16 +74,17 @@
 </head>
 <body>
     <div id="container">
-        <div id="loading-container">
-            <div class="spinner"></div>
+        <div id="loading-container" role="status" aria-live="polite" aria-atomic="true">
+            <div class="spinner" aria-hidden="true"></div>
             <div id="loading-text">Starting application, please wait...</div>
         </div>
-        <div id="error-container">
-            <h3>Unable to Load Application</h3>
+        <div id="error-container" role="alert" aria-live="assertive" aria-atomic="true">
+            <h1>Unable to Load Application</h1>
             <p id="error-message">Gradio service failed to start, please check console output</p>
             <button id="retry-button">Retry</button>
         </div>
         <iframe id="gradio-frame" src="about:blank"
+                title="MSST WebUI application"
                 sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
     </div>
     <script>
@@ -104,6 +113,7 @@
             document.getElementById('gradio-frame').style.display = 'none';
             document.getElementById('error-container').style.display = 'flex';
             document.getElementById('error-message').textContent = message || 'Gradio service failed to start, please check console output';
+            document.getElementById('retry-button').focus();
         }
 
         function retryLoading() {
@@ -141,6 +151,7 @@
             try {
                 if (frame.contentDocument.readyState === 'complete' && frame.contentDocument.body.children.length > 0) {
                     gradioReady = true;
+                    frame.focus();
                 } else {
                     setTimeout(checkGradioLoaded, 100);
                 }

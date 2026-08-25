@@ -5,6 +5,7 @@ import gradio as gr
 import pandas as pd
 
 from utils.constant import *
+from webui.accessibility import status_textbox
 from webui.utils import i18n, select_folder, open_folder, update_model_name, change_to_audio_infer, change_to_folder_infer
 from webui.preset import (
 	get_presets_list,
@@ -73,7 +74,7 @@ def preset(webui_config, force_cpu_flag=False):
 			inference_audio = gr.Button(i18n("输入音频分离"), variant="primary", visible=True)
 			inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False)
 			with gr.Row():
-				output_message_flow = gr.Textbox(label="Output Message", scale=5)
+				output_message_flow = status_textbox(label=i18n("处理状态"), scale=5)
 				stop_preset_inference = gr.Button(i18n("强制停止"), scale=1)
 		with gr.TabItem(label=i18n("制作预设")):
 			preset_name_input = gr.Textbox(label=i18n("预设名称"), placeholder=i18n("请输入预设名称"), interactive=True)
@@ -85,12 +86,14 @@ def preset(webui_config, force_cpu_flag=False):
 				output_to_storage = gr.CheckboxGroup(label=i18n("直接保存至输出目录的音轨(可多选)"), choices=[i18n("请先选择模型")], interactive=False)
 			add_to_flow = gr.Button(i18n("添加至流程"))
 			gr.Markdown(i18n("预设流程"))
-			preset_flow = gr.Dataframe(pd.DataFrame({"model_type": [""], "model_name": [""], "input_to_next": [""], "output_to_storage": [""]}), interactive=False, label=None)
+			preset_flow = gr.Dataframe(
+				pd.DataFrame({"model_type": [""], "model_name": [""], "input_to_next": [""], "output_to_storage": [""]}), interactive=False, label=i18n("预设流程")
+			)
 			with gr.Row():
 				reset_last = gr.Button(i18n("撤销上一步"))
 				reset_flow = gr.Button(i18n("全部清空"))
 			save_flow = gr.Button(i18n("保存上述预设流程"), variant="primary")
-			output_message_make = gr.Textbox(label="Output Message")
+			output_message_make = status_textbox(label=i18n("处理状态"))
 		with gr.TabItem(label=i18n("管理预设")):
 			gr.Markdown(
 				i18n(
@@ -103,13 +106,13 @@ def preset(webui_config, force_cpu_flag=False):
 			preset_flow_delete = gr.Dataframe(
 				pd.DataFrame({"model_type": [i18n("请先选择预设")], "model_name": [i18n("请先选择预设")], "input_to_next": [i18n("请先选择预设")], "output_to_storage": [i18n("请先选择预设")]}),
 				interactive=False,
-				label=None,
+				label=i18n("预设流程"),
 			)
 			with gr.Row():
 				select_preset_backup = gr.Dropdown(label=i18n("选择需要恢复的预设流程备份"), choices=preset_backup_list(), interactive=True, scale=4)
 				restore_preset = gr.Button(i18n("恢复所选预设"), scale=1)
 				open_preset_backup = gr.Button(i18n("打开备份文件夹"), scale=1)
-			output_message_manage = gr.Textbox(label="Output Message")
+			output_message_manage = status_textbox(label=i18n("处理状态"))
 
 	audio_tab.select(fn=change_to_audio_infer, outputs=[inference_audio, inference_folder])
 	folder_tab.select(fn=change_to_folder_infer, outputs=[inference_audio, inference_folder])

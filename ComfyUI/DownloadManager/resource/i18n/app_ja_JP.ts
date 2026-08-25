@@ -89,6 +89,31 @@
         <source>Failed to submit the task, error message: {response.text}</source>
         <translation>タスクの送信に失敗しました、エラーメッセージ: {response.text}</translation>
     </message>
+    <message>
+        <location filename="../../interface/download_interface.py" line="66"/>
+        <source>More actions</source>
+        <translation>その他の操作</translation>
+    </message>
+    <message>
+        <location filename="../../interface/download_interface.py" line="133"/>
+        <source>Use the arrow keys to browse models and Space to select or clear a model.</source>
+        <translation>矢印キーでモデルを移動し、Space キーでモデルを選択または解除します。</translation>
+    </message>
+    <message>
+        <location filename="../../interface/download_interface.py" line="213"/>
+        <source>Remove from download list</source>
+        <translation>ダウンロードリストから削除</translation>
+    </message>
+    <message>
+        <location filename="../../interface/download_interface.py" line="253"/>
+        <source>Close</source>
+        <translation>閉じる</translation>
+    </message>
+    <message>
+        <location filename="../../interface/download_interface.py" line="310"/>
+        <source>Download failed: {error}</source>
+        <translation>ダウンロードに失敗しました: {error}</translation>
+    </message>
 </context>
 <context>
     <name>ManagerInterface</name>
@@ -185,6 +210,36 @@
         <source>Model has been deleted successfully</source>
         <translation>モデルは正常に削除されました</translation>
     </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="33"/>
+        <source>More actions</source>
+        <translation>その他の操作</translation>
+    </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="48"/>
+        <source>Use the arrow keys to browse model rows. Tab moves to the action buttons in the selected row.</source>
+        <translation>矢印キーでモデル行を移動します。Tab キーで選択した行の操作ボタンへ移動します。</translation>
+    </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="87"/>
+        <source>Installed</source>
+        <translation>インストール済み</translation>
+    </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="87"/>
+        <source>Not installed</source>
+        <translation>未インストール</translation>
+    </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="124"/>
+        <source>Checking file hash...</source>
+        <translation>ファイルのハッシュを確認中...</translation>
+    </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="135"/>
+        <source>Close</source>
+        <translation>閉じる</translation>
+    </message>
 </context>
 <context>
     <name>SettingsInterface</name>
@@ -273,6 +328,44 @@
         <location filename="../../interface/settings_interface.py" line="144"/>
         <source>Please restart the application to apply the changes</source>
         <translation>変更を適用するためにアプリケーションを再起動してください</translation>
+    </message>
+    <message>
+        <location filename="../../interface/settings_interface.py" line="124"/>
+        <source>Clear Aria2 Secret</source>
+        <translation>Aria2 シークレットを消去</translation>
+    </message>
+    <message>
+        <location filename="../../interface/settings_interface.py" line="126"/>
+        <source>Show or hide Aria2 Secret</source>
+        <translation>Aria2 シークレットを表示または非表示</translation>
+    </message>
+    <message>
+        <location filename="../../interface/settings_interface.py" line="185"/>
+        <source>Close</source>
+        <translation>閉じる</translation>
+    </message>
+</context>
+<context>
+    <name>DownloadManager</name>
+    <message>
+        <location filename="../../download_manager.py" line="47"/>
+        <source>Minimize</source>
+        <translation>最小化</translation>
+    </message>
+    <message>
+        <location filename="../../download_manager.py" line="48"/>
+        <source>Restore</source>
+        <translation>元に戻す</translation>
+    </message>
+    <message>
+        <location filename="../../download_manager.py" line="48"/>
+        <source>Maximize</source>
+        <translation>最大化</translation>
+    </message>
+    <message>
+        <location filename="../../download_manager.py" line="50"/>
+        <source>Close</source>
+        <translation>閉じる</translation>
     </message>
 </context>
 </TS>

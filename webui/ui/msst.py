@@ -3,6 +3,7 @@ __author__ = "Sucial https://github.com/SUC-DriverOld"
 
 import gradio as gr
 
+from webui.accessibility import status_textbox
 from webui.utils import i18n, select_folder, open_folder
 from webui.init import init_selected_model, init_selected_msst_model
 from webui.msst import run_inference_single, run_multi_inference, stop_msst_inference, update_selected_model, load_selected_model, save_model_config, reset_model_config, update_inference_settings, run_folder_batch_inference
@@ -83,7 +84,7 @@ def msst(webui_config, device, force_cpu_flag=False):
 	inference_folder = gr.Button(i18n("输入文件夹分离"), variant="primary", visible=False)
 	inference_folder_batch = gr.Button(i18n("批量文件夹分离"), variant="primary", visible=False)
 	with gr.Row():
-		output_message = gr.Textbox(label="Output Message", scale=5)
+		output_message = status_textbox(label=i18n("处理状态"), scale=5)
 		stop_msst = gr.Button(i18n("强制停止"), scale=1)
 
 	buttons = [inference_audio, inference_folder, inference_folder_batch]
