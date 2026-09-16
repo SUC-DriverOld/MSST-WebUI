@@ -4,6 +4,7 @@ __author__ = "Sucial https://github.com/SUC-DriverOld"
 import gradio as gr
 
 from utils.constant import *
+from webui.accessibility import STATUS_ELEM_CLASS, status_textbox
 from webui.utils import i18n, webui_restart
 from webui.models import (
 	upgrade_download_model_name,
@@ -28,14 +29,16 @@ def models(webui_config):
 				with gr.Column(scale=3):
 					open_downloadmanager = gr.Button(i18n("点击打开下载管理器"), variant="primary")
 					with gr.Row():
-						model_type_dropdown = gr.Dropdown(label=i18n("选择模型类型"), choices=MODEL_CHOICES, scale=1)
-						download_model_name_dropdown = gr.Dropdown(label=i18n("选择模型"), choices=[i18n("请先选择模型类型")], scale=3)
-					model_info = gr.TextArea(label=i18n("模型信息"), value=i18n("请先选择模型"), interactive=False)
+						model_type_dropdown = gr.Dropdown(label=i18n("选择模型类型"), choices=MODEL_CHOICES, interactive=True, scale=1)
+						download_model_name_dropdown = gr.Dropdown(label=i18n("选择模型"), choices=[], interactive=False, scale=3)
+					model_info = gr.TextArea(
+						label=i18n("模型信息"), value=i18n("请先选择模型"), interactive=False, elem_classes=[STATUS_ELEM_CLASS]
+					)
 					open_model_dir = gr.Button(i18n("打开模型目录"))
 					with gr.Row():
 						download_button = gr.Button(i18n("自动下载"), variant="primary")
 						manual_download_button = gr.Button(i18n("手动下载"), variant="primary")
-					output_message_download = gr.Textbox(label="Output Message")
+					output_message_download = status_textbox(label=i18n("处理状态"))
 				with gr.Column(scale=1):
 					gr.Markdown(i18n("### 注意事项"))
 					gr.Markdown(
@@ -63,7 +66,7 @@ def models(webui_config):
 				unmodel_type = gr.Dropdown(label=i18n("选择模型类别"), choices=MODEL_TYPE, interactive=True)
 				unmsst_model_link = gr.Textbox(label=i18n("模型下载链接 (非必须，若无，可跳过)"), value="", interactive=True, scale=2)
 			unmsst_model_install = gr.Button(i18n("安装非官方MSST模型"), variant="primary")
-			output_message_unmsst = gr.Textbox(label="Output Message")
+			output_message_unmsst = status_textbox(label=i18n("处理状态"))
 		with gr.TabItem(label=i18n("安装非官方VR模型")):
 			gr.Markdown(value=i18n("你可以从其他途径获取非官方UVR模型, 在此页面完成配置文件设置后, 即可正常使用。<br>注意: 仅支持'.pth'格式的模型。模型显示名字为模型文件名。"))
 			with gr.Row():
@@ -84,7 +87,7 @@ def models(webui_config):
 			upload_param = gr.File(label=i18n("上传参数文件"), type="filepath", interactive=True, visible=False)
 			unvr_model_link = gr.Textbox(label=i18n("模型下载链接 (非必须，若无，可跳过)"), value="", interactive=True)
 			unvr_model_install = gr.Button(i18n("安装非官方VR模型"), variant="primary")
-			output_message_unvr = gr.Textbox(label="Output Message")
+			output_message_unvr = status_textbox(label=i18n("处理状态"))
 
 	model_type_dropdown.change(fn=upgrade_download_model_name, inputs=model_type_dropdown, outputs=download_model_name_dropdown)
 	download_button.click(fn=download_model, inputs=[model_type_dropdown, download_model_name_dropdown], outputs=output_message_download)

@@ -38,19 +38,22 @@ def open_download_manager():
 
 
 def upgrade_download_model_name(model_type_dropdown):
+	if not model_type_dropdown:
+		return gr.Dropdown(label=i18n("选择模型"), choices=[], value=None, interactive=False, scale=3)
+
 	model_map = load_configs(MODELS_INFO)
 	if model_type_dropdown == "UVR_VR_Models":
-		list = []
+		model_names = []
 		for model in model_map.values():
 			if model["model_class"] == "VR_Models":
-				list.append(model["model_name"])
-		return gr.Dropdown(label=i18n("选择模型"), choices=list)
+				model_names.append(model["model_name"])
 	else:
-		list = []
+		model_names = []
 		for model in model_map.values():
 			if model["model_class"] == model_type_dropdown:
-				list.append(model["model_name"])
-		return gr.Dropdown(label=i18n("选择模型"), choices=list)
+				model_names.append(model["model_name"])
+
+	return gr.Dropdown(label=i18n("选择模型"), choices=model_names, value=None, interactive=True, scale=3)
 
 
 def calculate_sha256(file_path):

@@ -17,6 +17,8 @@ from ComfyUI.DownloadManager.common.config import cfg
 
 def main():
 	app = QApplication(sys.argv)
+	app.setApplicationName("MSST Download Manager")
+	app.setApplicationDisplayName("MSST Download Manager")
 	app.setWindowIcon(QIcon("ComfyUI/DownloadManager/resource/icon/DownloadManager.ico"))
 	translator = QTranslator()
 

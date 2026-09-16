@@ -4,6 +4,7 @@ __author__ = "Sucial https://github.com/SUC-DriverOld"
 import gradio as gr
 
 from utils.constant import *
+from webui.accessibility import STATUS_ELEM_CLASS, status_textbox
 from webui.utils import i18n, webui_restart, select_folder, log_level_debug
 from webui.settings import (
 	reset_settings,
@@ -74,13 +75,19 @@ def settings(webui_config, language_dict, platform, device):
 						)
 						select_uvr_model_dir_button = gr.Button(i18n("选择文件夹"), scale=1)
 					with gr.Row():
-						update_message = gr.Textbox(label=i18n("检查更新"), value=i18n("当前版本: ") + PACKAGE_VERSION + i18n(", 请点击检查更新按钮"), interactive=False, scale=3)
+						update_message = gr.Textbox(
+							label=i18n("检查更新"),
+							value=i18n("当前版本: ") + PACKAGE_VERSION + i18n(", 请点击检查更新按钮"),
+							interactive=False,
+							elem_classes=[STATUS_ELEM_CLASS],
+							scale=3,
+						)
 						check_update = gr.Button(i18n("检查更新"), scale=1)
 						goto_github = gr.Button(i18n("前往Github瞅一眼"))
 					with gr.Row():
 						reset_all_webui_config = gr.Button(i18n("重置WebUI路径记录"), variant="primary")
 						reset_seetings = gr.Button(i18n("重置WebUI设置"), variant="primary")
-					setting_output_message = gr.Textbox(label="Output Message")
+					setting_output_message = status_textbox(label=i18n("处理状态"))
 				with gr.Column(scale=1):
 					gr.Markdown(i18n("### 选择UVR模型目录"))
 					gr.Markdown(
@@ -118,7 +125,7 @@ def settings(webui_config, language_dict, platform, device):
 				interactive=True,
 			)
 			save_audio_setting = gr.Button(i18n("保存设置"), variant="primary")
-			audio_setting_output_message = gr.Textbox(label="Output Message")
+			audio_setting_output_message = status_textbox(label=i18n("处理状态"))
 
 	restart_webui.click(fn=webui_restart, outputs=setting_output_message)
 	check_update.click(fn=check_webui_update, outputs=update_message)

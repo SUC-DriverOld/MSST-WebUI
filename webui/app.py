@@ -18,6 +18,7 @@ for music source separation and model management.
 import gradio as gr
 import os
 from utils.constant import WEBUI_CONFIG, LANGUAGE, PACKAGE_VERSION
+from webui.accessibility import WEBUI_ACCESSIBILITY_CSS, WEBUI_ACCESSIBILITY_JS
 from webui.utils import i18n, load_configs
 from webui import ui
 
@@ -26,7 +27,7 @@ language_dict = load_configs(LANGUAGE)
 
 
 def app(platform, device, force_cpu, theme="tools/themes/theme_blue.json"):
-	with gr.Blocks(theme=gr.Theme.load(theme), title="MSST WebUI") as webui:
+	with gr.Blocks(theme=gr.Theme.load(theme), title="MSST WebUI", css=WEBUI_ACCESSIBILITY_CSS, js=WEBUI_ACCESSIBILITY_JS) as webui:
 		gr.Markdown(value=f"""### Music-Source-Separation-Training-Inference-Webui v{PACKAGE_VERSION}""")
 		gr.Markdown(
 			value=i18n(

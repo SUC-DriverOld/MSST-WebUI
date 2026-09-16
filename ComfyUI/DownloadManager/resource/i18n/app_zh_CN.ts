@@ -87,7 +87,32 @@
     <message>
         <location filename="../../interface/download_interface.py" line="312"/>
         <source>Failed to submit the task, error message: {response.text}</source>
-        <translation>提交任务失败，错误信息为{e}</translation>
+        <translation>提交任务失败，错误信息为{response.text}</translation>
+    </message>
+    <message>
+        <location filename="../../interface/download_interface.py" line="66"/>
+        <source>More actions</source>
+        <translation>更多操作</translation>
+    </message>
+    <message>
+        <location filename="../../interface/download_interface.py" line="133"/>
+        <source>Use the arrow keys to browse models and Space to select or clear a model.</source>
+        <translation>使用方向键浏览模型，按空格键选择或清除模型。</translation>
+    </message>
+    <message>
+        <location filename="../../interface/download_interface.py" line="213"/>
+        <source>Remove from download list</source>
+        <translation>从下载列表移除</translation>
+    </message>
+    <message>
+        <location filename="../../interface/download_interface.py" line="253"/>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <location filename="../../interface/download_interface.py" line="310"/>
+        <source>Download failed: {error}</source>
+        <translation>下载失败：{error}</translation>
     </message>
 </context>
 <context>
@@ -185,6 +210,36 @@
         <source>Model has been deleted successfully</source>
         <translation>模型已经成功删除</translation>
     </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="33"/>
+        <source>More actions</source>
+        <translation>更多操作</translation>
+    </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="48"/>
+        <source>Use the arrow keys to browse model rows. Tab moves to the action buttons in the selected row.</source>
+        <translation>使用方向键浏览模型行。按 Tab 键移动到所选行的操作按钮。</translation>
+    </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="87"/>
+        <source>Installed</source>
+        <translation>已安装</translation>
+    </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="87"/>
+        <source>Not installed</source>
+        <translation>未安装</translation>
+    </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="124"/>
+        <source>Checking file hash...</source>
+        <translation>正在校验文件哈希...</translation>
+    </message>
+    <message>
+        <location filename="../../interface/manager_interface.py" line="135"/>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
 </context>
 <context>
     <name>SettingsInterface</name>
@@ -273,6 +328,44 @@
         <location filename="../../interface/settings_interface.py" line="144"/>
         <source>Please restart the application to apply the changes</source>
         <translation>请重启应用以应用设置</translation>
+    </message>
+    <message>
+        <location filename="../../interface/settings_interface.py" line="124"/>
+        <source>Clear Aria2 Secret</source>
+        <translation>清除 Aria2 密钥</translation>
+    </message>
+    <message>
+        <location filename="../../interface/settings_interface.py" line="126"/>
+        <source>Show or hide Aria2 Secret</source>
+        <translation>显示或隐藏 Aria2 密钥</translation>
+    </message>
+    <message>
+        <location filename="../../interface/settings_interface.py" line="185"/>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+</context>
+<context>
+    <name>DownloadManager</name>
+    <message>
+        <location filename="../../download_manager.py" line="47"/>
+        <source>Minimize</source>
+        <translation>最小化</translation>
+    </message>
+    <message>
+        <location filename="../../download_manager.py" line="48"/>
+        <source>Restore</source>
+        <translation>还原</translation>
+    </message>
+    <message>
+        <location filename="../../download_manager.py" line="48"/>
+        <source>Maximize</source>
+        <translation>最大化</translation>
+    </message>
+    <message>
+        <location filename="../../download_manager.py" line="50"/>
+        <source>Close</source>
+        <translation>关闭</translation>
     </message>
 </context>
 </TS>

@@ -3,6 +3,7 @@ __author__ = "Sucial https://github.com/SUC-DriverOld"
 
 import gradio as gr
 
+from webui.accessibility import status_textbox
 from webui.utils import i18n, select_folder, open_folder
 from webui.tools import convert_audio, merge_audios, caculate_sdr, some_inference
 
@@ -63,7 +64,7 @@ def tools(webui_config):
 					interactive=True,
 				)
 			convert_audio_button = gr.Button(i18n("转换音频"), variant="primary")
-			output_message_ffmpeg = gr.Textbox(label="Output Message")
+			output_message_ffmpeg = status_textbox(label=i18n("处理状态"))
 		with gr.TabItem(label=i18n("合并音频")):
 			gr.Markdown(value=i18n("点击合并音频按钮后, 将自动把输入文件夹中的所有音频文件合并为一整个音频文件<br>合并后的音频会保存至输出目录中, 文件名为merged_audio_<文件夹名字>.wav"))
 			with gr.Row():
@@ -77,7 +78,7 @@ def tools(webui_config):
 				select_merge_output_dir = gr.Button(i18n("选择文件夹"), scale=1)
 				open_merge_output_dir = gr.Button(i18n("打开文件夹"), scale=1)
 			merge_audio_button = gr.Button(i18n("合并音频"), variant="primary")
-			output_message_merge = gr.Textbox(label="Output Message")
+			output_message_merge = status_textbox(label=i18n("处理状态"))
 		with gr.TabItem(label=i18n("计算SDR")):
 			with gr.Column():
 				gr.Markdown(
@@ -89,7 +90,7 @@ def tools(webui_config):
 				reference_audio = gr.File(label=i18n("参考音频"), type="filepath")
 				estimated_audio = gr.File(label=i18n("待估音频"), type="filepath")
 			compute_sdr_button = gr.Button(i18n("计算SDR"), variant="primary")
-			output_message_sdr = gr.Textbox(label="Output Message")
+			output_message_sdr = status_textbox(label=i18n("处理状态"))
 		with gr.TabItem(label=i18n("歌声转MIDI")):
 			gr.Markdown(
 				value=i18n(
@@ -110,7 +111,7 @@ def tools(webui_config):
 						select_some_output_dir = gr.Button(i18n("选择文件夹"))
 						open_some_output_dir = gr.Button(i18n("打开文件夹"))
 			some_button = gr.Button(i18n("开始转换"), variant="primary")
-			output_message_some = gr.Textbox(label="Output Message")
+			output_message_some = status_textbox(label=i18n("处理状态"))
 			gr.Markdown(i18n("### 注意事项"))
 			gr.Markdown(
 				i18n(
